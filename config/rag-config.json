@@ -1,0 +1,123 @@
+{
+  "version": "1.0.0",
+  "description": "Configuration des paramètres RAG pour rag-mcp-server",
+  "last_updated": "28/12/2025 00:05:00",
+  
+  "defaults": {
+    "embedding_provider": "ollama",
+    "embedding_model": "qwen3-embedding:8b",
+    "chunk_size": 500,
+    "chunk_overlap": 100,
+    "file_patterns": ["**/*.{js,ts,py,md,txt,json,yaml,yml,html,css,scss}"],
+    "recursive": true,
+    "search_limit": 20,
+    "search_threshold": 0.3,
+    "format_output": true
+  },
+  
+  "providers": {
+    "fake": {
+      "description": "Fournisseur factice pour les tests",
+      "models": ["nomic-embed-text", "all-minilm"],
+      "requires_ollama": false
+    },
+    "ollama": {
+      "description": "Fournisseur Ollama pour embeddings locaux",
+      "models": ["nomic-embed-text", "all-minilm", "mxbai-embed-large", "bge-m3"],
+      "endpoint": "http://localhost:11434",
+      "requires_ollama": true,
+      "default_model": "nomic-embed-text"
+    },
+    "sentence-transformers": {
+      "description": "Fournisseur Sentence Transformers",
+      "models": ["all-MiniLM-L6-v2", "paraphrase-multilingual-MiniLM-L12-v2", "all-mpnet-base-v2"],
+      "requires_ollama": false,
+      "default_model": "all-MiniLM-L6-v2"
+    }
+  },
+  
+  "limits": {
+    "chunk_size": {
+      "min": 100,
+      "max": 10000,
+      "default": 500
+    },
+    "chunk_overlap": {
+      "min": 0,
+      "max": 1000,
+      "default": 100
+    },
+    "search_limit": {
+      "min": 1,
+      "max": 50,
+      "default": 20
+    },
+    "search_threshold": {
+      "min": 0,
+      "max": 1,
+      "default": 0.3
+    }
+  },
+  
+  "file_handling": {
+    "default_patterns": [
+      "**/*.js",
+      "**/*.ts", 
+      "**/*.py",
+      "**/*.md",
+      "**/*.txt",
+      "**/*.json",
+      "**/*.yaml",
+      "**/*.yml",
+      "**/*.html",
+      "**/*.css",
+      "**/*.scss"
+    ],
+    "ignore_patterns": [
+      "node_modules/",
+      "venv/",
+      "__pycache__/",
+      "*.log",
+      "*.png",
+      "*.jpg",
+      "*.jpeg",
+      "*.gif",
+      "dist/",
+      "build/",
+      ".git/"
+    ],
+    "recursive_default": true
+  },
+  
+  "indexing": {
+    "max_file_size_mb": 10,
+    "supported_extensions": [".js", ".ts", ".py", ".md", ".txt", ".json", ".yaml", ".yml", ".html", ".css", ".scss"],
+    "text_extensions": [".md", ".txt", ".json", ".yaml", ".yml"],
+    "code_extensions": [".js", ".ts", ".py", ".html", ".css", ".scss"]
+  },
+  
+  "search": {
+    "default_limit": 20,
+    "max_limit": 50,
+    "similarity_threshold": 0.3,
+    "format_results": true,
+    "include_context_lines": 3
+  },
+  
+  "environments": {
+    "development": {
+      "embedding_provider": "ollama",
+      "embedding_model": "qwen3-embedding:8b",
+      "verbose_logging": true,
+      "cache_enabled": true,
+      "batch_size": 10
+    },
+    "production": {
+      "embedding_provider": "ollama",
+      "embedding_model": "qwen3-embedding:8b",
+      "verbose_logging": false,
+      "cache_enabled": true,
+      "batch_size": 50
+    }
+  }
+}

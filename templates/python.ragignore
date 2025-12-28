@@ -1,0 +1,243 @@
+# Template .ragignore pour projets Python
+# Placez ce fichier à la racine de votre projet Python
+
+# ============================================
+# Environnements virtuels et cache Python
+# ============================================
+
+# Environnements virtuels
+venv/
+env/
+.venv/
+venv-*/
+env-*/
+.venv-*/
+
+# Cache Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Fichiers de cache pip
+pip-wheel-metadata/
+pip-delete-this-directory.txt
+
+# ============================================
+# Distribution et packaging
+# ============================================
+
+# Distribution
+dist/
+build/
+*.egg-info/
+*.egg
+.eggs/
+
+# Installateurs
+*.whl
+*.tar.gz
+
+# ============================================
+# Fichiers de logs et débogage
+# ============================================
+
+# Fichiers de logs
+*.log
+logs/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Profilage et débogage
+profile/
+*.prof
+*.py,cover
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# ============================================
+# Fichiers de configuration sensible
+# ============================================
+
+# Variables d'environnement
+.env
+.env.local
+.env.production
+.env.development
+.env.test
+.env.*.local
+
+# Fichiers de secrets
+secrets/
+keys/
+*.key
+*.pem
+*.crt
+*.p12
+
+# Configuration locale
+.local-*
+.local.env
+
+# ============================================
+# Fichiers système et IDE
+# ============================================
+
+# Fichiers système
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Fichiers temporaires
+*.swp
+*.swo
+*~
+~$*
+*.tmp
+*.temp
+
+# Dossiers IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+__pycache__/
+
+# ============================================
+# Documentation générée
+# ============================================
+
+# Documentation Sphinx
+docs/_build/
+_build/
+build/
+
+# Documentation auto-générée
+*.mo
+*.pot
+
+# ============================================
+# Tests et couverture
+# ============================================
+
+# Fichiers de test
+.tox/
+.nox/
+.pytest_cache/
+.mypy_cache/
+.hypothesis/
+
+# Rapports
+htmlcov/
+.coverage
+.coverage.*
+*.xml
+*.trx
+
+# ============================================
+# Fichiers de données volumineux
+# ============================================
+
+# Données
+*.csv
+*.jsonl
+*.parquet
+*.feather
+*.h5
+*.pkl
+*.pickle
+*.joblib
+
+# Bases de données
+*.db
+*.sqlite
+*.sqlite3
+*.mdb
+
+# Modèles ML
+*.model
+*.h5
+*.keras
+*.pth
+*.pt
+
+# ============================================
+# Notebooks Jupyter
+# ============================================
+
+# Cache Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# Sorties de notebook
+__pycache__/
+
+# ============================================
+# Dépendances et virtualenv
+# ============================================
+
+# Fichiers de dépendances
+Pipfile.lock
+poetry.lock
+requirements*.txt
+constraints*.txt
+
+# Environnements conda
+.conda/
+conda-*
+
+# ============================================
+# Exceptions (fichiers à inclure malgré les règles)
+# ============================================
+
+# Inclure les fichiers de configuration importants
+!pyproject.toml
+!setup.py
+!setup.cfg
+!requirements.txt
+!requirements-dev.txt
+!Makefile
+!Dockerfile
+!docker-compose.yml
+
+# Inclure les fichiers de documentation
+!README.md
+!README-*.md
+!CONTRIBUTING.md
+!CHANGELOG.md
+!LICENSE
+!AUTHORS
+
+# Inclure les fichiers source Python
+!*.py
+!*.pyx
+
+# ============================================
+# Notes d'utilisation
+# ============================================
+
+# Ce fichier .ragignore contrôle quels fichiers sont indexés pour la recherche sémantique.
+# 
+# Bonnes pratiques pour les projets Python :
+# 1. Excluez toujours les environnements virtuels (venv/, .venv/)
+# 2. Excluez le cache Python (__pycache__/)
+# 3. Personnalisez selon vos dépendances spécifiques
+# 4. Testez avec : node scripts/manual-index.js --test-ignore
+# 
+# Pour les projets data science :
+# - Ajoutez des règles pour les gros fichiers de données
+# - Excluez les modèles ML entraînés
+# - Incluez les notebooks Jupyter si pertinents
+# 
+# Pour plus d'informations : https://github.com/your-repo/memory-mcp

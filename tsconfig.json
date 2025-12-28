@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "allowSyntheticDefaultImports": true,
+    "outDir": "build",
+    "esModuleInterop": true,
+    "strict": true,
+    "types": ["node"],
+    "typeRoots": [
+      "node_modules/@types",
+      "node_modules/@modelcontextprotocol/sdk/dist/esm/types"
+    ],
+    "baseUrl": ".",
+    "paths": {
+      "@modelcontextprotocol/sdk": [
+        "node_modules/@modelcontextprotocol/sdk/dist/esm/index.js"
+      ],
+      "@modelcontextprotocol/sdk/*": [
+        "node_modules/@modelcontextprotocol/sdk/dist/esm/*"
+      ]
+    }
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "build"]
+}

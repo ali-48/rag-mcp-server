@@ -1,0 +1,231 @@
+// src/config/rag-config.ts
+// Gestionnaire de configuration RAG
+import { readFileSync } from 'fs';
+import { dirname, join } from 'path';
+import { fileURLToPath } from 'url';
+/**
+ * Classe pour charger et gérer la configuration RAG
+ */
+export class RagConfigManager {
+    config;
+    configPath;
+    constructor(configPath) {
+        const __filename = fileURLToPath(import.meta.url);
+        const __dirname = dirname(__filename);
+        this.configPath = configPath || join(__dirname, '..', '..', 'config', 'rag-config.json');
+        this.config = this.loadConfig();
+    }
+    /**
+     * Charge la configuration depuis le fichier JSON
+     */
+    loadConfig() {
+        try {
+            const configData = readFileSync(this.configPath, 'utf-8');
+            return JSON.parse(configData);
+        }
+        catch (error) {
+            console.error(`❌ Erreur lors du chargement de la configuration RAG: ${error}`);
+            throw new Error(`Impossible de charger la configuration RAG depuis ${this.configPath}`);
+        }
+    }
+    /**
+     * Récupère la configuration complète
+     */
+    getConfig() {
+        return this.config;
+    }
+    /**
+     * Récupère les valeurs par défaut
+     */
+    getDefaults() {
+        return this.config.defaults;
+    }
+    /**
+     * Récupère les limites pour un paramètre
+     */
+    getLimits(param) {
+        return this.config.limits[param];
+    }
+    /**
+     * Valide une valeur par rapport aux limites
+     */
+    validateValue(param, value) {
+        const limits = this.getLimits(param);
+        return value >= limits.min && value <= limits.max;
+    }
+    /**
+     * Récupère les modèles disponibles pour un fournisseur
+     */
+    getProviderModels(provider) {
+        return this.config.providers[provider]?.models || [];
+    }
+    /**
+     * Vérifie si un fournisseur nécessite Ollama
+     */
+    requiresOllama(provider) {
+        return this.config.providers[provider]?.requires_ollama || false;
+    }
+    /**
+     * Récupère la configuration pour un environnement
+     */
+    getEnvironmentConfig(env) {
+        return this.config.environments[env];
+    }
+    /**
+     * Récupère les patterns de fichiers par défaut
+     */
+    getFilePatterns() {
+        return this.config.file_handling.default_patterns;
+    }
+    /**
+     * Récupère les patterns à ignorer
+     */
+    getIgnorePatterns() {
+        return this.config.file_handling.ignore_patterns;
+    }
+    /**
+     * Récupère les extensions supportées
+     */
+    getSupportedExtensions() {
+        return this.config.indexing.supported_extensions;
+    }
+    /**
+     * Vérifie si une extension est supportée
+     */
+    isExtensionSupported(extension) {
+        return this.config.indexing.supported_extensions.includes(extension);
+    }
+    /**
+     * Récupère les paramètres de recherche par défaut
+     */
+    getSearchDefaults() {
+        return {
+            limit: this.config.search.default_limit,
+            threshold: this.config.search.similarity_threshold,
+            format: this.config.search.format_results,
+            contextLines: this.config.search.include_context_lines
+        };
+    }
+    /**
+     * Applique les limites à une valeur
+     */
+    applyLimits(param, value) {
+        const limits = this.getLimits(param);
+        if (value < limits.min) {
+            console.warn(`⚠️ Valeur ${param} (${value}) inférieure au minimum (${limits.min}), utilisation du minimum`);
+            return limits.min;
+        }
+        if (value > limits.max) {
+            console.warn(`⚠️ Valeur ${param} (${value}) supérieure au maximum (${limits.max}), utilisation du maximum`);
+            return limits.max;
+        }
+        return value;
+    }
+    /**
+     * Récupère la configuration pour un outil spécifique
+     */
+    getToolConfig(toolName) {
+        const defaults = this.getDefaults();
+        switch (toolName) {
+            case 'index_project':
+            case 'update_project':
+                return {
+                    embedding_provider: defaults.embedding_provider,
+                    embedding_model: defaults.embedding_model,
+                    chunk_size: defaults.chunk_size,
+                    chunk_overlap: defaults.chunk_overlap,
+                    file_patterns: defaults.file_patterns,
+                    recursive: defaults.recursive
+                };
+            case 'search_code':
+                return {
+                    embedding_provider: defaults.embedding_provider,
+                    embedding_model: defaults.embedding_model,
+                    limit: defaults.search_limit,
+                    threshold: defaults.search_threshold,
+                    format_output: defaults.format_output
+                };
+            case 'manage_projects':
+                return {
+                // Pas de configuration spécifique pour manage_projects
+                };
+            default:
+                return {};
+        }
+    }
+}
+/**
+ * Instance singleton du gestionnaire de configuration
+ */
+let configManager = null;
+/**
+ * Obtient l'instance singleton du gestionnaire de configuration
+ */
+export function getRagConfigManager(configPath) {
+    if (!configManager) {
+        configManager = new RagConfigManager(configPath);
+    }
+    return configManager;
+}
+/**
+ * Fonction utilitaire pour charger rapidement la configuration
+ */
+export function loadRagConfig(configPath) {
+    return getRagConfigManager(configPath).getConfig();
+}
+/**
+ * Test de la configuration
+ */
+export async function testRagConfig() {
+    try {
+        const configManager = getRagConfigManager();
+        const config = configManager.getConfig();
+        console.log('🧪 Test de la configuration RAG...');
+        // Vérifier la version
+        if (!config.version) {
+            console.error('❌ Version manquante dans la configuration');
+            return false;
+        }
+        // Vérifier les valeurs par défaut
+        const defaults = configManager.getDefaults();
+        if (!defaults.embedding_provider) {
+            console.error('❌ embedding_provider manquant dans les valeurs par défaut');
+            return false;
+        }
+        // Vérifier les limites
+        const chunkSizeLimits = configManager.getLimits('chunk_size');
+        if (chunkSizeLimits.min >= chunkSizeLimits.max) {
+            console.error('❌ Limites chunk_size invalides');
+            return false;
+        }
+        // Vérifier les fournisseurs
+        const providers = Object.keys(config.providers);
+        if (providers.length === 0) {
+            console.error('❌ Aucun fournisseur configuré');
+            return false;
+        }
+        console.log('✅ Configuration RAG valide');
+        console.log(`📊 Version: ${config.version}`);
+        console.log(`📊 Fournisseurs disponibles: ${providers.join(', ')}`);
+        console.log(`📊 Valeurs par défaut: embedding_provider=${defaults.embedding_provider}, chunk_size=${defaults.chunk_size}`);
+        return true;
+    }
+    catch (error) {
+        console.error('❌ Erreur lors du test de la configuration RAG:', error);
+        return false;
+    }
+}
+// Exécution automatique si ce fichier est exécuté directement
+if (import.meta.url === `file://${process.argv[1]}`) {
+    console.log('🚀 Test de la configuration RAG...');
+    testRagConfig().then(success => {
+        if (success) {
+            console.log('🎉 Test de configuration réussi !');
+            process.exit(0);
+        }
+        else {
+            console.error('❌ Test de configuration échoué');
+            process.exit(1);
+        }
+    });
+}

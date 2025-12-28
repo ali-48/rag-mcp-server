@@ -1,0 +1,279 @@
+# Template .ragignore pour projets Web
+# Placez ce fichier à la racine de votre projet web (HTML/CSS/JS)
+
+# ============================================
+# Dossiers de dépendances
+# ============================================
+
+# Dossiers de dépendances Node.js
+node_modules/
+.npm/
+.yarn/
+.pnpm/
+.bower_components/
+.jspm_packages/
+
+# Cache des packages
+.cache/
+.npm-cache/
+.yarn-cache/
+.bower-cache/
+
+# ============================================
+# Fichiers de build et distribution
+# ============================================
+
+# Dossiers de build
+dist/
+build/
+out/
+coverage/
+.nyc_output/
+public/
+static/
+
+# Fichiers de production
+*.min.js
+*.min.css
+*.min.js.map
+*.min.css.map
+*.bundle.js
+*.bundle.css
+
+# Assets optimisés
+assets/optimized/
+images/optimized/
+
+# ============================================
+# Fichiers de logs et débogage
+# ============================================
+
+# Fichiers de logs
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Fichiers de profilage
+*.cpuprofile
+*.heapsnapshot
+
+# Source maps (sauf pour le développement)
+*.map
+!*.js.map
+!*.css.map
+
+# ============================================
+# Fichiers de configuration sensible
+# ============================================
+
+# Variables d'environnement
+.env
+.env.local
+.env.production
+.env.development
+.env.test
+
+# Fichiers de secrets
+secrets/
+keys/
+*.key
+*.pem
+*.crt
+
+# Configuration locale
+.local-*
+
+# ============================================
+# Fichiers système et IDE
+# ============================================
+
+# Fichiers système
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Fichiers temporaires
+*.swp
+*.swo
+*~
+~$*
+*.tmp
+*.temp
+
+# Dossiers IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ============================================
+# Assets et médias
+# ============================================
+
+# Images
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+*.ico
+*.webp
+*.avif
+
+# Fonts
+*.woff
+*.woff2
+*.ttf
+*.eot
+*.otf
+
+# Vidéos et audio
+*.mp4
+*.webm
+*.ogg
+*.mp3
+*.wav
+
+# Documents
+*.pdf
+*.doc
+*.docx
+*.xls
+*.xlsx
+
+# ============================================
+# Documentation générée
+# ============================================
+
+# Documentation
+docs/_build/
+storybook-static/
+.styleguidist/
+
+# Sites générés
+_site/
+_sites/
+.jekyll-cache/
+
+# ============================================
+# Tests et couverture
+# ============================================
+
+# Rapports de test
+test-results/
+reports/
+*.xml
+*.trx
+*.lcov
+
+# Couverture de code
+coverage/
+.nyc_output/
+
+# ============================================
+# Fichiers de données volumineux
+# ============================================
+
+# Données
+*.csv
+*.jsonl
+*.parquet
+*.feather
+
+# Bases de données locales
+*.db
+*.sqlite
+*.sqlite3
+*.indexeddb
+
+# Cache de données
+.cache/
+tmp/
+temp/
+
+# ============================================
+# Fichiers spécifiques aux frameworks
+# ============================================
+
+# Next.js
+.next/
+out/
+
+# Nuxt.js
+.nuxt/
+.nuxt-build/
+
+# Gatsby
+.cache/
+public/
+
+# Angular
+dist/
+.aot/
+
+# Vue.js
+dist/
+
+# React (Create React App)
+build/
+
+# ============================================
+# Exceptions (fichiers à inclure malgré les règles)
+# ============================================
+
+# Inclure les fichiers de configuration importants
+!package.json
+!package-lock.json
+!tsconfig.json
+!webpack.config.js
+!vite.config.js
+!next.config.js
+!gatsby-config.js
+!angular.json
+!vue.config.js
+
+# Inclure les fichiers de documentation
+!README.md
+!README-*.md
+!CONTRIBUTING.md
+!CHANGELOG.md
+
+# Inclure les fichiers source
+!*.html
+!*.css
+!*.scss
+!*.sass
+!*.less
+!*.js
+!*.jsx
+!*.ts
+!*.tsx
+!*.vue
+!*.svelte
+
+# ============================================
+# Notes d'utilisation
+# ============================================
+
+# Ce fichier .ragignore contrôle quels fichiers sont indexés pour la recherche sémantique.
+# 
+# Bonnes pratiques pour les projets web :
+# 1. Excluez les assets médias (images, fonts, vidéos)
+# 2. Excluez les fichiers de build et distribution
+# 3. Incluez les fichiers source (HTML, CSS, JS, frameworks)
+# 4. Personnalisez selon votre stack technique
+# 
+# Pour les projets avec beaucoup d'assets :
+# - Considérez indexer les noms de fichiers d'assets
+# - Excluez les assets binaires volumineux
+# - Incluez les métadonnées des assets si importantes
+# 
+# Testez avec : node scripts/manual-index.js --test-ignore
+# 
+# Pour plus d'informations : https://github.com/your-repo/memory-mcp

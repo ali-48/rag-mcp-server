@@ -1,0 +1,50 @@
+{
+  "name": "rag-mcp-server",
+  "version": "1.0.0",
+  "description": "Serveur MCP unifié combinant graphe de connaissances et RAG pour la mémoire cognitive",
+  "main": "build/index.js",
+  "type": "module",
+  "bin": {
+    "rag-mcp-server": "build/index.js"
+  },
+  "scripts": {
+    "build": "tsc && chmod +x build/index.js",
+    "start": "node build/index.js",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.9.0",
+    "fast-glob": "^3.3.3",
+    "ignore": "^7.0.5",
+    "pg": "^8.16.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/pg": "^8.16.0",
+    "typescript": "^5.3.3",
+    "shx": "^0.3.4"
+  },
+  "files": [
+    "build/**/*",
+    "templates/**/*"
+  ],
+  "keywords": [
+    "mcp",
+    "memory",
+    "rag",
+    "knowledge-graph",
+    "cognitive",
+    "vector-search",
+    "semantic-search"
+  ],
+  "author": "RAG MCP Server Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/rag-mcp-server"
+  },
+  "bugs": {
+    "url": "https://github.com/your-org/rag-mcp-server/issues"
+  },
+  "homepage": "https://github.com/your-org/rag-mcp-server#readme"
+}

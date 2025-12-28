@@ -1,0 +1,181 @@
+# Template .ragignore pour projets Node.js
+# Placez ce fichier à la racine de votre projet Node.js
+
+# ============================================
+# Dossiers de dépendances et cache
+# ============================================
+
+# Dossiers de dépendances Node.js
+node_modules/
+.npm/
+.yarn/
+.pnpm/
+.yarn-cache/
+
+# Cache des packages
+.cache/
+.npm-cache/
+.yarn-cache/
+
+# ============================================
+# Fichiers de build et distribution
+# ============================================
+
+# Dossiers de build
+dist/
+build/
+out/
+coverage/
+.nyc_output/
+
+# Fichiers de production
+*.min.js
+*.min.css
+*.min.js.map
+*.min.css.map
+
+# ============================================
+# Fichiers de logs et débogage
+# ============================================
+
+# Fichiers de logs
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Fichiers de profilage
+*.cpuprofile
+*.heapsnapshot
+
+# ============================================
+# Fichiers de configuration sensible
+# ============================================
+
+# Variables d'environnement
+.env
+.env.local
+.env.production
+.env.development
+.env.test
+
+# Fichiers de secrets
+secrets/
+keys/
+*.key
+*.pem
+*.crt
+
+# Configuration locale
+.local-*
+
+# ============================================
+# Fichiers système et IDE
+# ============================================
+
+# Fichiers système
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Fichiers temporaires
+*.swp
+*.swo
+*~
+~$*
+
+# Dossiers IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ============================================
+# Fichiers de lock et métadonnées
+# ============================================
+
+# Fichiers de lock
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+shrinkwrap.yaml
+
+# Métadonnées
+*.tgz
+*.tar.gz
+
+# ============================================
+# Documentation générée
+# ============================================
+
+# Documentation
+docs/_build/
+site/
+public/
+storybook-static/
+
+# ============================================
+# Tests et couverture
+# ============================================
+
+# Rapports de test
+test-results/
+reports/
+*.xml
+*.trx
+
+# ============================================
+# Fichiers de données volumineux
+# ============================================
+
+# Données
+*.csv
+*.jsonl
+*.parquet
+*.feather
+*.h5
+*.pkl
+*.pickle
+
+# Bases de données locales
+*.db
+*.sqlite
+*.sqlite3
+
+# ============================================
+# Exceptions (fichiers à inclure malgré les règles)
+# ============================================
+
+# Inclure les fichiers de configuration importants
+!package.json
+!tsconfig.json
+!webpack.config.js
+!vite.config.js
+!next.config.js
+!jest.config.js
+
+# Inclure les fichiers de documentation
+!README.md
+!README-*.md
+!CONTRIBUTING.md
+!CHANGELOG.md
+
+# ============================================
+# Notes d'utilisation
+# ============================================
+
+# Ce fichier .ragignore contrôle quels fichiers sont indexés pour la recherche sémantique.
+# 
+# Bonnes pratiques :
+# 1. Personnalisez ce fichier selon les besoins de votre projet
+# 2. Ajoutez des règles spécifiques à votre projet
+# 3. Testez avec : node scripts/manual-index.js --test-ignore
+# 4. Versionnez ce fichier avec votre code
+# 
+# Pour plus d'informations : https://github.com/your-repo/memory-mcp
