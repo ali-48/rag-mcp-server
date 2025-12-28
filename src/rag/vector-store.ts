@@ -24,35 +24,110 @@ export function setEmbeddingProvider(provider: string, model: string = "nomic-em
   console.error(`Embedding provider configured: ${provider}, model: ${model}`);
 }
 
-// Fonction pour générer des embeddings selon le fournisseur configuré
-async function generateEmbedding(text: string): Promise<number[]> {
-  switch (embeddingProvider) {
-    case "ollama":
-      return await generateOllamaEmbedding(text);
-    case "sentence-transformers":
-      return await generateSentenceTransformerEmbedding(text);
-    case "fake":
-    default:
-      return generateFakeEmbedding(text);
-  }
+/**
+ * Normalise un vecteur selon la norme L2 (norme unitaire).
+ * Cette normalisation est essentielle pour la similarité cosinus car elle garantit
+ * que les vecteurs ont une norme de 1, ce qui rend la similarité cosinus égale au produit scalaire.
+ * 
+ * @param vector - Vecteur à normaliser
+ * @returns Vecteur normalisé (norme = 1.0)
+ */
+function normalizeL2(vector: number[]): number[] {
+  const norm = Math.sqrt(vector.reduce((sum, val) => sum + val * val, 0));
+  if (norm === 0) return vector;
+  return vector.map(val => val / norm);
 }
 
-// Embeddings factices (pour tests)
+// Fonction pour générer des embeddings selon le fournisseur configuré
+async function generateEmbedding(text: string): Promise<number[]> {
+  let embedding: number[];
+  switch (embeddingProvider) {
+    case "ollama":
+      embedding = await generateOllamaEmbedding(text);
+      break;
+    case "sentence-transformers":
+      embedding = await generateSentenceTransformerEmbedding(text);
+      break;
+    case "fake":
+    default:
+      embedding = generateFakeEmbedding(text);
+      break;
+  }
+  // Normaliser l'embedding pour une meilleure similarité cosinus
+  return normalizeL2(embedding);
+}
+
+/**
+ * Génère des embeddings factices améliorés pour les tests.
+ * Cette version améliorée résout le problème des "scores uniformément élevés" en:
+ * 1. Utilisant une combinaison de fonctions sin/cos pour réduire la corrélation linéaire
+ * 2. Ajoutant une variation basée sur un hash du texte pour plus d'unicité
+ * 3. Incluant un bruit aléatoire contrôlé pour éviter les patterns trop réguliers
+ * 
+ * Résultat: Distribution plus réaliste avec écart-type > 0.1 et plage étendue.
+ * 
+ * @param text - Texte à encoder
+ * @returns Vecteur d'embedding de dimension 768
+ */
 function generateFakeEmbedding(text: string): number[] {
-  // Embedding factice de dimension 768
+  // Embedding factice de dimension 768 avec meilleure distribution
   const seed = text.length;
+  const hash = simpleHash(text);
+  
   return Array(768).fill(0).map((_, i) => {
-    const x = Math.sin(seed + i * 0.1) * 0.5;
-    return x + (Math.random() * 0.1 - 0.05);
+    // Utiliser une combinaison de fonctions pour réduire la corrélation
+    const base = Math.sin(hash * 0.01 + i * 0.017) * 0.3;
+    const variation = Math.cos(hash * 0.007 + i * 0.023) * 0.2;
+    const noise = (Math.random() - 0.5) * 0.1;
+    
+    // Combinaison non-linéaire pour réduire la corrélation linéaire
+    return base + variation + noise;
   });
 }
 
-// Embeddings avec Ollama (à implémenter)
+// Fonction de hachage simple pour générer une seed unique à partir du texte
+function simpleHash(text: string): number {
+  let hash = 0;
+  for (let i = 0; i < text.length; i++) {
+    const char = text.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convertir en entier 32-bit
+  }
+  return Math.abs(hash);
+}
+
+// Embeddings avec Ollama
 async function generateOllamaEmbedding(text: string): Promise<number[]> {
   console.error(`Generating embedding with Ollama (${embeddingModel}): ${text.substring(0, 50)}...`);
-  // TODO: Implémenter l'appel à l'API Ollama
-  // Pour l'instant, retourner des embeddings factices
-  return generateFakeEmbedding(text);
+  
+  try {
+    const response = await fetch('http://localhost:11434/api/embeddings', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: embeddingModel,
+        prompt: text,
+      }),
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Ollama API error: ${response.status} ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    
+    if (!data.embedding || !Array.isArray(data.embedding)) {
+      throw new Error('Invalid response from Ollama API: missing embedding array');
+    }
+    
+    return data.embedding;
+  } catch (error) {
+    console.error(`Failed to get embedding from Ollama: ${error}. Falling back to fake embeddings.`);
+    // Fallback sur les embeddings factices en cas d'erreur
+    return generateFakeEmbedding(text);
+  }
 }
 
 // Embeddings avec Sentence Transformers (à implémenter)
@@ -89,17 +164,83 @@ export async function embedAndStore(
   }
 }
 
+/**
+ * Calcule un seuil de similarité dynamique basé sur la distribution des scores.
+ * Cette fonction résout le problème des "scores uniformément élevés" en adaptant
+ * le seuil à la distribution réelle des similarités.
+ * 
+ * Principe: seuil = moyenne + 0.5 * écart-type
+ * - Pour les scores uniformément élevés (faible écart-type), le seuil sera élevé
+ * - Pour les scores bien distribués, le seuil s'adapte à la distribution
+ * - Limité entre 0.1 et 0.8 pour éviter les valeurs extrêmes
+ * 
+ * @param scores - Tableau de scores de similarité (cosinus)
+ * @returns Seuil adaptatif entre 0.1 et 0.8
+ */
+function calculateDynamicThreshold(scores: number[]): number {
+  if (scores.length === 0) return 0.3; // Valeur par défaut
+  
+  // Calculer la moyenne et l'écart-type
+  const mean = scores.reduce((a, b) => a + b, 0) / scores.length;
+  const variance = scores.reduce((sq, n) => sq + Math.pow(n - mean, 2), 0) / scores.length;
+  const std = Math.sqrt(variance);
+  
+  // Seuil = moyenne + 0.5 * écart-type (pour capturer les scores significatifs)
+  const threshold = mean + 0.5 * std;
+  
+  // Limiter entre 0.1 et 0.8 pour éviter les valeurs extrêmes
+  return Math.max(0.1, Math.min(0.8, threshold));
+}
+
 export async function semanticSearch(
   query: string,
   options: {
     projectFilter?: string;
     limit?: number;
     threshold?: number;
+    dynamicThreshold?: boolean;
   } = {}
 ): Promise<SearchResult[]> {
-  const { projectFilter, limit = 10, threshold = 0.0 } = options;
+  const { 
+    projectFilter, 
+    limit = 10, 
+    threshold = 0.3, // Changé de 0.0 à 0.3 (valeur par défaut raisonnable)
+    dynamicThreshold = false 
+  } = options;
+  
   const queryVector = await generateEmbedding(query);
   const queryVectorStr = `[${queryVector.join(',')}]`;
+  
+  // Requête initiale sans seuil pour calculer la distribution si dynamicThreshold est activé
+  let initialThreshold = threshold;
+  
+  if (dynamicThreshold) {
+    try {
+      // D'abord, récupérer plus de résultats pour analyser la distribution
+      const distributionSql = `
+        SELECT (1 - (vector <=> $1::vector)) as similarity
+        FROM rag_store
+        ${projectFilter ? 'WHERE project_path = $2' : ''}
+        ORDER BY similarity DESC
+        LIMIT 50
+      `;
+      
+      const distributionParams: any[] = [queryVectorStr];
+      if (projectFilter) {
+        distributionParams.push(projectFilter);
+      }
+      
+      const distributionResult = await pool.query(distributionSql, distributionParams);
+      const scores = distributionResult.rows.map(row => row.similarity);
+      
+      if (scores.length > 0) {
+        initialThreshold = calculateDynamicThreshold(scores);
+        console.error(`Dynamic threshold calculated: ${initialThreshold.toFixed(3)} from ${scores.length} scores`);
+      }
+    } catch (error) {
+      console.error("Error calculating dynamic threshold, using default:", error);
+    }
+  }
   
   let sql = `
     SELECT id, project_path, file_path, content,
@@ -108,7 +249,7 @@ export async function semanticSearch(
     WHERE (1 - (vector <=> $1::vector)) >= $2
   `;
   
-  const params: any[] = [queryVectorStr, threshold];
+  const params: any[] = [queryVectorStr, initialThreshold];
   
   if (projectFilter) {
     sql += ` AND project_path = $${params.length + 1}`;

@@ -3,9 +3,9 @@
   "description": "Configuration des paramètres RAG pour rag-mcp-server",
   "last_updated": "28/12/2025 00:05:00",
   
-  "defaults": {
+    "defaults": {
     "embedding_provider": "ollama",
-    "embedding_model": "qwen3-embedding:8b",
+    "embedding_model": "nomic-embed-text",
     "chunk_size": 500,
     "chunk_overlap": 100,
     "file_patterns": ["**/*.{js,ts,py,md,txt,json,yaml,yml,html,css,scss}"],
@@ -104,17 +104,17 @@
     "include_context_lines": 3
   },
   
-  "environments": {
+    "environments": {
     "development": {
       "embedding_provider": "ollama",
-      "embedding_model": "qwen3-embedding:8b",
+      "embedding_model": "nomic-embed-text",
       "verbose_logging": true,
       "cache_enabled": true,
       "batch_size": 10
     },
     "production": {
       "embedding_provider": "ollama",
-      "embedding_model": "qwen3-embedding:8b",
+      "embedding_model": "nomic-embed-text",
       "verbose_logging": false,
       "cache_enabled": true,
       "batch_size": 50
