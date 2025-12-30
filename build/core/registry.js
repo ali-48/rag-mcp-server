@@ -207,7 +207,7 @@ export async function initializeAutoRegistry(config) {
  */
 export function getExpectedTools() {
     return [
-        // Outils Graph
+        // Outils Graph (9 outils)
         'create_entities',
         'create_relations',
         'add_observations',
@@ -217,8 +217,9 @@ export function getExpectedTools() {
         'read_graph',
         'search_nodes',
         'open_nodes',
-        // Outils RAG
-        'index_project',
+        // Outils RAG (5 outils - avec injection_rag comme outil principal)
+        'injection_rag', // Nouvel outil principal
+        'index_project', // Alias déprécié (rétrocompatibilité)
         'search_code',
         'manage_projects',
         'update_project'

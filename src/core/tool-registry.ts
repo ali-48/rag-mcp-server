@@ -14,6 +14,7 @@ export type ToolHandler = (args: any) => Promise<any>;
 export interface ToolDefinition extends Tool {
   // Hérite de Tool (name, description, inputSchema)
   // Ajoute éventuellement des métadonnées supplémentaires
+  hidden?: boolean; // Si true, l'outil est masqué de la liste des outils visibles
 }
 
 /**
@@ -149,7 +150,7 @@ export class ToolRegistry {
       return this.filterByPrefix('rag_');
     } else {
       // Catégorie personnalisée
-      return this.getTools().filter(tool => 
+      return this.getTools().filter(tool =>
         tool.name.toLowerCase().includes(category.toLowerCase())
       );
     }

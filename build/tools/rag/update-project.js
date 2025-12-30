@@ -26,31 +26,6 @@ export const updateProjectTool = {
                 type: "boolean",
                 description: "Parcourir les sous-dossiers récursivement",
                 default: true
-            },
-            embedding_provider: {
-                type: "string",
-                description: "Fournisseur d'embeddings (fake, ollama, sentence-transformers)",
-                enum: ["fake", "ollama", "sentence-transformers"],
-                default: "fake"
-            },
-            embedding_model: {
-                type: "string",
-                description: "Modèle d'embeddings (pour Ollama: 'nomic-embed-text', 'all-minilm', etc.)",
-                default: "nomic-embed-text"
-            },
-            chunk_size: {
-                type: "number",
-                description: "Taille des chunks pour le découpage (en tokens)",
-                default: 1000,
-                minimum: 100,
-                maximum: 10000
-            },
-            chunk_overlap: {
-                type: "number",
-                description: "Chevauchement entre les chunks (en tokens)",
-                default: 200,
-                minimum: 0,
-                maximum: 1000
             }
         },
         required: ["project_path"]
@@ -66,14 +41,14 @@ export const updateProjectHandler = async (args) => {
     // Charger la configuration
     const configManager = getRagConfigManager();
     const defaults = configManager.getDefaults();
-    // Utiliser les valeurs par défaut de la configuration si non spécifiées
+    // Utiliser les valeurs par défaut de la configuration
     const file_patterns = args.file_patterns || defaults.file_patterns;
     const recursive = args.recursive !== undefined ? args.recursive : defaults.recursive;
-    const embedding_provider = args.embedding_provider || defaults.embedding_provider;
-    const embedding_model = args.embedding_model || defaults.embedding_model;
-    // Appliquer les limites aux valeurs numériques
-    const chunk_size = configManager.applyLimits('chunk_size', args.chunk_size || defaults.chunk_size);
-    const chunk_overlap = configManager.applyLimits('chunk_overlap', args.chunk_overlap || defaults.chunk_overlap);
+    const embedding_provider = defaults.embedding_provider;
+    const embedding_model = defaults.embedding_model;
+    // Appliquer les limites aux valeurs numériques de la configuration
+    const chunk_size = configManager.applyLimits('chunk_size', defaults.chunk_size);
+    const chunk_overlap = configManager.applyLimits('chunk_overlap', defaults.chunk_overlap);
     // Configurer le fournisseur d'embeddings
     setEmbeddingProvider(embedding_provider, embedding_model);
     const options = {
@@ -138,8 +113,7 @@ export async function testUpdateProject() {
         const result = await updateProjectHandler({
             project_path: testProjectPath,
             file_patterns: ["**/*.js"],
-            recursive: true,
-            embedding_provider: "fake"
+            recursive: true
         });
         console.log("✅ Test passed:", result ? "Oui" : "Non");
         // Nettoyer

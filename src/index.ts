@@ -20,16 +20,27 @@ const server = new Server(
 
 // Gérer la liste des outils
 server.setRequestHandler(ListToolsRequestSchema, async () => {
-  const tools = toolRegistry.getTools();
+  const allTools = toolRegistry.getTools();
+
+  // Filtrer les outils masqués
+  const visibleTools = allTools.filter(tool => !tool.hidden);
+
+  // Trier les outils : injection_rag en premier, puis ordre alphabétique
+  const sortedTools = visibleTools.sort((a, b) => {
+    if (a.name === 'injection_rag') return -1;
+    if (b.name === 'injection_rag') return 1;
+    return a.name.localeCompare(b.name);
+  });
+
   return {
-    tools,
+    tools: sortedTools,
   };
 });
 
 // Gérer l'exécution des outils
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const { name, arguments: args } = request.params;
-  
+
   if (!args) {
     throw new Error(`No arguments provided for tool: ${name}`);
   }
@@ -48,30 +59,35 @@ async function main() {
   // Initialiser le registre automatique
   console.error("🚀 Initialisation du registre automatique...");
   const registeredCount = await initializeAutoRegistry({ verbose: true });
-  
+
   // Récupérer la liste des outils
-  const tools = toolRegistry.getTools();
-  
-  // Compter les outils par catégorie
-  const graphTools = tools.filter(tool => 
-    tool.name.includes('_entities') || 
-    tool.name.includes('_relations') || 
+  const allTools = toolRegistry.getTools();
+
+  // Filtrer les outils masqués pour les statistiques
+  const visibleTools = allTools.filter(tool => !tool.hidden);
+
+  // Compter les outils par catégorie (basé sur les outils visibles)
+  const graphTools = visibleTools.filter(tool =>
+    tool.name.includes('_entities') ||
+    tool.name.includes('_relations') ||
     tool.name.includes('_observations') ||
     tool.name.includes('_graph') ||
     tool.name.includes('_nodes')
   );
-  
-  const ragTools = tools.filter(tool => 
-    tool.name.includes('_project') || 
-    tool.name.includes('_code')
+
+  const ragTools = visibleTools.filter(tool =>
+    tool.name.includes('_rag') ||        // injection_rag
+    tool.name.includes('_code') ||       // search_code
+    tool.name === 'manage_projects' ||   // manage_projects
+    tool.name === 'update_project'       // update_project
   );
-  
+
   // Démarrer le serveur
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  
+
   console.error("✅ RAG MCP Server running on stdio");
-  console.error(`📊 Total tools available: ${tools.length} (${graphTools.length} graph tools, ${ragTools.length} RAG tools)`);
+  console.error(`📊 Total tools available: ${visibleTools.length} (${graphTools.length} graph tools, ${ragTools.length} RAG tools)`);
   console.error(`🎉 Outils enregistrés automatiquement: ${registeredCount}`);
 }
 

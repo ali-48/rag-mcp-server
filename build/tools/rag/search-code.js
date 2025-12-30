@@ -19,36 +19,6 @@ export const searchCodeTool = {
             project_filter: {
                 type: "string",
                 description: "Filtrer par chemin de projet spécifique"
-            },
-            limit: {
-                type: "number",
-                description: "Nombre maximum de résultats",
-                default: 10,
-                minimum: 1,
-                maximum: 50
-            },
-            threshold: {
-                type: "number",
-                description: "Seuil de similarité (0.0 à 1.0)",
-                default: 0,
-                minimum: 0,
-                maximum: 1
-            },
-            format_output: {
-                type: "boolean",
-                description: "Formater la sortie pour l'affichage",
-                default: true
-            },
-            embedding_provider: {
-                type: "string",
-                description: "Fournisseur d'embeddings pour la recherche (fake, ollama, sentence-transformers)",
-                enum: ["fake", "ollama", "sentence-transformers"],
-                default: "fake"
-            },
-            embedding_model: {
-                type: "string",
-                description: "Modèle d'embeddings (pour Ollama: 'nomic-embed-text', 'all-minilm', etc.)",
-                default: "nomic-embed-text"
             }
         },
         required: ["query"]
@@ -65,12 +35,12 @@ export const searchCodeHandler = async (args) => {
     const configManager = getRagConfigManager();
     const defaults = configManager.getDefaults();
     const searchDefaults = configManager.getSearchDefaults();
-    // Utiliser les valeurs par défaut de la configuration si non spécifiées
-    const embedding_provider = args.embedding_provider || defaults.embedding_provider;
-    const embedding_model = args.embedding_model || defaults.embedding_model;
-    const limit = configManager.applyLimits('search_limit', args.limit || searchDefaults.limit);
-    const threshold = configManager.applyLimits('search_threshold', args.threshold || searchDefaults.threshold);
-    const format_output = args.format_output !== undefined ? args.format_output : searchDefaults.format;
+    // Utiliser uniquement les valeurs par défaut de la configuration
+    const embedding_provider = defaults.embedding_provider;
+    const embedding_model = defaults.embedding_model;
+    const limit = configManager.applyLimits('search_limit', searchDefaults.limit);
+    const threshold = configManager.applyLimits('search_threshold', searchDefaults.threshold);
+    const format_output = searchDefaults.format;
     // Configurer le fournisseur d'embeddings
     setEmbeddingProvider(embedding_provider, embedding_model);
     const options = {
@@ -141,9 +111,7 @@ export async function testSearchCode() {
         console.log(`✅ Indexed test project at: ${testProjectPath}`);
         // Rechercher
         const result = await searchCodeHandler({
-            query: "search test",
-            format_output: false,
-            embedding_provider: "fake"
+            query: "search test"
         });
         console.log("✅ Test passed:", result ? "Oui" : "Non");
         // Nettoyer

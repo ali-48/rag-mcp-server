@@ -12,7 +12,7 @@ export interface RagConfig {
   version: string;
   description: string;
   last_updated: string;
-  
+
   defaults: {
     embedding_provider: string;
     embedding_model: string;
@@ -24,7 +24,7 @@ export interface RagConfig {
     search_threshold: number;
     format_output: boolean;
   };
-  
+
   providers: {
     [key: string]: {
       description: string;
@@ -34,27 +34,53 @@ export interface RagConfig {
       default_model?: string;
     };
   };
-  
+
+  llm_providers?: {
+    [key: string]: {
+      description: string;
+      models: string[];
+      endpoint?: string;
+      requires_ollama?: boolean;
+      default_model?: string;
+      max_tokens?: number;
+      temperature?: number;
+      timeout_ms?: number;
+    };
+  };
+
+  preparation?: {
+    enable_llm_analysis: boolean;
+    llm_provider: string;
+    llm_model: string;
+    tasks: string[];
+    cache_enabled: boolean;
+    cache_ttl_seconds: number;
+    batch_size: number;
+    max_content_length: number;
+  };
+
   limits: {
     chunk_size: { min: number; max: number; default: number };
     chunk_overlap: { min: number; max: number; default: number };
     search_limit: { min: number; max: number; default: number };
     search_threshold: { min: number; max: number; default: number };
+    preparation_batch_size?: { min: number; max: number; default: number };
+    preparation_timeout?: { min: number; max: number; default: number };
   };
-  
+
   file_handling: {
     default_patterns: string[];
     ignore_patterns: string[];
     recursive_default: boolean;
   };
-  
+
   indexing: {
     max_file_size_mb: number;
     supported_extensions: string[];
     text_extensions: string[];
     code_extensions: string[];
   };
-  
+
   search: {
     default_limit: number;
     max_limit: number;
@@ -62,7 +88,7 @@ export interface RagConfig {
     format_results: boolean;
     include_context_lines: number;
   };
-  
+
   environments: {
     development: {
       embedding_provider: string;
@@ -83,15 +109,15 @@ export interface RagConfig {
 export class RagConfigManager {
   private config: RagConfig;
   private configPath: string;
-  
+
   constructor(configPath?: string) {
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = dirname(__filename);
-    
+
     this.configPath = configPath || join(__dirname, '..', '..', 'config', 'rag-config.json');
     this.config = this.loadConfig();
   }
-  
+
   /**
    * Charge la configuration depuis le fichier JSON
    */
@@ -104,85 +130,126 @@ export class RagConfigManager {
       throw new Error(`Impossible de charger la configuration RAG depuis ${this.configPath}`);
     }
   }
-  
+
   /**
    * Récupère la configuration complète
    */
   getConfig(): RagConfig {
     return this.config;
   }
-  
+
   /**
    * Récupère les valeurs par défaut
    */
   getDefaults() {
     return this.config.defaults;
   }
-  
+
   /**
    * Récupère les limites pour un paramètre
    */
   getLimits(param: keyof RagConfig['limits']) {
     return this.config.limits[param];
   }
-  
+
   /**
    * Valide une valeur par rapport aux limites
    */
   validateValue(param: keyof RagConfig['limits'], value: number): boolean {
     const limits = this.getLimits(param);
+    if (!limits) {
+      console.warn(`⚠️ Aucune limite définie pour ${param}`);
+      return true; // Pas de validation si pas de limites
+    }
     return value >= limits.min && value <= limits.max;
   }
-  
+
   /**
    * Récupère les modèles disponibles pour un fournisseur
    */
   getProviderModels(provider: string): string[] {
     return this.config.providers[provider]?.models || [];
   }
-  
+
   /**
    * Vérifie si un fournisseur nécessite Ollama
    */
   requiresOllama(provider: string): boolean {
     return this.config.providers[provider]?.requires_ollama || false;
   }
-  
+
+  /**
+   * Récupère la configuration d'un fournisseur LLM
+   */
+  getLlmProviderConfig(provider: string) {
+    return this.config.llm_providers?.[provider];
+  }
+
+  /**
+   * Récupère la configuration de préparation
+   */
+  getPreparationConfig() {
+    return this.config.preparation || {
+      enable_llm_analysis: false,
+      llm_provider: 'ollama',
+      llm_model: 'llama3.2:3b',
+      tasks: [],
+      cache_enabled: true,
+      cache_ttl_seconds: 3600,
+      batch_size: 5,
+      max_content_length: 10000
+    };
+  }
+
+  /**
+   * Vérifie si l'analyse LLM est activée
+   */
+  isLlmAnalysisEnabled(): boolean {
+    return this.config.preparation?.enable_llm_analysis || false;
+  }
+
+  /**
+   * Récupère les modèles LLM disponibles pour un fournisseur
+   */
+  getLlmProviderModels(provider: string): string[] {
+    return this.config.llm_providers?.[provider]?.models || [];
+  }
+
   /**
    * Récupère la configuration pour un environnement
    */
   getEnvironmentConfig(env: 'development' | 'production') {
     return this.config.environments[env];
   }
-  
+
   /**
    * Récupère les patterns de fichiers par défaut
    */
   getFilePatterns(): string[] {
     return this.config.file_handling.default_patterns;
   }
-  
+
   /**
    * Récupère les patterns à ignorer
    */
   getIgnorePatterns(): string[] {
     return this.config.file_handling.ignore_patterns;
   }
-  
+
   /**
    * Récupère les extensions supportées
    */
   getSupportedExtensions(): string[] {
     return this.config.indexing.supported_extensions;
   }
-  
+
   /**
    * Vérifie si une extension est supportée
    */
   isExtensionSupported(extension: string): boolean {
     return this.config.indexing.supported_extensions.includes(extension);
   }
-  
+
   /**
    * Récupère les paramètres de recherche par défaut
    */
@@ -194,32 +261,38 @@ export class RagConfigManager {
       contextLines: this.config.search.include_context_lines
     };
   }
-  
+
   /**
    * Applique les limites à une valeur
    */
   applyLimits(param: keyof RagConfig['limits'], value: number): number {
     const limits = this.getLimits(param);
-    
+
+    if (!limits) {
+      console.warn(`⚠️ Aucune limite définie pour ${param}, utilisation de la valeur originale`);
+      return value;
+    }
+
     if (value < limits.min) {
       console.warn(`⚠️ Valeur ${param} (${value}) inférieure au minimum (${limits.min}), utilisation du minimum`);
       return limits.min;
     }
-    
+
     if (value > limits.max) {
       console.warn(`⚠️ Valeur ${param} (${value}) supérieure au maximum (${limits.max}), utilisation du maximum`);
       return limits.max;
     }
-    
+
     return value;
   }
-  
+
   /**
    * Récupère la configuration pour un outil spécifique
    */
   getToolConfig(toolName: string): any {
     const defaults = this.getDefaults();
-    
+    const preparation = this.getPreparationConfig();
+
     switch (toolName) {
       case 'index_project':
       case 'update_project':
@@ -229,9 +302,12 @@ export class RagConfigManager {
           chunk_size: defaults.chunk_size,
           chunk_overlap: defaults.chunk_overlap,
           file_patterns: defaults.file_patterns,
-          recursive: defaults.recursive
+          recursive: defaults.recursive,
+          enable_llm_analysis: preparation.enable_llm_analysis,
+          llm_provider: preparation.llm_provider,
+          llm_model: preparation.llm_model
         };
-        
+
       case 'search_code':
         return {
           embedding_provider: defaults.embedding_provider,
@@ -240,12 +316,12 @@ export class RagConfigManager {
           threshold: defaults.search_threshold,
           format_output: defaults.format_output
         };
-        
+
       case 'manage_projects':
         return {
           // Pas de configuration spécifique pour manage_projects
         };
-        
+
       default:
         return {};
     }
@@ -281,41 +357,52 @@ export async function testRagConfig(): Promise<boolean> {
   try {
     const configManager = getRagConfigManager();
     const config = configManager.getConfig();
-    
+
     console.log('🧪 Test de la configuration RAG...');
-    
+
     // Vérifier la version
     if (!config.version) {
       console.error('❌ Version manquante dans la configuration');
       return false;
     }
-    
+
     // Vérifier les valeurs par défaut
     const defaults = configManager.getDefaults();
     if (!defaults.embedding_provider) {
       console.error('❌ embedding_provider manquant dans les valeurs par défaut');
       return false;
     }
-    
+
     // Vérifier les limites
     const chunkSizeLimits = configManager.getLimits('chunk_size');
-    if (chunkSizeLimits.min >= chunkSizeLimits.max) {
-      console.error('❌ Limites chunk_size invalides');
+    if (!chunkSizeLimits || chunkSizeLimits.min >= chunkSizeLimits.max) {
+      console.error('❌ Limites chunk_size invalides ou manquantes');
       return false;
     }
-    
+
     // Vérifier les fournisseurs
     const providers = Object.keys(config.providers);
     if (providers.length === 0) {
       console.error('❌ Aucun fournisseur configuré');
       return false;
     }
-    
+
+    // Vérifier la configuration LLM si présente
+    if (config.llm_providers) {
+      const llmProviders = Object.keys(config.llm_providers);
+      console.log(`📊 Fournisseurs LLM disponibles: ${llmProviders.join(', ')}`);
+
+      if (config.preparation) {
+        console.log(`📊 Préparation LLM: ${config.preparation.enable_llm_analysis ? 'activée' : 'désactivée'}`);
+        console.log(`📊 Modèle LLM: ${config.preparation.llm_model}`);
+      }
+    }
+
     console.log('✅ Configuration RAG valide');
     console.log(`📊 Version: ${config.version}`);
     console.log(`📊 Fournisseurs disponibles: ${providers.join(', ')}`);
     console.log(`📊 Valeurs par défaut: embedding_provider=${defaults.embedding_provider}, chunk_size=${defaults.chunk_size}`);
-    
+
     return true;
   } catch (error) {
     console.error('❌ Erreur lors du test de la configuration RAG:', error);
@@ -326,7 +413,7 @@ export async function testRagConfig(): Promise<boolean> {
 // Exécution automatique si ce fichier est exécuté directement
 if (import.meta.url === `file://${process.argv[1]}`) {
   console.log('🚀 Test de la configuration RAG...');
-  
+
   testRagConfig().then(success => {
     if (success) {
       console.log('🎉 Test de configuration réussi !');

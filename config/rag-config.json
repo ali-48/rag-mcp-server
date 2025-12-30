@@ -1,41 +1,88 @@
 {
   "version": "1.0.0",
   "description": "Configuration des paramètres RAG pour rag-mcp-server",
-  "last_updated": "28/12/2025 00:05:00",
-  
-    "defaults": {
+  "last_updated": "28/12/2025 22:40:00",
+  "defaults": {
     "embedding_provider": "ollama",
-    "embedding_model": "nomic-embed-text",
+    "embedding_model": "qwen3-embedding:8b",
     "chunk_size": 500,
     "chunk_overlap": 100,
-    "file_patterns": ["**/*.{js,ts,py,md,txt,json,yaml,yml,html,css,scss}"],
+    "file_patterns": [
+      "**/*.{js,ts,py,md,txt,json,yaml,yml,html,css,scss}"
+    ],
     "recursive": true,
     "search_limit": 20,
     "search_threshold": 0.3,
     "format_output": true
   },
-  
   "providers": {
     "fake": {
       "description": "Fournisseur factice pour les tests",
-      "models": ["nomic-embed-text", "all-minilm"],
+      "models": [
+        "nomic-embed-text",
+        "all-minilm",
+        "qwen3-embedding:8b"
+      ],
       "requires_ollama": false
     },
     "ollama": {
       "description": "Fournisseur Ollama pour embeddings locaux",
-      "models": ["nomic-embed-text", "all-minilm", "mxbai-embed-large", "bge-m3"],
+      "models": [
+        "nomic-embed-text",
+        "all-minilm",
+        "mxbai-embed-large",
+        "bge-m3",
+        "qwen3-embedding:8b",
+        "qwen3-embedding:latest"
+      ],
       "endpoint": "http://localhost:11434",
       "requires_ollama": true,
-      "default_model": "nomic-embed-text"
+      "default_model": "qwen3-embedding:8b"
     },
     "sentence-transformers": {
       "description": "Fournisseur Sentence Transformers",
-      "models": ["all-MiniLM-L6-v2", "paraphrase-multilingual-MiniLM-L12-v2", "all-mpnet-base-v2"],
+      "models": [
+        "all-MiniLM-L6-v2",
+        "paraphrase-multilingual-MiniLM-L12-v2",
+        "all-mpnet-base-v2"
+      ],
       "requires_ollama": false,
       "default_model": "all-MiniLM-L6-v2"
     }
   },
-  
+  "llm_providers": {
+    "ollama": {
+      "description": "LLM Ollama pour analyse et préparation intelligente",
+      "models": [
+        "llama3.1:latest",
+        "qwen2.5:7b",
+        "mistral:7b",
+        "phi3:mini"
+      ],
+      "endpoint": "http://localhost:11434",
+      "default_model": "llama3.1:latest",
+      "requires_ollama": true,
+      "max_tokens": 4096,
+      "temperature": 0.1,
+      "timeout_ms": 30000
+    }
+  },
+  "preparation": {
+    "enable_llm_analysis": true,
+    "llm_provider": "ollama",
+    "llm_model": "llama3.1:latest",
+    "tasks": [
+      "summarize",
+      "extract_keywords",
+      "suggest_structure",
+      "detect_entities",
+      "classify_complexity"
+    ],
+    "cache_enabled": true,
+    "cache_ttl_seconds": 3600,
+    "batch_size": 5,
+    "max_content_length": 10000
+  },
   "limits": {
     "chunk_size": {
       "min": 100,
@@ -56,13 +103,22 @@
       "min": 0,
       "max": 1,
       "default": 0.3
+    },
+    "preparation_batch_size": {
+      "min": 1,
+      "max": 20,
+      "default": 5
+    },
+    "preparation_timeout": {
+      "min": 1000,
+      "max": 60000,
+      "default": 30000
     }
   },
-  
   "file_handling": {
     "default_patterns": [
       "**/*.js",
-      "**/*.ts", 
+      "**/*.ts",
       "**/*.py",
       "**/*.md",
       "**/*.txt",
@@ -88,14 +144,37 @@
     ],
     "recursive_default": true
   },
-  
   "indexing": {
     "max_file_size_mb": 10,
-    "supported_extensions": [".js", ".ts", ".py", ".md", ".txt", ".json", ".yaml", ".yml", ".html", ".css", ".scss"],
-    "text_extensions": [".md", ".txt", ".json", ".yaml", ".yml"],
-    "code_extensions": [".js", ".ts", ".py", ".html", ".css", ".scss"]
+    "supported_extensions": [
+      ".js",
+      ".ts",
+      ".py",
+      ".md",
+      ".txt",
+      ".json",
+      ".yaml",
+      ".yml",
+      ".html",
+      ".css",
+      ".scss"
+    ],
+    "text_extensions": [
+      ".md",
+      ".txt",
+      ".json",
+      ".yaml",
+      ".yml"
+    ],
+    "code_extensions": [
+      ".js",
+      ".ts",
+      ".py",
+      ".html",
+      ".css",
+      ".scss"
+    ]
   },
-  
   "search": {
     "default_limit": 20,
     "max_limit": 50,
@@ -103,18 +182,17 @@
     "format_results": true,
     "include_context_lines": 3
   },
-  
-    "environments": {
+  "environments": {
     "development": {
       "embedding_provider": "ollama",
-      "embedding_model": "nomic-embed-text",
+      "embedding_model": "qwen3-embedding:8b",
       "verbose_logging": true,
       "cache_enabled": true,
       "batch_size": 10
     },
     "production": {
       "embedding_provider": "ollama",
-      "embedding_model": "nomic-embed-text",
+      "embedding_model": "qwen3-embedding:8b",
       "verbose_logging": false,
       "cache_enabled": true,
       "batch_size": 50

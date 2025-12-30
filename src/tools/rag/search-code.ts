@@ -22,36 +22,6 @@ export const searchCodeTool: ToolDefinition = {
       project_filter: {
         type: "string",
         description: "Filtrer par chemin de projet spécifique"
-      },
-      limit: {
-        type: "number",
-        description: "Nombre maximum de résultats",
-        default: 10,
-        minimum: 1,
-        maximum: 50
-      },
-      threshold: {
-        type: "number",
-        description: "Seuil de similarité (0.0 à 1.0)",
-        default: 0,
-        minimum: 0,
-        maximum: 1
-      },
-      format_output: {
-        type: "boolean",
-        description: "Formater la sortie pour l'affichage",
-        default: true
-      },
-      embedding_provider: {
-        type: "string",
-        description: "Fournisseur d'embeddings pour la recherche (fake, ollama, sentence-transformers)",
-        enum: ["fake", "ollama", "sentence-transformers"],
-        default: "fake"
-      },
-      embedding_model: {
-        type: "string",
-        description: "Modèle d'embeddings (pour Ollama: 'nomic-embed-text', 'all-minilm', etc.)",
-        default: "nomic-embed-text"
       }
     },
     required: ["query"]
@@ -70,17 +40,13 @@ export const searchCodeHandler: ToolHandler = async (args) => {
   const configManager = getRagConfigManager();
   const defaults = configManager.getDefaults();
   const searchDefaults = configManager.getSearchDefaults();
-  
-  // Utiliser les valeurs par défaut de la configuration si non spécifiées
-  const embedding_provider = args.embedding_provider || defaults.embedding_provider;
-  const embedding_model = args.embedding_model || defaults.embedding_model;
-  const limit = configManager.applyLimits('search_limit',
-    args.limit || searchDefaults.limit
-  );
-  const threshold = configManager.applyLimits('search_threshold',
-    args.threshold || searchDefaults.threshold
-  );
-  const format_output = args.format_output !== undefined ? args.format_output : searchDefaults.format;
+
+  // Utiliser uniquement les valeurs par défaut de la configuration
+  const embedding_provider = defaults.embedding_provider;
+  const embedding_model = defaults.embedding_model;
+  const limit = configManager.applyLimits('search_limit', searchDefaults.limit);
+  const threshold = configManager.applyLimits('search_threshold', searchDefaults.threshold);
+  const format_output = searchDefaults.format;
 
   // Configurer le fournisseur d'embeddings
   setEmbeddingProvider(embedding_provider, embedding_model);
@@ -93,7 +59,7 @@ export const searchCodeHandler: ToolHandler = async (args) => {
 
   try {
     const searchResult = await searchCode(args.query, options);
-    
+
     // Formater la sortie si demandé
     if (format_output !== false) {
       const formatted = `Recherche RAG: "${args.query}"\n` +
@@ -102,18 +68,18 @@ export const searchCodeHandler: ToolHandler = async (args) => {
         `Temps d'exécution: ${searchResult.stats?.executionTime || 0}ms\n` +
         `Projets scannés: ${searchResult.stats?.projectsScanned || 0}\n` +
         `Limite: ${limit}, Seuil: ${threshold}\n\n` +
-        searchResult.results.map((r: any, i: number) => 
+        searchResult.results.map((r: any, i: number) =>
           `${i + 1}. ${r.filePath} (score: ${(r.score * 100).toFixed(2)}%)\n` +
           `   Projet: ${r.metadata.projectPath}\n` +
           `   Contenu: ${r.content.substring(0, 100)}...`
         ).join('\n\n');
-      
+
       return { content: [{ type: "text", text: formatted }] };
     }
-    
-    return { 
-      content: [{ 
-        type: "text", 
+
+    return {
+      content: [{
+        type: "text",
         text: JSON.stringify({
           ...searchResult,
           config_used: {
@@ -123,8 +89,8 @@ export const searchCodeHandler: ToolHandler = async (args) => {
             threshold,
             format_output
           }
-        }, null, 2) 
-      }] 
+        }, null, 2)
+      }]
     };
   } catch (error) {
     console.error("Error in search_code tool:", error);
@@ -137,21 +103,21 @@ export const searchCodeHandler: ToolHandler = async (args) => {
  */
 export async function testSearchCode() {
   console.log("Testing search_code tool...");
-  
+
   try {
     // D'abord indexer un projet de test
     const testProjectPath = "/tmp/test-project-search";
     const fs = await import('fs');
     const path = await import('path');
-    
+
     if (!fs.existsSync(testProjectPath)) {
       fs.mkdirSync(testProjectPath, { recursive: true });
     }
-    
+
     // Créer un fichier de test avec du contenu spécifique
     const testFile = path.join(testProjectPath, "search-test.js");
     fs.writeFileSync(testFile, "// This is a test file for search functionality\nconst searchQuery = 'find me';\nconsole.log('Search test successful');");
-    
+
     // Indexer le projet
     const { indexProjectHandler } = await import("./index-project.js");
     await indexProjectHandler({
@@ -160,21 +126,19 @@ export async function testSearchCode() {
       recursive: true,
       embedding_provider: "fake"
     });
-    
+
     console.log(`✅ Indexed test project at: ${testProjectPath}`);
-    
+
     // Rechercher
     const result = await searchCodeHandler({
-      query: "search test",
-      format_output: false,
-      embedding_provider: "fake"
+      query: "search test"
     });
-    
+
     console.log("✅ Test passed:", result ? "Oui" : "Non");
-    
+
     // Nettoyer
     fs.rmSync(testProjectPath, { recursive: true, force: true });
-    
+
     return result;
   } catch (error) {
     console.error("❌ Test failed:", error);

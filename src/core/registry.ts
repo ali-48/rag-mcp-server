@@ -58,7 +58,7 @@ export class AutoRegistry {
 
     for (const dir of this.config.toolDirectories) {
       const fullPath = join(projectRoot, dir);
-      
+
       if (!existsSync(fullPath)) {
         if (this.config.verbose) {
           console.warn(`⚠️ Répertoire non trouvé: ${fullPath}`);
@@ -67,7 +67,7 @@ export class AutoRegistry {
       }
 
       const files = this.scanDirectory(fullPath);
-      
+
       for (const file of files) {
         if (this.config.toolFilePattern.test(file)) {
           try {
@@ -93,14 +93,14 @@ export class AutoRegistry {
    */
   private scanDirectory(dir: string): string[] {
     const files: string[] = [];
-    
+
     try {
       const entries = readdirSync(dir);
-      
+
       for (const entry of entries) {
         const fullPath = join(dir, entry);
         const stat = statSync(fullPath);
-        
+
         if (stat.isDirectory()) {
           files.push(...this.scanDirectory(fullPath).map(f => join(entry, f)));
         } else if (stat.isFile()) {
@@ -112,7 +112,7 @@ export class AutoRegistry {
         console.error(`❌ Erreur lors du scan de ${dir}:`, error);
       }
     }
-    
+
     return files;
   }
 
@@ -121,31 +121,31 @@ export class AutoRegistry {
    */
   extractToolsFromModule(module: ToolModule): Array<{ tool: ToolDefinition; handler: ToolHandler }> {
     const tools: Array<{ tool: ToolDefinition; handler: ToolHandler }> = [];
-    
+
     // Chercher les paires tool/handler
-    const toolEntries = Object.entries(module).filter(([key]) => 
+    const toolEntries = Object.entries(module).filter(([key]) =>
       this.config.toolExportPattern.test(key)
     );
-    
+
     // Grouper par nom d'outil (sans suffixe)
     const toolGroups = new Map<string, { tool?: ToolDefinition; handler?: ToolHandler }>();
-    
+
     for (const [key, value] of toolEntries) {
       const baseName = key.replace(/(Tool|Handler)$/, '');
-      
+
       if (!toolGroups.has(baseName)) {
         toolGroups.set(baseName, {});
       }
-      
+
       const group = toolGroups.get(baseName)!;
-      
+
       if (key.endsWith('Tool')) {
         group.tool = value as ToolDefinition;
       } else if (key.endsWith('Handler')) {
         group.handler = value as ToolHandler;
       }
     }
-    
+
     // Créer les paires complètes
     for (const [baseName, group] of toolGroups) {
       if (group.tool && group.handler) {
@@ -157,7 +157,7 @@ export class AutoRegistry {
         });
       }
     }
-    
+
     return tools;
   }
 
@@ -168,13 +168,13 @@ export class AutoRegistry {
     if (this.config.verbose) {
       console.log('🔍 Découverte automatique des outils...');
     }
-    
+
     const modules = await this.discoverToolModules();
     let registeredCount = 0;
-    
+
     for (const { path, module } of modules) {
       const tools = this.extractToolsFromModule(module);
-      
+
       for (const { tool, handler } of tools) {
         if (this.registeredTools.has(tool.name)) {
           if (this.config.verbose) {
@@ -182,12 +182,12 @@ export class AutoRegistry {
           }
           continue;
         }
-        
+
         try {
           toolRegistry.register(tool, handler);
           this.registeredTools.add(tool.name);
           registeredCount++;
-          
+
           if (this.config.verbose) {
             console.log(`✅ Outil enregistré automatiquement: ${tool.name} (${path})`);
           }
@@ -198,12 +198,12 @@ export class AutoRegistry {
         }
       }
     }
-    
+
     if (this.config.verbose) {
       console.log(`🎉 Enregistrement automatique terminé: ${registeredCount} outils enregistrés`);
       console.log(`📊 Total d'outils dans le registre: ${toolRegistry.size()}`);
     }
-    
+
     return registeredCount;
   }
 
@@ -212,18 +212,18 @@ export class AutoRegistry {
    */
   verifyRegistration(expectedTools: string[] = []): boolean {
     const missingTools: string[] = [];
-    
+
     for (const toolName of expectedTools) {
       if (!toolRegistry.hasTool(toolName)) {
         missingTools.push(toolName);
       }
     }
-    
+
     if (missingTools.length > 0) {
       console.error(`❌ Outils manquants: ${missingTools.join(', ')}`);
       return false;
     }
-    
+
     console.log(`✅ Tous les outils attendus sont enregistrés (${expectedTools.length} outils)`);
     return true;
   }
@@ -261,7 +261,7 @@ export async function initializeAutoRegistry(config?: Partial<RegistryConfig>): 
  */
 export function getExpectedTools(): string[] {
   return [
-    // Outils Graph
+    // Outils Graph (9 outils)
     'create_entities',
     'create_relations',
     'add_observations',
@@ -271,9 +271,10 @@ export function getExpectedTools(): string[] {
     'read_graph',
     'search_nodes',
     'open_nodes',
-    
-    // Outils RAG
-    'index_project',
+
+    // Outils RAG (5 outils - avec injection_rag comme outil principal)
+    'injection_rag',      // Nouvel outil principal
+    'index_project',      // Alias déprécié (rétrocompatibilité)
     'search_code',
     'manage_projects',
     'update_project'
@@ -283,17 +284,17 @@ export function getExpectedTools(): string[] {
 // Exécution automatique si ce fichier est exécuté directement
 if (import.meta.url === `file://${process.argv[1]}`) {
   console.log('🚀 Initialisation du registre automatique...');
-  
+
   initializeAutoRegistry({ verbose: true }).then(async (count) => {
     console.log(`\n📊 Résumé:`);
     console.log(`- Outils enregistrés: ${count}`);
     console.log(`- Total dans ToolRegistry: ${toolRegistry.size()}`);
-    
+
     // Vérifier les outils attendus
     const expectedTools = getExpectedTools();
     const registry = new AutoRegistry();
     const allRegistered = registry.verifyRegistration(expectedTools);
-    
+
     if (allRegistered) {
       console.log('🎉 Tous les outils sont correctement enregistrés !');
       process.exit(0);

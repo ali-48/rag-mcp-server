@@ -1,17 +1,15 @@
 // src/tools/rag/index-project.ts
-// Outil: index_project - Indexer un projet complet pour la recherche sémantique
+// Outil: index_project - Alias pour injection_rag (déprécié)
+// Version: v1.0.0 (alias)
 
-import { getRagConfigManager } from "../../config/rag-config.js";
-import { ToolDefinition, ToolHandler } from "../../core/tool-registry.js";
-import { indexProject } from "../../rag/indexer.js";
-import { setEmbeddingProvider } from "../../rag/vector-store.js";
+import { injectionRagHandler } from "./injection-rag.js";
 
 /**
- * Définition de l'outil index_project
+ * Définition de l'outil index_project (alias déprécié)
  */
-export const indexProjectTool: ToolDefinition = {
+export const indexProjectTool = {
   name: "index_project",
-  description: "Indexer un projet complet pour la recherche sémantique avec options RAG",
+  description: "ALIAS DÉPRÉCIÉ - Utilisez 'injection_rag' à la place. Indexer un projet complet pour la recherche sémantique avec options RAG",
   inputSchema: {
     type: "object",
     properties: {
@@ -58,107 +56,67 @@ export const indexProjectTool: ToolDefinition = {
     },
     required: ["project_path"]
   },
+  hidden: true, // Masqué de la liste des outils visibles
 };
 
 /**
- * Handler pour l'outil index_project
+ * Handler pour l'outil index_project (alias vers injection_rag)
  */
-export const indexProjectHandler: ToolHandler = async (args) => {
-  if (!args.project_path || typeof args.project_path !== 'string') {
-    throw new Error("The 'project_path' parameter is required and must be a string");
-  }
+export const indexProjectHandler = async (args: any) => {
+  console.warn("⚠️  L'outil 'index_project' est déprécié. Utilisez 'injection_rag' à la place.");
+  console.warn("   → 'index_project' sera supprimé dans une future version.");
+  console.warn("   → Migration recommandée: injection_rag offre plus de fonctionnalités.");
 
-  // Charger la configuration
-  const configManager = getRagConfigManager();
-  const defaults = configManager.getDefaults();
-  
-  // Utiliser les valeurs par défaut de la configuration si non spécifiées
-  const file_patterns = args.file_patterns || defaults.file_patterns;
-  const recursive = args.recursive !== undefined ? args.recursive : defaults.recursive;
-  const embedding_provider = args.embedding_provider || defaults.embedding_provider;
-  const embedding_model = args.embedding_model || defaults.embedding_model;
-  
-  // Appliquer les limites aux valeurs numériques
-  const chunk_size = configManager.applyLimits('chunk_size', 
-    args.chunk_size || defaults.chunk_size
-  );
-  const chunk_overlap = configManager.applyLimits('chunk_overlap',
-    args.chunk_overlap || defaults.chunk_overlap
-  );
-
-  // Configurer le fournisseur d'embeddings
-  setEmbeddingProvider(embedding_provider, embedding_model);
-
-  const options = {
-    filePatterns: file_patterns,
-    recursive: recursive,
-    chunkSize: chunk_size,
-    chunkOverlap: chunk_overlap
+  // Ajouter un flag pour indiquer que c'est un appel via alias
+  const enhancedArgs = {
+    ...args,
+    _called_via_alias: "index_project",
+    _deprecation_warning: true
   };
 
-  try {
-    const result = await indexProject(args.project_path, options);
-    return { 
-      content: [{ 
-        type: "text", 
-        text: JSON.stringify({
-          ...result,
-          config_used: {
-            embedding_provider,
-            embedding_model,
-            chunk_size,
-            chunk_overlap,
-            recursive,
-            file_patterns_count: file_patterns.length
-          }
-        }, null, 2) 
-      }] 
-    };
-  } catch (error) {
-    console.error("Error in index_project tool:", error);
-    throw error;
-  }
+  // Appeler le handler injection_rag
+  return await injectionRagHandler(enhancedArgs);
 };
 
 /**
  * Test de l'outil (pour usage en développement)
  */
 export async function testIndexProject() {
-  console.log("Testing index_project tool...");
-  
-  const testProjectPath = "/tmp/test-project";
-  
+  console.log("🧪 Test de l'alias index_project (déprécié)...");
+
+  const testProjectPath = "/tmp/test-index-project-alias";
+
   try {
     // Créer un répertoire de test
     const fs = await import('fs');
     const path = await import('path');
-    
+
     if (!fs.existsSync(testProjectPath)) {
       fs.mkdirSync(testProjectPath, { recursive: true });
     }
-    
+
     // Créer un fichier de test
     const testFile = path.join(testProjectPath, "test.js");
-    fs.writeFileSync(testFile, "// Test file for index_project\nconsole.log('Hello World');");
-    
-    console.log(`✅ Created test project at: ${testProjectPath}`);
-    
-    // Indexer le projet
+    fs.writeFileSync(testFile, "// Test file for index_project alias\nconsole.log('Testing alias');");
+
+    console.log(`✅ Projet de test créé: ${testProjectPath}`);
+
+    // Tester l'alias
     const result = await indexProjectHandler({
       project_path: testProjectPath,
       file_patterns: ["**/*.js"],
       recursive: true,
       embedding_provider: "fake"
     });
-    
-    console.log("✅ Test passed:", result ? "Oui" : "Non");
-    
+
+    console.log("✅ Test d'alias réussi:", result ? "Oui" : "Non");
+
     // Nettoyer
     fs.rmSync(testProjectPath, { recursive: true, force: true });
-    
+
     return result;
   } catch (error) {
-    console.error("❌ Test failed:", error);
+    console.error("❌ Test d'alias échoué:", error);
     throw error;
   }
 }

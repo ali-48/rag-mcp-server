@@ -19,6 +19,23 @@ export interface SearchResult {
     projectPath: string;
     fileSize: number;
     lines: number;
+    originalSize?: number;
+    contentType?: string | null;
+    role?: string | null;
+    fileExtension?: string | null;
+    language?: string | null;
+    linesCount?: number | null;
+    isCompressed?: boolean;
+    compressionRatio?: string | null;
+    createdAt?: Date | null;
+    updatedAt?: Date | null;
+    originalScore?: number;
+    rerankScore?: number;
+    semanticScore?: number;
+    weightedSemanticScore?: number;
+    textScore?: number;
+    weightedTextScore?: number;
+    combinedScore?: number;
   };
 }
 

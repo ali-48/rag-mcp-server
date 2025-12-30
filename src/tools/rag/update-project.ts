@@ -29,31 +29,6 @@ export const updateProjectTool: ToolDefinition = {
         type: "boolean",
         description: "Parcourir les sous-dossiers récursivement",
         default: true
-      },
-      embedding_provider: {
-        type: "string",
-        description: "Fournisseur d'embeddings (fake, ollama, sentence-transformers)",
-        enum: ["fake", "ollama", "sentence-transformers"],
-        default: "fake"
-      },
-      embedding_model: {
-        type: "string",
-        description: "Modèle d'embeddings (pour Ollama: 'nomic-embed-text', 'all-minilm', etc.)",
-        default: "nomic-embed-text"
-      },
-      chunk_size: {
-        type: "number",
-        description: "Taille des chunks pour le découpage (en tokens)",
-        default: 1000,
-        minimum: 100,
-        maximum: 10000
-      },
-      chunk_overlap: {
-        type: "number",
-        description: "Chevauchement entre les chunks (en tokens)",
-        default: 200,
-        minimum: 0,
-        maximum: 1000
       }
     },
     required: ["project_path"]
@@ -71,20 +46,16 @@ export const updateProjectHandler: ToolHandler = async (args) => {
   // Charger la configuration
   const configManager = getRagConfigManager();
   const defaults = configManager.getDefaults();
-  
-  // Utiliser les valeurs par défaut de la configuration si non spécifiées
+
+  // Utiliser les valeurs par défaut de la configuration
   const file_patterns = args.file_patterns || defaults.file_patterns;
   const recursive = args.recursive !== undefined ? args.recursive : defaults.recursive;
-  const embedding_provider = args.embedding_provider || defaults.embedding_provider;
-  const embedding_model = args.embedding_model || defaults.embedding_model;
-  
-  // Appliquer les limites aux valeurs numériques
-  const chunk_size = configManager.applyLimits('chunk_size', 
-    args.chunk_size || defaults.chunk_size
-  );
-  const chunk_overlap = configManager.applyLimits('chunk_overlap',
-    args.chunk_overlap || defaults.chunk_overlap
-  );
+  const embedding_provider = defaults.embedding_provider;
+  const embedding_model = defaults.embedding_model;
+
+  // Appliquer les limites aux valeurs numériques de la configuration
+  const chunk_size = configManager.applyLimits('chunk_size', defaults.chunk_size);
+  const chunk_overlap = configManager.applyLimits('chunk_overlap', defaults.chunk_overlap);
 
   // Configurer le fournisseur d'embeddings
   setEmbeddingProvider(embedding_provider, embedding_model);
@@ -98,9 +69,9 @@ export const updateProjectHandler: ToolHandler = async (args) => {
 
   try {
     const result = await updateProject(args.project_path, options);
-    return { 
-      content: [{ 
-        type: "text", 
+    return {
+      content: [{
+        type: "text",
         text: JSON.stringify({
           ...result,
           config_used: {
@@ -111,8 +82,8 @@ export const updateProjectHandler: ToolHandler = async (args) => {
             recursive,
             file_patterns_count: file_patterns.length
           }
-        }, null, 2) 
-      }] 
+        }, null, 2)
+      }]
     };
   } catch (error) {
     console.error("Error in update_project tool:", error);
@@ -125,22 +96,22 @@ export const updateProjectHandler: ToolHandler = async (args) => {
  */
 export async function testUpdateProject() {
   console.log("Testing update_project tool...");
-  
+
   const testProjectPath = "/tmp/test-project-update";
-  
+
   try {
     // Créer un répertoire de test
     const fs = await import('fs');
     const path = await import('path');
-    
+
     if (!fs.existsSync(testProjectPath)) {
       fs.mkdirSync(testProjectPath, { recursive: true });
     }
-    
+
     // Créer un fichier initial
     const initialFile = path.join(testProjectPath, "initial.js");
     fs.writeFileSync(initialFile, "// Initial file for update_project test\nconsole.log('Initial');");
-    
+
     // Indexer le projet initialement
     const { indexProjectHandler } = await import("./index-project.js");
     await indexProjectHandler({
@@ -149,26 +120,25 @@ export async function testUpdateProject() {
       recursive: true,
       embedding_provider: "fake"
     });
-    
+
     console.log(`✅ Initial indexing done for: ${testProjectPath}`);
-    
+
     // Ajouter un nouveau fichier
     const newFile = path.join(testProjectPath, "new.js");
     fs.writeFileSync(newFile, "// New file for update_project test\nconsole.log('Updated');");
-    
+
     // Mettre à jour le projet
     const result = await updateProjectHandler({
       project_path: testProjectPath,
       file_patterns: ["**/*.js"],
-      recursive: true,
-      embedding_provider: "fake"
+      recursive: true
     });
-    
+
     console.log("✅ Test passed:", result ? "Oui" : "Non");
-    
+
     // Nettoyer
     fs.rmSync(testProjectPath, { recursive: true, force: true });
-    
+
     return result;
   } catch (error) {
     console.error("❌ Test failed:", error);

@@ -51,6 +51,10 @@ export class RagConfigManager {
      */
     validateValue(param, value) {
         const limits = this.getLimits(param);
+        if (!limits) {
+            console.warn(`⚠️ Aucune limite définie pour ${param}`);
+            return true; // Pas de validation si pas de limites
+        }
         return value >= limits.min && value <= limits.max;
     }
     /**
@@ -64,6 +68,39 @@ export class RagConfigManager {
      */
     requiresOllama(provider) {
         return this.config.providers[provider]?.requires_ollama || false;
+    }
+    /**
+     * Récupère la configuration d'un fournisseur LLM
+     */
+    getLlmProviderConfig(provider) {
+        return this.config.llm_providers?.[provider];
+    }
+    /**
+     * Récupère la configuration de préparation
+     */
+    getPreparationConfig() {
+        return this.config.preparation || {
+            enable_llm_analysis: false,
+            llm_provider: 'ollama',
+            llm_model: 'llama3.2:3b',
+            tasks: [],
+            cache_enabled: true,
+            cache_ttl_seconds: 3600,
+            batch_size: 5,
+            max_content_length: 10000
+        };
+    }
+    /**
+     * Vérifie si l'analyse LLM est activée
+     */
+    isLlmAnalysisEnabled() {
+        return this.config.preparation?.enable_llm_analysis || false;
+    }
+    /**
+     * Récupère les modèles LLM disponibles pour un fournisseur
+     */
+    getLlmProviderModels(provider) {
+        return this.config.llm_providers?.[provider]?.models || [];
     }
     /**
      * Récupère la configuration pour un environnement
@@ -111,6 +148,10 @@ export class RagConfigManager {
      */
     applyLimits(param, value) {
         const limits = this.getLimits(param);
+        if (!limits) {
+            console.warn(`⚠️ Aucune limite définie pour ${param}, utilisation de la valeur originale`);
+            return value;
+        }
         if (value < limits.min) {
             console.warn(`⚠️ Valeur ${param} (${value}) inférieure au minimum (${limits.min}), utilisation du minimum`);
             return limits.min;
@@ -126,6 +167,7 @@ export class RagConfigManager {
      */
     getToolConfig(toolName) {
         const defaults = this.getDefaults();
+        const preparation = this.getPreparationConfig();
         switch (toolName) {
             case 'index_project':
             case 'update_project':
@@ -135,7 +177,10 @@ export class RagConfigManager {
                     chunk_size: defaults.chunk_size,
                     chunk_overlap: defaults.chunk_overlap,
                     file_patterns: defaults.file_patterns,
-                    recursive: defaults.recursive
+                    recursive: defaults.recursive,
+                    enable_llm_analysis: preparation.enable_llm_analysis,
+                    llm_provider: preparation.llm_provider,
+                    llm_model: preparation.llm_model
                 };
             case 'search_code':
                 return {
@@ -194,8 +239,8 @@ export async function testRagConfig() {
         }
         // Vérifier les limites
         const chunkSizeLimits = configManager.getLimits('chunk_size');
-        if (chunkSizeLimits.min >= chunkSizeLimits.max) {
-            console.error('❌ Limites chunk_size invalides');
+        if (!chunkSizeLimits || chunkSizeLimits.min >= chunkSizeLimits.max) {
+            console.error('❌ Limites chunk_size invalides ou manquantes');
             return false;
         }
         // Vérifier les fournisseurs
@@ -203,6 +248,15 @@ export async function testRagConfig() {
         if (providers.length === 0) {
             console.error('❌ Aucun fournisseur configuré');
             return false;
+        }
+        // Vérifier la configuration LLM si présente
+        if (config.llm_providers) {
+            const llmProviders = Object.keys(config.llm_providers);
+            console.log(`📊 Fournisseurs LLM disponibles: ${llmProviders.join(', ')}`);
+            if (config.preparation) {
+                console.log(`📊 Préparation LLM: ${config.preparation.enable_llm_analysis ? 'activée' : 'désactivée'}`);
+                console.log(`📊 Modèle LLM: ${config.preparation.llm_model}`);
+            }
         }
         console.log('✅ Configuration RAG valide');
         console.log(`📊 Version: ${config.version}`);
