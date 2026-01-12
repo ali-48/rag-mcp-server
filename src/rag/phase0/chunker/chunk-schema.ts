@@ -277,6 +277,15 @@ export interface ChunkerConfig {
 
         /** Regrouper les exports */
         groupExports?: boolean;
+
+        /** Réduire les fonctions trop grandes (inspiré de QwenRag) */
+        collapseLargeFunctions?: boolean;
+
+        /** Réduire les classes trop grandes (inspiré de QwenRag) */
+        collapseLargeClasses?: boolean;
+
+        /** Priorité aux fonctions (inspiré de QwenRag) */
+        preferFunctions?: boolean;
     };
 }
 
