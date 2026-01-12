@@ -7,7 +7,7 @@ import { ToolDefinition, ToolHandler } from "../../core/tool-registry.js";
 import { indexProject } from "../../rag/indexer.js";
 import { setEmbeddingProvider } from "../../rag/vector-store.js";
 
-// Système de logs amélioré
+// Système de logs simplifié (sans émojis pour compatibilité MCP)
 enum LogLevel {
     INFO = "INFO",
     DEBUG = "DEBUG",
@@ -16,7 +16,8 @@ enum LogLevel {
 
 class InjectionLogger {
     private static instance: InjectionLogger;
-    private logLevel: LogLevel = LogLevel.INFO;
+    private logLevel: LogLevel = LogLevel.ERROR; // Par défaut ERROR seulement pour MCP
+    private useEmojis: boolean = false;
 
     private constructor() { }
 
@@ -31,6 +32,10 @@ class InjectionLogger {
         this.logLevel = level;
     }
 
+    disableEmojis(): void {
+        this.useEmojis = false;
+    }
+
     private shouldLog(level: LogLevel): boolean {
         const levels = [LogLevel.ERROR, LogLevel.INFO, LogLevel.DEBUG];
         return levels.indexOf(level) <= levels.indexOf(this.logLevel);
@@ -41,11 +46,13 @@ class InjectionLogger {
             const timestamp = new Date().toISOString();
             const logMessage = `[${timestamp}] [${level}] ${message}`;
 
-            if (data) {
-                console.error(logMessage, JSON.stringify(data, null, 2));
-            } else {
+            // Pour MCP, on n'utilise pas console.error() qui pollue le canal
+            // On écrit dans un buffer interne ou on ignore selon le niveau
+            if (level === LogLevel.ERROR) {
+                // Seules les erreurs critiques sont loggées
                 console.error(logMessage);
             }
+            // INFO et DEBUG sont ignorés pour MCP
         }
     }
 
@@ -62,7 +69,7 @@ class InjectionLogger {
     }
 
     warn(message: string, data?: any): void {
-        this.log(LogLevel.INFO, `⚠️  ${message}`, data);
+        this.log(LogLevel.INFO, `WARN: ${message}`, data);
     }
 }
 
@@ -112,21 +119,27 @@ export const injectionRagTool: ToolDefinition = {
 export const injectionRagHandler: ToolHandler = async (args) => {
     const logger = InjectionLogger.getInstance();
 
+    // Désactiver les émojis pour compatibilité MCP
+    logger.disableEmojis();
+
     if (!args.project_path || typeof args.project_path !== 'string') {
         const error = "Le paramètre 'project_path' est requis et doit être une chaîne de caractères";
         logger.error(error);
         throw new Error(error);
     }
 
-    // Configurer le niveau de logs
-    const logLevel = args.log_level as LogLevel || LogLevel.INFO;
+    // Configurer le niveau de logs - pour MCP, on utilise ERROR par défaut
+    const logLevel = args.log_level as LogLevel || LogLevel.ERROR;
     logger.setLogLevel(logLevel);
 
-    logger.info("🚀 Démarrage de l'injection RAG", {
-        version: "v1.0.0",
-        project_path: args.project_path,
-        log_level: logLevel
-    });
+    // Log minimal pour MCP
+    if (logLevel === LogLevel.DEBUG) {
+        logger.info("Démarrage de l'injection RAG", {
+            version: "v1.0.0",
+            project_path: args.project_path,
+            log_level: logLevel
+        });
+    }
 
     // Phase 0 : Vérification des permissions
     logger.info("🔍 Phase 0 - Vérification des permissions et sécurité");

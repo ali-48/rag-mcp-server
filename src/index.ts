@@ -56,9 +56,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
 // Fonction principale
 async function main() {
-  // Initialiser le registre automatique
-  console.error("🚀 Initialisation du registre automatique...");
-  const registeredCount = await initializeAutoRegistry({ verbose: true });
+  // Initialiser le registre automatique (logs réduits pour MCP)
+  const registeredCount = await initializeAutoRegistry({ verbose: false });
 
   // Récupérer la liste des outils
   const allTools = toolRegistry.getTools();
@@ -86,9 +85,8 @@ async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
 
-  console.error("✅ RAG MCP Server running on stdio");
-  console.error(`📊 Total tools available: ${visibleTools.length} (${graphTools.length} graph tools, ${ragTools.length} RAG tools)`);
-  console.error(`🎉 Outils enregistrés automatiquement: ${registeredCount}`);
+  // Log minimal pour MCP
+  console.error("RAG MCP Server running on stdio");
 }
 
 // Gestion des erreurs

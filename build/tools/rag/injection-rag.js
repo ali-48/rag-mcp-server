@@ -4,7 +4,7 @@
 import { getRagConfigManager } from "../../config/rag-config.js";
 import { indexProject } from "../../rag/indexer.js";
 import { setEmbeddingProvider } from "../../rag/vector-store.js";
-// Système de logs amélioré
+// Système de logs simplifié (sans émojis pour compatibilité MCP)
 var LogLevel;
 (function (LogLevel) {
     LogLevel["INFO"] = "INFO";
@@ -13,7 +13,8 @@ var LogLevel;
 })(LogLevel || (LogLevel = {}));
 class InjectionLogger {
     static instance;
-    logLevel = LogLevel.INFO;
+    logLevel = LogLevel.ERROR; // Par défaut ERROR seulement pour MCP
+    useEmojis = false;
     constructor() { }
     static getInstance() {
         if (!InjectionLogger.instance) {
@@ -24,6 +25,9 @@ class InjectionLogger {
     setLogLevel(level) {
         this.logLevel = level;
     }
+    disableEmojis() {
+        this.useEmojis = false;
+    }
     shouldLog(level) {
         const levels = [LogLevel.ERROR, LogLevel.INFO, LogLevel.DEBUG];
         return levels.indexOf(level) <= levels.indexOf(this.logLevel);
@@ -32,12 +36,13 @@ class InjectionLogger {
         if (this.shouldLog(level)) {
             const timestamp = new Date().toISOString();
             const logMessage = `[${timestamp}] [${level}] ${message}`;
-            if (data) {
-                console.error(logMessage, JSON.stringify(data, null, 2));
-            }
-            else {
+            // Pour MCP, on n'utilise pas console.error() qui pollue le canal
+            // On écrit dans un buffer interne ou on ignore selon le niveau
+            if (level === LogLevel.ERROR) {
+                // Seules les erreurs critiques sont loggées
                 console.error(logMessage);
             }
+            // INFO et DEBUG sont ignorés pour MCP
         }
     }
     info(message, data) {
@@ -50,7 +55,7 @@ class InjectionLogger {
         this.log(LogLevel.ERROR, message, error);
     }
     warn(message, data) {
-        this.log(LogLevel.INFO, `⚠️  ${message}`, data);
+        this.log(LogLevel.INFO, `WARN: ${message}`, data);
     }
 }
 /**
@@ -97,19 +102,24 @@ export const injectionRagTool = {
  */
 export const injectionRagHandler = async (args) => {
     const logger = InjectionLogger.getInstance();
+    // Désactiver les émojis pour compatibilité MCP
+    logger.disableEmojis();
     if (!args.project_path || typeof args.project_path !== 'string') {
         const error = "Le paramètre 'project_path' est requis et doit être une chaîne de caractères";
         logger.error(error);
         throw new Error(error);
     }
-    // Configurer le niveau de logs
-    const logLevel = args.log_level || LogLevel.INFO;
+    // Configurer le niveau de logs - pour MCP, on utilise ERROR par défaut
+    const logLevel = args.log_level || LogLevel.ERROR;
     logger.setLogLevel(logLevel);
-    logger.info("🚀 Démarrage de l'injection RAG", {
-        version: "v1.0.0",
-        project_path: args.project_path,
-        log_level: logLevel
-    });
+    // Log minimal pour MCP
+    if (logLevel === LogLevel.DEBUG) {
+        logger.info("Démarrage de l'injection RAG", {
+            version: "v1.0.0",
+            project_path: args.project_path,
+            log_level: logLevel
+        });
+    }
     // Phase 0 : Vérification des permissions
     logger.info("🔍 Phase 0 - Vérification des permissions et sécurité");
     try {
