@@ -1,7 +1,7 @@
 #!/bin/bash
 # scripts/injection-rag.sh
 # Script wrapper pour l'outil injection_rag
-# Version: v1.0.0
+# Version: v1.0.1 - Corrections des bugs
 
 set -e
 
@@ -43,14 +43,14 @@ check_prerequisites() {
     # Vérifier Node.js
     if ! command -v node &> /dev/null; then
         log_error "Node.js n'est pas installé"
-        exit 1
+        return 1
     fi
     log_info "✅ Node.js: $(node --version)"
     
     # Vérifier le répertoire build
     if [ ! -d "$BUILD_DIR" ]; then
         log_error "Le répertoire build n'existe pas. Exécutez 'npm run build' d'abord."
-        exit 1
+        return 1
     fi
     log_info "✅ Répertoire build: $BUILD_DIR"
     
@@ -65,6 +65,8 @@ check_prerequisites() {
     # Créer le répertoire de logs
     mkdir -p "$LOG_DIR"
     log_info "✅ Répertoire de logs: $LOG_DIR"
+    
+    return 0
 }
 
 # Afficher l'aide
@@ -102,12 +104,13 @@ parse_arguments() {
     local chunk_overlap=""
     local file_patterns=""
     local enable_graph=true
+    local show_help_flag=false
     
     while [[ $# -gt 0 ]]; do
         case $1 in
             -h|--help)
-                show_help
-                exit 0
+                show_help_flag=true
+                shift
                 ;;
             -v|--verbose)
                 verbose=true
@@ -118,18 +121,34 @@ parse_arguments() {
                 shift
                 ;;
             -l|--log-level)
+                if [[ -z "$2" ]]; then
+                    log_error "L'option -l/--log-level nécessite une valeur"
+                    return 1
+                fi
                 log_level="$2"
                 shift 2
                 ;;
             -c|--chunk-size)
+                if [[ -z "$2" ]]; then
+                    log_error "L'option -c/--chunk-size nécessite une valeur"
+                    return 1
+                fi
                 chunk_size="$2"
                 shift 2
                 ;;
             -o|--chunk-overlap)
+                if [[ -z "$2" ]]; then
+                    log_error "L'option -o/--chunk-overlap nécessite une valeur"
+                    return 1
+                fi
                 chunk_overlap="$2"
                 shift 2
                 ;;
             -p|--patterns)
+                if [[ -z "$2" ]]; then
+                    log_error "L'option -p/--patterns nécessite une valeur"
+                    return 1
+                fi
                 file_patterns="$2"
                 shift 2
                 ;;
@@ -139,33 +158,36 @@ parse_arguments() {
                 ;;
             -*)
                 log_error "Option inconnue: $1"
-                show_help
-                exit 1
+                return 1
                 ;;
             *)
                 if [ -z "$project_path" ]; then
                     project_path="$1"
                 else
                     log_error "Trop d'arguments. Un seul chemin de projet attendu."
-                    show_help
-                    exit 1
+                    return 1
                 fi
                 shift
                 ;;
         esac
     done
     
+    # Retourner le flag d'aide en premier
+    if [ "$show_help_flag" = true ]; then
+        echo "HELP"
+        return 0
+    fi
+    
     # Vérifier le chemin du projet
     if [ -z "$project_path" ]; then
         log_error "Chemin du projet requis"
-        show_help
-        exit 1
+        return 1
     fi
     
     # Vérifier que le chemin existe
     if [ ! -d "$project_path" ]; then
         log_error "Le chemin du projet n'existe pas: $project_path"
-        exit 1
+        return 1
     fi
     
     # Retourner les valeurs
@@ -177,6 +199,8 @@ parse_arguments() {
     echo "$chunk_overlap"
     echo "$file_patterns"
     echo "$enable_graph"
+    
+    return 0
 }
 
 # Construire la commande Node.js
@@ -190,11 +214,7 @@ build_node_command() {
     local file_patterns="$7"
     local enable_graph="$8"
     
-    local node_cmd="node $BUILD_DIR/index.js"
-    local tool_args=""
-    
-    # Ajouter les arguments
-    tool_args="\"project_path\": \"$project_path\""
+    local tool_args="\"project_path\": \"$project_path\""
     
     if [ "$verbose" = true ]; then
         tool_args="$tool_args, \"log_level\": \"DEBUG\""
@@ -301,21 +321,24 @@ run_injection() {
 
 # Fonction principale
 main() {
-    log_info "========================================"
-    log_info "      INJECTION RAG WRAPPER v1.0.0     "
-    log_info "========================================"
+    # Parser les arguments d'abord (pour --help)
+    local args_result
+    args_result=$(parse_arguments "$@")
+    local parse_exit_code=$?
     
-    # Vérifier les prérequis
-    check_prerequisites
-    
-    # Parser les arguments
-    local args_result=$(parse_arguments "$@")
-    if [ $? -ne 0 ]; then
-        exit 1
+    if [ $parse_exit_code -ne 0 ]; then
+        # Erreur de parsing
+        exit $parse_exit_code
     fi
     
     # Extraire les arguments
     IFS=$'\n' read -d '' -r -a args_array <<< "$args_result"
+    
+    # Vérifier si c'est une demande d'aide
+    if [ "${args_array[0]}" = "HELP" ]; then
+        show_help
+        exit 0
+    fi
     
     local project_path="${args_array[0]}"
     local verbose="${args_array[1]}"
@@ -325,6 +348,16 @@ main() {
     local chunk_overlap="${args_array[5]}"
     local file_patterns="${args_array[6]}"
     local enable_graph="${args_array[7]}"
+    
+    # Afficher l'en-tête seulement si on exécute réellement
+    log_info "========================================"
+    log_info "      INJECTION RAG WRAPPER v1.0.1     "
+    log_info "========================================"
+    
+    # Vérifier les prérequis (après parsing)
+    if ! check_prerequisites; then
+        exit 1
+    fi
     
     # Exécuter l'injection
     run_injection "$project_path" "$verbose" "$dry_run" "$log_level" \
