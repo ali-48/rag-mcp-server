@@ -463,10 +463,10 @@ export class ChunkFactory {
     private static extractDocumentation(text: string, language: string): string | undefined {
         // Logique simplifiée d'extraction de documentation
         if (language === 'python') {
-            const docstringMatch = text.match(/['"]{3}(.*?)['"]{3}/s);
+            const docstringMatch = text.match(/['"]{3}([\s\S]*?)['"]{3}/);
             if (docstringMatch) return docstringMatch[1].trim();
         } else if (language === 'typescript' || language === 'javascript') {
-            const jsdocMatch = text.match(/\/\*\*\s*\n(.*?)\n\s*\*\//s);
+            const jsdocMatch = text.match(/\/\*\*\s*\n([\s\S]*?)\n\s*\*\//);
             if (jsdocMatch) return jsdocMatch[1].trim();
         }
 

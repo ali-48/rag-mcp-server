@@ -10,7 +10,12 @@
   "scripts": {
     "build": "tsc && chmod +x build/index.js",
     "start": "node build/index.js",
-    "dev": "tsc --watch"
+    "dev": "tsc --watch",
+    "test": "npm run test:build && npm run test:run",
+    "test:build": "tsc --project tsconfig.test.json",
+    "test:run": "node --test build-test/**/*.js",
+    "test:dev": "node --test --watch test/phase0-chunker/test-chunker-intelligent.ts",
+    "test:chunker": "npm run test:build && node --test build-test/test/phase0-chunker/test-chunker-intelligent.js"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.9.0",

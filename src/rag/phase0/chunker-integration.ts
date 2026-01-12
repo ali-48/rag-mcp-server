@@ -174,18 +174,20 @@ export class ChunkerIntegration {
 
         // Vérifier l'extension
         const extension = filePath.toLowerCase().match(/\.[^.]+$/)?.[0];
-        if (!extension || !extensions.includes(extension)) {
+        if (!extension || !extensions?.includes(extension)) {
             return false;
         }
 
         // Vérifier les patterns ignorés
-        for (const pattern of ignorePatterns) {
-            if (typeof pattern === 'string') {
-                if (filePath.includes(pattern)) {
+        if (ignorePatterns) {
+            for (const pattern of ignorePatterns) {
+                if (typeof pattern === 'string') {
+                    if (filePath.includes(pattern)) {
+                        return false;
+                    }
+                } else if (pattern.test(filePath)) {
                     return false;
                 }
-            } else if (pattern.test(filePath)) {
-                return false;
             }
         }
 
@@ -231,7 +233,7 @@ export class ChunkerIntegration {
                 this.detectLanguage(event.path)
             );
 
-            if (!parseResult.ast) {
+            if (!parseResult || !parseResult.ast) {
                 console.warn(`⚠️  Impossible de parser le fichier: ${event.relativePath}`);
                 return [];
             }

@@ -809,7 +809,7 @@ export class IntelligentChunker {
             }
         }
 
-        return [...new Set(dependencies)]; // Éliminer les doublons
+        return Array.from(new Set(dependencies)); // Éliminer les doublons
     }
 
     /**

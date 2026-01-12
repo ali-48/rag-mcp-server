@@ -1,9 +1,11 @@
 // src/rag/phase0/parser/tree-sitter/languages.ts
 // Configuration des langages supportés par Tree-sitter
-import Parser from 'tree-sitter';
-import JavaScript from 'tree-sitter-javascript';
-import Python from 'tree-sitter-python';
-import TypeScript from 'tree-sitter-typescript';
+import { createRequire as _createRequire } from "module";
+const __require = _createRequire(import.meta.url);
+const Parser = __require("tree-sitter");
+const JavaScript = __require("tree-sitter-javascript");
+const Python = __require("tree-sitter-python");
+const TypeScript = __require("tree-sitter-typescript");
 /**
  * Langages supportés par défaut
  */

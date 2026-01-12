@@ -7,7 +7,14 @@ import { ChunkFactory, ChunkValidator } from './chunk-schema.js';
 export class IntelligentChunker {
     config;
     rules;
+    functionTypes;
+    classTypes;
+    blockTypes;
     constructor(config = {}) {
+        // Initialiser les propriétés avec des valeurs par défaut
+        this.functionTypes = new Set();
+        this.classTypes = new Set();
+        this.blockTypes = new Set();
         const defaultConfig = {
             granularity: 'atomic',
             chunkTypes: ['function', 'class', 'method', 'interface', 'import', 'export', 'type_definition'],
@@ -26,10 +33,63 @@ export class IntelligentChunker {
                 respectSemanticBoundaries: true,
                 groupImports: true,
                 groupExports: true,
+                collapseLargeFunctions: true,
+                collapseLargeClasses: true,
+                preferFunctions: true,
             },
         };
         this.config = { ...defaultConfig, ...config };
         this.rules = this.initializeRules();
+        this.initializeNodeTypes();
+    }
+    /**
+     * Initialise les types de nœuds par langage (inspiré de QwenRag)
+     */
+    initializeNodeTypes() {
+        // Types de nœuds pour les fonctions (multi-langages)
+        this.functionTypes = new Set([
+            // TypeScript/JavaScript
+            'function_declaration', 'function_expression', 'arrow_function', 'method_definition',
+            'method_declaration', 'constructor_definition',
+            // Python
+            'function_definition', 'async_function_definition',
+            // Java
+            'method_declaration', 'constructor_declaration',
+            // C/C++
+            'function_definition', 'function_declarator',
+            // Rust
+            'function_item', 'method_declaration',
+            // Go
+            'function_declaration', 'method_declaration',
+            // C#
+            'method_declaration', 'constructor_declaration',
+            // Générique
+            'function', 'method', 'constructor'
+        ]);
+        // Types de nœuds pour les classes (multi-langages)
+        this.classTypes = new Set([
+            // TypeScript/JavaScript
+            'class_declaration', 'class_definition',
+            // Python
+            'class_definition',
+            // Java
+            'class_declaration', 'interface_declaration',
+            // C/C++
+            'class_specifier', 'struct_specifier',
+            // Rust
+            'struct_item', 'impl_item', 'trait_item', 'enum_item',
+            // Go
+            'type_spec', 'struct_type', 'interface_type',
+            // C#
+            'class_declaration', 'struct_declaration', 'interface_declaration',
+            // Générique
+            'class', 'interface', 'struct', 'enum', 'trait'
+        ]);
+        // Types de nœuds pour les blocs
+        this.blockTypes = new Set([
+            'block', 'statement_block', 'compound_statement',
+            'function_body', 'class_body', 'declaration_list'
+        ]);
     }
     /**
      * Initialise les règles de chunking
@@ -602,7 +662,7 @@ export class IntelligentChunker {
                 dependencies.push(match[1]);
             }
         }
-        return [...new Set(dependencies)]; // Éliminer les doublons
+        return Array.from(new Set(dependencies)); // Éliminer les doublons
     }
     /**
      * Détecte les références entre chunks
@@ -987,5 +1047,175 @@ export class IntelligentChunker {
             'with_statement': 'with',
         };
         return typeMap[nodeType] || 'block';
+    }
+    /**
+     * Méthodes inspirées de QwenRag pour améliorer le chunking
+     */
+    /**
+     * Estime le nombre de tokens (méthode QwenRag : 1 token ≈ 4 caractères)
+     */
+    estimateTokenCount(text) {
+        return Math.ceil(text.length / 4);
+    }
+    /**
+     * Crée une version réduite d'une fonction trop grande (collapsing)
+     */
+    createCollapsedFunction(code, language) {
+        const lines = code.split('\n');
+        if (lines.length <= 5)
+            return code;
+        // Garder la signature et quelques lignes
+        const signatureLines = [];
+        let bodyStartIdx = 0;
+        for (let i = 0; i < lines.length; i++) {
+            signatureLines.push(lines[i]);
+            // Détecter le début du corps de fonction
+            if (language === 'python') {
+                if (lines[i].includes(':')) {
+                    bodyStartIdx = i + 1;
+                    break;
+                }
+            }
+            else {
+                if (lines[i].includes('{')) {
+                    bodyStartIdx = i + 1;
+                    break;
+                }
+            }
+        }
+        // Ajouter l'indicateur de corps réduit
+        if (bodyStartIdx < lines.length) {
+            if (language === 'python') {
+                signatureLines.push('    # ... function body ...');
+            }
+            else {
+                signatureLines.push('    // ... function body ...');
+            }
+            // Ajouter la dernière ligne (accolade fermante ou return)
+            if (lines[lines.length - 1].trim()) {
+                signatureLines.push(lines[lines.length - 1]);
+            }
+        }
+        return signatureLines.join('\n');
+    }
+    /**
+     * Crée une version réduite d'une classe trop grande (collapsing)
+     */
+    createCollapsedClass(code, language) {
+        const lines = code.split('\n');
+        if (lines.length <= 10)
+            return code;
+        // Garder la définition et les signatures des méthodes
+        const resultLines = [];
+        let inClassBody = false;
+        for (let i = 0; i < Math.min(lines.length, 15); i++) {
+            const line = lines[i];
+            const trimmed = line.trim();
+            if (trimmed.startsWith('class ') || trimmed.startsWith('interface ') || trimmed.startsWith('struct ')) {
+                resultLines.push(line);
+                inClassBody = true;
+            }
+            else if (inClassBody && (trimmed.startsWith('def ') || trimmed.startsWith('async def ') ||
+                trimmed.startsWith('function ') || trimmed.startsWith('async function ') ||
+                trimmed.includes('(') && trimmed.includes(')') && trimmed.includes('{') ||
+                trimmed.includes('(') && trimmed.includes(')') && trimmed.includes(':'))) {
+                resultLines.push(line);
+            }
+            else if (trimmed === '' && resultLines.length > 0) {
+                resultLines.push(line);
+            }
+        }
+        if (lines.length > 15) {
+            if (language === 'python') {
+                resultLines.push('    # ... class body ...');
+            }
+            else {
+                resultLines.push('    // ... class body ...');
+            }
+        }
+        return resultLines.join('\n');
+    }
+    /**
+     * Fallback textuel simple quand l'AST échoue (inspiré de QwenRag)
+     */
+    simpleTextChunking(filePath, content) {
+        const chunks = [];
+        const lines = content.split('\n');
+        let currentChunk = [];
+        let currentTokens = 0;
+        let startLine = 0;
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            const lineTokens = this.estimateTokenCount(line);
+            if (currentTokens + lineTokens > this.config.maxChunkSize && currentChunk.length > 0) {
+                // Créer un chunk du contenu actuel
+                const chunkContent = currentChunk.join('\n');
+                const chunk = ChunkFactory.createChunk('mixed', 'section', chunkContent, {
+                    tags: ['fallback', 'text', 'simple'],
+                    complexity: 1,
+                }, filePath, 'unknown', {
+                    startLine: startLine + 1,
+                    startColumn: 1,
+                    endLine: i,
+                    endColumn: lines[i - 1]?.length || 1,
+                });
+                chunks.push(chunk);
+                // Commencer un nouveau chunk
+                currentChunk = [line];
+                currentTokens = lineTokens;
+                startLine = i;
+            }
+            else {
+                currentChunk.push(line);
+                currentTokens += lineTokens;
+            }
+        }
+        // Ajouter le dernier chunk
+        if (currentChunk.length > 0) {
+            const chunkContent = currentChunk.join('\n');
+            const chunk = ChunkFactory.createChunk('mixed', 'section', chunkContent, {
+                tags: ['fallback', 'text', 'simple'],
+                complexity: 1,
+            }, filePath, 'unknown', {
+                startLine: startLine + 1,
+                startColumn: 1,
+                endLine: lines.length,
+                endColumn: lines[lines.length - 1]?.length || 1,
+            });
+            chunks.push(chunk);
+        }
+        return chunks;
+    }
+    /**
+     * Vérifie si un chunk est trop grand et applique le collapsing si configuré
+     */
+    applyCollapsingIfNeeded(chunk) {
+        const tokenCount = this.estimateTokenCount(chunk.content.code);
+        if (tokenCount <= this.config.maxChunkSize) {
+            return chunk;
+        }
+        // Appliquer le collapsing selon le type
+        let collapsedCode = chunk.content.code;
+        if (chunk.type === 'function' && this.config.rules?.collapseLargeFunctions) {
+            collapsedCode = this.createCollapsedFunction(chunk.content.code, chunk.metadata.language);
+        }
+        else if (chunk.type === 'class' && this.config.rules?.collapseLargeClasses) {
+            collapsedCode = this.createCollapsedClass(chunk.content.code, chunk.metadata.language);
+        }
+        // Créer un nouveau chunk avec le code réduit
+        return {
+            ...chunk,
+            content: {
+                ...chunk.content,
+                code: collapsedCode,
+            },
+            metadata: {
+                ...chunk.metadata,
+                metrics: {
+                    ...chunk.metadata.metrics,
+                    tokens: this.estimateTokenCount(collapsedCode),
+                },
+            },
+        };
     }
 }

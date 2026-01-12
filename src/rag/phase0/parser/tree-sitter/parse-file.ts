@@ -1,7 +1,7 @@
 // src/rag/phase0/parser/tree-sitter/parse-file.ts
 // Parser de fichiers avec Tree-sitter
 
-import fs from 'fs/promises';
+import * as fs from 'fs/promises';
 import { LanguageConfig } from './languages.js';
 
 /**
@@ -62,8 +62,11 @@ export async function parseFile(
         const extension = filePath.toLowerCase().match(/\.[^.]+$/)?.[0];
         let language: LanguageConfig | undefined;
 
-        for (const [langId, langConfig] of initializedLanguages.entries()) {
-            if (langConfig.extensions.includes(extension || '')) {
+        // Itération compatible avec downlevelIteration
+        const langIds = Array.from(initializedLanguages.keys());
+        for (const langId of langIds) {
+            const langConfig = initializedLanguages.get(langId);
+            if (langConfig && langConfig.extensions.includes(extension || '')) {
                 language = langConfig;
                 break;
             }
