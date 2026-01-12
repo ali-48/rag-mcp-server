@@ -91,7 +91,7 @@ export const injectionRagTool = {
             enable_graph_integration: {
                 type: "boolean",
                 description: "Activer l'intégration automatique avec le graphe de connaissances",
-                default: true
+                default: false
             }
         },
         required: ["project_path"]
@@ -157,7 +157,7 @@ export const injectionRagHandler = async (args) => {
     const embedding_model = defaults.embedding_model;
     const enable_graph_integration = args.enable_graph_integration !== undefined
         ? args.enable_graph_integration
-        : true;
+        : false;
     // Appliquer les limites aux valeurs numériques de la configuration
     const chunk_size = configManager.applyLimits('chunk_size', defaults.chunk_size);
     const chunk_overlap = configManager.applyLimits('chunk_overlap', defaults.chunk_overlap);

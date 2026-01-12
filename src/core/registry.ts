@@ -28,7 +28,6 @@ export interface RegistryConfig {
  */
 const DEFAULT_CONFIG: RegistryConfig = {
   toolDirectories: [
-    'build/tools/graph',
     'build/tools/rag'
   ],
   toolFilePattern: /\.js$/,
@@ -261,17 +260,6 @@ export async function initializeAutoRegistry(config?: Partial<RegistryConfig>): 
  */
 export function getExpectedTools(): string[] {
   return [
-    // Outils Graph (9 outils)
-    'create_entities',
-    'create_relations',
-    'add_observations',
-    'delete_entities',
-    'delete_observations',
-    'delete_relations',
-    'read_graph',
-    'search_nodes',
-    'open_nodes',
-
     // Outils RAG (5 outils - avec injection_rag comme outil principal)
     'injection_rag',      // Nouvel outil principal
     'index_project',      // Alias déprécié (rétrocompatibilité)

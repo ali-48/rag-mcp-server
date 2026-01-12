@@ -9,7 +9,6 @@ import { toolRegistry } from "./tool-registry.js";
  */
 const DEFAULT_CONFIG = {
     toolDirectories: [
-        'build/tools/graph',
         'build/tools/rag'
     ],
     toolFilePattern: /\.js$/,
@@ -207,16 +206,6 @@ export async function initializeAutoRegistry(config) {
  */
 export function getExpectedTools() {
     return [
-        // Outils Graph (9 outils)
-        'create_entities',
-        'create_relations',
-        'add_observations',
-        'delete_entities',
-        'delete_observations',
-        'delete_relations',
-        'read_graph',
-        'search_nodes',
-        'open_nodes',
         // Outils RAG (5 outils - avec injection_rag comme outil principal)
         'injection_rag', // Nouvel outil principal
         'index_project', // Alias déprécié (rétrocompatibilité)
