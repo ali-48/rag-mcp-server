@@ -3,6 +3,7 @@
 // Version: v1.0.0
 import { getRagConfigManager } from "../../config/rag-config.js";
 import { indexProject } from "../../rag/indexer.js";
+import { createPhase0IntegrationWithIndexing } from "../../rag/phase0/phase0-integration.js";
 import { setEmbeddingProvider } from "../../rag/vector-store.js";
 // Système de logs simplifié (sans émojis pour compatibilité MCP)
 var LogLevel;
@@ -92,6 +93,16 @@ export const injectionRagTool = {
                 type: "boolean",
                 description: "Activer l'intégration automatique avec le graphe de connaissances",
                 default: false
+            },
+            enable_phase0: {
+                type: "boolean",
+                description: "Activer la Phase 0.1 (Workspace detection + File watcher + Event logging)",
+                default: true
+            },
+            enable_watcher: {
+                type: "boolean",
+                description: "Activer le file watcher en temps réel (nécessite enable_phase0=true)",
+                default: false
             }
         },
         required: ["project_path"]
@@ -158,6 +169,12 @@ export const injectionRagHandler = async (args) => {
     const enable_graph_integration = args.enable_graph_integration !== undefined
         ? args.enable_graph_integration
         : false;
+    const enable_phase0 = args.enable_phase0 !== undefined
+        ? args.enable_phase0
+        : true;
+    const enable_watcher = args.enable_watcher !== undefined
+        ? args.enable_watcher
+        : false;
     // Appliquer les limites aux valeurs numériques de la configuration
     const chunk_size = configManager.applyLimits('chunk_size', defaults.chunk_size);
     const chunk_overlap = configManager.applyLimits('chunk_overlap', defaults.chunk_overlap);
@@ -168,8 +185,58 @@ export const injectionRagHandler = async (args) => {
         embedding_model,
         chunk_size,
         chunk_overlap,
-        enable_graph_integration
+        enable_graph_integration,
+        enable_phase0,
+        enable_watcher
     });
+    // Phase 0.1 : Intégration des nouveaux outils (Workspace detection + File watcher + Event logging)
+    let phase0Integration = null;
+    if (enable_phase0) {
+        logger.info("🚀 Phase 0.1 - Intégration des nouveaux outils");
+        try {
+            // Définir le callback pour l'indexation automatique
+            const onIndexNeeded = async (filePath, eventType) => {
+                logger.info(`🔍 Indexation automatique déclenchée: ${eventType} ${filePath}`);
+                // Ici, on pourrait appeler une fonction d'indexation incrémentale
+                // Par exemple: await incrementalIndex(filePath, eventType);
+                // Pour l'instant, on log juste l'événement
+                logger.debug(`Indexation nécessaire pour: ${filePath} (${eventType})`);
+            };
+            // Créer l'intégration Phase 0.1
+            phase0Integration = await createPhase0IntegrationWithIndexing(onIndexNeeded, {
+                enableWorkspaceDetection: true,
+                enableFileWatcher: enable_watcher,
+                enableLogging: true,
+                fileWatcherOptions: {
+                    debounceDelay: 2000,
+                    recursive: true,
+                    logEvents: true,
+                },
+                loggerOptions: {
+                    minLevel: 'info',
+                    enableConsole: true,
+                    enableMemoryStorage: true,
+                },
+            }, args.project_path);
+            logger.info("✅ Phase 0.1 initialisée avec succès");
+            // Log des informations du workspace détecté
+            const workspace = phase0Integration.getWorkspace();
+            if (workspace) {
+                logger.info("📋 Workspace détecté", {
+                    path: workspace.path,
+                    vscodeWorkspace: workspace.vscodeWorkspace,
+                    language: workspace.language,
+                    fileCount: workspace.metadata.fileCount,
+                    isGitRepo: workspace.metadata.isGitRepo,
+                    detectedBy: workspace.metadata.detectedBy,
+                });
+            }
+        }
+        catch (error) {
+            logger.error("Erreur lors de l'initialisation Phase 0.1, continuation sans ces fonctionnalités", error);
+            // Ne pas bloquer le processus principal en cas d'erreur Phase 0.1
+        }
+    }
     // Phase 1 : Intégration avec le graphe de connaissances (si activé)
     if (enable_graph_integration) {
         logger.info("🧠 Phase 1 - Intégration avec le graphe de connaissances");
@@ -202,12 +269,34 @@ export const injectionRagHandler = async (args) => {
         const result = await indexProject(args.project_path, options);
         const endTime = Date.now();
         const duration = ((endTime - startTime) / 1000).toFixed(2);
+        // Arrêter l'intégration Phase 0.1 si elle a été démarrée
+        if (phase0Integration && phase0Integration.isActive()) {
+            try {
+                await phase0Integration.stop();
+                logger.info("✅ Phase 0.1 arrêtée proprement");
+            }
+            catch (error) {
+                logger.warn("⚠️  Erreur lors de l'arrêt de Phase 0.1", error);
+            }
+        }
+        // Collecter les statistiques Phase 0.1 si disponible
+        const phase0Stats = phase0Integration ? {
+            phase0_enabled: true,
+            file_watcher_enabled: enable_watcher,
+            file_events_count: phase0Integration.getFileWatcherStats()?.totalEvents || 0,
+            logs_count: phase0Integration.getLoggerStats()?.totalLogs || 0,
+            workspace_detected: !!phase0Integration.getWorkspace(),
+        } : {
+            phase0_enabled: false,
+            file_watcher_enabled: false,
+        };
         logger.info("✅ Injection RAG terminée avec succès", {
             duration: `${duration}s`,
             total_files: result.totalFiles,
             indexed_files: result.indexedFiles,
             chunks_created: result.chunksCreated,
-            errors: result.errors
+            errors: result.errors,
+            ...phase0Stats
         });
         return {
             content: [{
@@ -228,9 +317,24 @@ export const injectionRagHandler = async (args) => {
                             log_level: logLevel
                         },
                         pipeline: {
+                            phase_0_1: enable_phase0 ? "Nouveaux outils intégrés ✓" : "Phase 0.1 désactivée",
                             phase_0: "Vérification permissions ✓",
                             phase_1: enable_graph_integration ? "Enrichissement Graph intégré ✓" : "Enrichissement Graph désactivé",
                             phase_2: "Injection RAG principale ✓"
+                        },
+                        phase0_stats: phase0Integration ? {
+                            enabled: true,
+                            file_watcher: enable_watcher,
+                            file_events: phase0Integration.getFileWatcherStats()?.totalEvents || 0,
+                            logs: phase0Integration.getLoggerStats()?.totalLogs || 0,
+                            workspace: phase0Integration.getWorkspace() ? {
+                                path: phase0Integration.getWorkspace().path,
+                                vscode: phase0Integration.getWorkspace().vscodeWorkspace,
+                                language: phase0Integration.getWorkspace().language,
+                            } : null,
+                        } : {
+                            enabled: false,
+                            file_watcher: false,
                         }
                     }, null, 2)
                 }]
@@ -265,13 +369,15 @@ export async function testInjectionRag() {
         const testFile = path.join(testProjectPath, "test.js");
         fs.writeFileSync(testFile, "// Test file for injection_rag\nconsole.log('Hello Injection RAG');");
         logger.info(`✅ Projet de test créé: ${testProjectPath}`);
-        // Tester l'injection
+        // Tester l'injection avec Phase 0.1 activée
         const result = await injectionRagHandler({
             project_path: testProjectPath,
             file_patterns: ["**/*.js"],
             recursive: true,
             log_level: "DEBUG",
-            enable_graph_integration: true
+            enable_graph_integration: true,
+            enable_phase0: true,
+            enable_watcher: true
         });
         logger.info("✅ Test réussi", {
             has_result: !!result,
