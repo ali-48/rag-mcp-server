@@ -17,15 +17,16 @@ const DEFAULT_CONFIG_V2 = {
     verbose: true,
     legacyMode: true, // Par défaut, activer le mode rétrocompatible
     exposedTools: [
+        'init_rag',
         'activated_rag',
-        'recherche_rag'
+        'recherche_rag',
+        'manage_projects'
     ],
     hiddenTools: [
         'injection_rag',
         'index_project',
         'update_project',
-        'search_code',
-        'manage_projects'
+        'search_code'
     ]
 };
 /**
@@ -292,14 +293,15 @@ export async function initializeAutoRegistryV2(config) {
 export function getExpectedToolsV2() {
     return [
         // Nouveaux outils principaux
+        'init_rag',
         'activated_rag',
         'recherche_rag',
+        'manage_projects',
         // Outils legacy (masqués par défaut)
         'injection_rag',
         'index_project',
         'update_project',
-        'search_code',
-        'manage_projects'
+        'search_code'
     ];
 }
 /**

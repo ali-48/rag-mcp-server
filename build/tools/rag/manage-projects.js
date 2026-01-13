@@ -62,13 +62,21 @@ export async function testManageProjects() {
         // Créer un fichier de test
         const testFile = path.join(testProjectPath, "manage-test.js");
         fs.writeFileSync(testFile, "// Test file for manage_projects\nconsole.log('Manage test');");
-        // Indexer le projet
-        const { indexProjectHandler } = await import("./index-project.js");
-        await indexProjectHandler({
+        // Initialiser le projet avec init_rag
+        const { initRagHandler } = await import("./init-rag.js");
+        await initRagHandler({
             project_path: testProjectPath,
+            mode: "default",
+            force: false,
+            verbose: false
+        });
+        // Indexer le projet avec activated_rag
+        const { activatedRagHandler } = await import("./activated-rag.js");
+        await activatedRagHandler({
+            project_path: testProjectPath,
+            mode: "full",
             file_patterns: ["**/*.js"],
-            recursive: true,
-            embedding_provider: "fake"
+            enable_phase0: true
         });
         console.log(`✅ Indexed test project at: ${testProjectPath}`);
         // Tester l'action 'list'

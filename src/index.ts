@@ -2,7 +2,7 @@
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
-import { initializeAutoRegistry } from "./core/registry.js";
+import { initializeAutoRegistryV2 } from "./core/registry-v2.js";
 import { toolRegistry } from "./core/tool-registry.js";
 
 // Le serveur MCP
@@ -25,10 +25,10 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
   // Filtrer les outils masqués
   const visibleTools = allTools.filter(tool => !tool.hidden);
 
-  // Trier les outils : injection_rag en premier, puis ordre alphabétique
+  // Trier les outils : init_rag en premier, puis ordre alphabétique
   const sortedTools = visibleTools.sort((a, b) => {
-    if (a.name === 'injection_rag') return -1;
-    if (b.name === 'injection_rag') return 1;
+    if (a.name === 'init_rag') return -1;
+    if (b.name === 'init_rag') return 1;
     return a.name.localeCompare(b.name);
   });
 
@@ -56,8 +56,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
 // Fonction principale
 async function main() {
-  // Initialiser le registre automatique (logs réduits pour MCP)
-  const registeredCount = await initializeAutoRegistry({ verbose: false });
+  // Initialiser le registre automatique v2 (logs réduits pour MCP)
+  const registeredCount = await initializeAutoRegistryV2({ verbose: false });
 
   // Récupérer la liste des outils
   const allTools = toolRegistry.getTools();
@@ -75,10 +75,8 @@ async function main() {
   );
 
   const ragTools = visibleTools.filter(tool =>
-    tool.name.includes('_rag') ||        // injection_rag
-    tool.name.includes('_code') ||       // search_code
-    tool.name === 'manage_projects' ||   // manage_projects
-    tool.name === 'update_project'       // update_project
+    tool.name.includes('_rag') ||        // init_rag, activated_rag, recherche_rag
+    tool.name === 'manage_projects'      // manage_projects
   );
 
   // Démarrer le serveur
@@ -86,7 +84,11 @@ async function main() {
   await server.connect(transport);
 
   // Log minimal pour MCP
-  console.error("RAG MCP Server running on stdio");
+  console.error("RAG MCP Server v2.0 running on stdio");
+  console.error(`📊 Outils enregistrés: ${registeredCount}`);
+  console.error(`👁️  Outils visibles: ${visibleTools.length}`);
+  console.error(`🧠 Outils RAG: ${ragTools.length}`);
+  console.error(`📈 Outils Graph: ${graphTools.length}`);
 }
 
 // Gestion des erreurs

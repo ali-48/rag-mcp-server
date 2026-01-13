@@ -38,7 +38,7 @@ export const manageProjectsHandler: ToolHandler = async (args) => {
       if (!args.project_path || typeof args.project_path !== 'string') {
         throw new Error("The 'project_path' parameter is required for 'stats' action");
       }
-      
+
       const stats = await getProjectStatistics(args.project_path);
       return { content: [{ type: "text", text: JSON.stringify(stats, null, 2) }] };
     } else {
@@ -56,48 +56,57 @@ export const manageProjectsHandler: ToolHandler = async (args) => {
  */
 export async function testManageProjects() {
   console.log("Testing manage_projects tool...");
-  
+
   try {
     // D'abord indexer un projet de test
     const testProjectPath = "/tmp/test-project-manage";
     const fs = await import('fs');
     const path = await import('path');
-    
+
     if (!fs.existsSync(testProjectPath)) {
       fs.mkdirSync(testProjectPath, { recursive: true });
     }
-    
+
     // Créer un fichier de test
     const testFile = path.join(testProjectPath, "manage-test.js");
     fs.writeFileSync(testFile, "// Test file for manage_projects\nconsole.log('Manage test');");
-    
-    // Indexer le projet
-    const { indexProjectHandler } = await import("./index-project.js");
-    await indexProjectHandler({
+
+    // Initialiser le projet avec init_rag
+    const { initRagHandler } = await import("./init-rag.js");
+    await initRagHandler({
       project_path: testProjectPath,
-      file_patterns: ["**/*.js"],
-      recursive: true,
-      embedding_provider: "fake"
+      mode: "default",
+      force: false,
+      verbose: false
     });
-    
+
+    // Indexer le projet avec activated_rag
+    const { activatedRagHandler } = await import("./activated-rag.js");
+    await activatedRagHandler({
+      project_path: testProjectPath,
+      mode: "full",
+      file_patterns: ["**/*.js"],
+      enable_phase0: true
+    });
+
     console.log(`✅ Indexed test project at: ${testProjectPath}`);
-    
+
     // Tester l'action 'list'
     console.log("Test 1: Action 'list'");
     const listResult = await manageProjectsHandler({ action: "list" });
     console.log("✅ manage_projects 'list' fonctionne:", listResult ? "Oui" : "Non");
-    
+
     // Tester l'action 'stats'
     console.log("Test 2: Action 'stats'");
-    const statsResult = await manageProjectsHandler({ 
-      action: "stats", 
-      project_path: testProjectPath 
+    const statsResult = await manageProjectsHandler({
+      action: "stats",
+      project_path: testProjectPath
     });
     console.log("✅ manage_projects 'stats' fonctionne:", statsResult ? "Oui" : "Non");
-    
+
     // Nettoyer
     fs.rmSync(testProjectPath, { recursive: true, force: true });
-    
+
     return { listResult, statsResult };
   } catch (error) {
     console.error("❌ Test failed:", error);

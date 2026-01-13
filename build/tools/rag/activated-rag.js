@@ -2,9 +2,12 @@
 // Outil maître: activated_rag - Orchestration complète du pipeline RAG (5 phases)
 // Remplace: injection_rag, index_project, update_project, analyse_code
 // Version: v2.0.0
+// Module D : Vérification RAG-initialized + exécution contrôlée
+// Responsabilités : D1 - Check bloquant, D2 - Échec propre si non initialisé
 import { getRagConfigManager } from "../../config/rag-config.js";
 import { indexProject, updateProject } from "../../rag/indexer.js";
 import { createPhase0IntegrationWithIndexing } from "../../rag/phase0/phase0-integration.js";
+import { getRagState, isRagInitialized } from "../../rag/phase0/rag-state.js";
 import { setEmbeddingProvider } from "../../rag/vector-store.js";
 // Système de logs simplifié (sans émojis pour compatibilité MCP)
 var LogLevel;
@@ -156,8 +159,8 @@ export const activatedRagHandler = async (args) => {
     let phase0Integration = null;
     let projectMetadata = null;
     try {
-        // ========== PHASE 0: Workspace Detection & File Watcher ==========
-        logger.info("🔍 Phase 0 - Détection Workspace & Surveillance");
+        // ========== D1 - CHECK BLOQUANT : Vérification RAG initialisé ==========
+        logger.info("🔍 Vérification de l'initialisation RAG...");
         // Détection automatique du projet si non spécifié
         let projectPath = args.project_path;
         if (!projectPath) {
@@ -182,6 +185,34 @@ export const activatedRagHandler = async (args) => {
                 throw error;
             }
         }
+        // Vérifier si le RAG est initialisé pour ce projet
+        const isInitialized = await isRagInitialized(projectPath);
+        if (!isInitialized) {
+            const errorMessage = `❌ RAG non initialisé pour le projet: ${projectPath}\n` +
+                `Utilisez d'abord l'outil init_rag pour initialiser l'infrastructure RAG:\n` +
+                `- init_rag({ project_path: "${projectPath}", mode: "default" })`;
+            logger.error(errorMessage);
+            // D2 - ÉCHEC PROPRE : Retour structuré pour MCP
+            return {
+                content: [{
+                        type: "text",
+                        text: JSON.stringify({
+                            success: false,
+                            error: "RAG_NOT_INITIALIZED",
+                            message: errorMessage,
+                            required_action: "run_init_rag",
+                            details: {
+                                project_path: projectPath,
+                                rag_state: await getRagState(projectPath),
+                                timestamp: new Date().toISOString()
+                            }
+                        }, null, 2)
+                    }]
+            };
+        }
+        logger.info("✅ RAG initialisé, continuation du pipeline...");
+        // ========== PHASE 0: Workspace Detection & File Watcher ==========
+        logger.info("🔍 Phase 0 - Détection Workspace & Surveillance");
         // Vérification des permissions
         try {
             const fs = await import('fs');
