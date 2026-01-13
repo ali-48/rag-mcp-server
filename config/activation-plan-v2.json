@@ -1,0 +1,44 @@
+{
+  "phase1": {
+    "description": "Mode legacy activé",
+    "tools": [
+      "activated_rag",
+      "recherche_rag"
+    ],
+    "legacy_tools": [
+      "injection_rag",
+      "index_project",
+      "update_project",
+      "search_code",
+      "manage_projects"
+    ],
+    "status": "active"
+  },
+  "phase2": {
+    "description": "Phase 0 activée",
+    "components": [
+      "workspace_detection"
+    ],
+    "file_watcher": "disabled",
+    "status": "active"
+  },
+  "phase3": {
+    "description": "Cache activé",
+    "ttl_seconds": 3600,
+    "status": "active"
+  },
+  "next_phases": [
+    {
+      "phase": "phase4",
+      "description": "Activer le file watcher",
+      "condition": "Après 24h de stabilité",
+      "action": "config.phase0.file_watcher.enabled = true"
+    },
+    {
+      "phase": "phase5",
+      "description": "Désactiver le mode legacy",
+      "condition": "Après 7 jours de stabilité",
+      "action": "config.system.legacy_mode = false"
+    }
+  ]
+}

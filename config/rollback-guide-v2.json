@@ -1,0 +1,31 @@
+{
+  "title": "Guide de rollback v2.0.0",
+  "timestamp": "2026-01-13T03:44:17.589Z",
+  "steps": [
+    {
+      "step": 1,
+      "description": "Arrêter le serveur MCP",
+      "command": "Ctrl+C dans le terminal où le serveur tourne"
+    },
+    {
+      "step": 2,
+      "description": "Restaurer la configuration",
+      "command": "cp config/rag-config.json.backup config/rag-config.json"
+    },
+    {
+      "step": 3,
+      "description": "Supprimer les fichiers temporaires",
+      "command": "rm -f config/deploy-state-backup.json config/activation-plan-v2.json config/deployment-report-v2.json"
+    },
+    {
+      "step": 4,
+      "description": "Redémarrer le serveur",
+      "command": "npm start"
+    }
+  ],
+  "notes": [
+    "Le rollback restaure la configuration v1.0.0",
+    "Les données RAG v2 restent disponibles mais non utilisées",
+    "Les logs de déploiement sont conservés pour analyse"
+  ]
+}

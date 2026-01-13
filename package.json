@@ -31,8 +31,10 @@
   "devDependencies": {
     "@types/node": "^20.11.0",
     "@types/pg": "^8.16.0",
+    "@vitest/ui": "^4.0.17",
     "shx": "^0.3.4",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "vitest": "^4.0.17"
   },
   "files": [
     "build/**/*",

@@ -1,9 +1,28 @@
 {
-  "version": "1.0.0",
-  "description": "Configuration des paramètres RAG pour rag-mcp-server",
-  "last_updated": "28/12/2025 22:40:00",
+  "version": "2.0.0",
+  "description": "Configuration RAG v2.0 - Support des nouveaux outils activated_rag et recherche_rag",
+  "last_updated": "13/01/2026",
+  "system": {
+    "mode": "autonomous",
+    "exposed_tools": [
+      "activated_rag",
+      "recherche_rag"
+    ],
+    "legacy_tools": [
+      "injection_rag",
+      "index_project",
+      "update_project",
+      "search_code",
+      "manage_projects",
+      "recherche_rag"
+    ],
+    "legacy_mode": true,
+    "auto_detect_vscode": true,
+    "auto_watch_files": true,
+    "auto_index_changes": true
+  },
   "defaults": {
-    "embedding_provider": "ollama",
+    "embedding_provider": "fake",
     "embedding_model": "qwen3-embedding:8b",
     "chunk_size": 500,
     "chunk_overlap": 100,
@@ -15,106 +34,252 @@
     "search_threshold": 0.3,
     "format_output": true
   },
-  "providers": {
-    "fake": {
-      "description": "Fournisseur factice pour les tests",
-      "models": [
-        "nomic-embed-text",
-        "all-minilm",
-        "qwen3-embedding:8b"
-      ],
-      "requires_ollama": false
+  "embedding_models": {
+    "by_content_type": {
+      "code": {
+        "provider": "ollama",
+        "model": "nomic-embed-code",
+        "dimension": 768,
+        "description": "Modèle optimisé pour le code source"
+      },
+      "text": {
+        "provider": "ollama",
+        "model": "nomic-embed-text",
+        "dimension": 768,
+        "description": "Modèle optimisé pour la documentation et texte"
+      },
+      "config": {
+        "provider": "ollama",
+        "model": "bge-small",
+        "dimension": 384,
+        "description": "Modèle léger pour fichiers de configuration"
+      },
+      "fallback": {
+        "provider": "ollama",
+        "model": "qwen3-embedding:8b",
+        "dimension": 1024,
+        "description": "Modèle de fallback généraliste"
+      }
     },
-    "ollama": {
-      "description": "Fournisseur Ollama pour embeddings locaux",
-      "models": [
-        "nomic-embed-text",
-        "all-minilm",
-        "mxbai-embed-large",
-        "bge-m3",
-        "qwen3-embedding:8b",
-        "qwen3-embedding:latest"
-      ],
-      "endpoint": "http://localhost:11434",
-      "requires_ollama": true,
-      "default_model": "qwen3-embedding:8b"
-    },
-    "sentence-transformers": {
-      "description": "Fournisseur Sentence Transformers",
-      "models": [
-        "all-MiniLM-L6-v2",
-        "paraphrase-multilingual-MiniLM-L12-v2",
-        "all-mpnet-base-v2"
-      ],
-      "requires_ollama": false,
-      "default_model": "all-MiniLM-L6-v2"
+    "providers": {
+      "fake": {
+        "description": "Fournisseur factice pour les tests",
+        "models": [
+          "nomic-embed-text",
+          "all-minilm",
+          "qwen3-embedding:8b"
+        ],
+        "requires_ollama": false
+      },
+      "ollama": {
+        "description": "Fournisseur Ollama pour embeddings locaux",
+        "models": [
+          "nomic-embed-text",
+          "nomic-embed-code",
+          "all-minilm",
+          "mxbai-embed-large",
+          "bge-m3",
+          "bge-small",
+          "qwen3-embedding:8b",
+          "qwen3-embedding:latest"
+        ],
+        "endpoint": "http://localhost:11434",
+        "requires_ollama": true,
+        "default_model": "qwen3-embedding:8b"
+      },
+      "sentence-transformers": {
+        "description": "Fournisseur Sentence Transformers",
+        "models": [
+          "all-MiniLM-L6-v2",
+          "paraphrase-multilingual-MiniLM-L12-v2",
+          "all-mpnet-base-v2"
+        ],
+        "requires_ollama": false,
+        "default_model": "all-MiniLM-L6-v2"
+      }
     }
   },
-  "llm_providers": {
-    "ollama": {
-      "description": "LLM Ollama pour analyse et préparation intelligente",
-      "models": [
-        "llama3.1:latest",
-        "qwen2.5:7b",
-        "mistral:7b",
-        "phi3:mini"
-      ],
-      "endpoint": "http://localhost:11434",
-      "default_model": "llama3.1:latest",
-      "requires_ollama": true,
-      "max_tokens": 4096,
-      "temperature": 0.1,
-      "timeout_ms": 30000
-    }
-  },
-  "preparation": {
-    "enable_llm_analysis": true,
-    "llm_provider": "ollama",
-    "llm_model": "llama3.1:latest",
-    "tasks": [
-      "summarize",
-      "extract_keywords",
-      "suggest_structure",
-      "detect_entities",
-      "classify_complexity"
-    ],
-    "cache_enabled": true,
-    "cache_ttl_seconds": 3600,
-    "batch_size": 5,
-    "max_content_length": 10000
-  },
-  "phase0_3": {
-    "enabled": false,
-    "description": "Phase 0.3 - LLM Enrichment avant embeddings",
-    "provider": "ollama",
-    "model": "llama3.1:latest",
-    "temperature": 0.1,
-    "max_tokens": 1000,
-    "timeout_ms": 30000,
-    "batch_size": 5,
-    "features": [
-      "summary",
-      "keywords",
-      "entities",
-      "complexity",
-      "category"
-    ],
-    "cache_enabled": true,
-    "cache_ttl_seconds": 3600,
-    "provider_options": {},
-    "limits": {
-      "min_content_length": 10,
-      "max_content_length": 10000,
-      "max_chunks_per_batch": 50,
-      "max_retries": 3,
+  "phase0": {
+    "enabled": true,
+    "description": "Phase 0 - Détection automatique et pipeline complet",
+    "components": {
+      "workspace_detector": {
+        "enabled": true,
+        "detect_vscode": true,
+        "detect_git": true,
+        "auto_select_project": true
+      },
+      "file_watcher": {
+        "enabled": false,
+        "library": "chokidar",
+        "watch_options": {
+          "ignored": [
+            "node_modules",
+            ".git",
+            "*.log"
+          ],
+          "persistent": true,
+          "ignoreInitial": true,
+          "interval": 1000,
+          "binaryInterval": 3000
+        },
+        "debounce_ms": 1000,
+        "max_file_size_mb": 10
+      },
+      "tree_sitter": {
+        "enabled": true,
+        "languages": [
+          "javascript",
+          "typescript",
+          "python",
+          "json",
+          "yaml",
+          "markdown"
+        ],
+        "max_file_size_mb": 10,
+        "timeout_ms": 5000,
+        "fallback_to_regex": true
+      },
+      "chunking": {
+        "strategy": "logical",
+        "max_chunk_size": 1000,
+        "chunk_overlap": 200,
+        "rules": {
+          "function_as_chunk": true,
+          "class_as_chunk": true,
+          "max_function_lines": 200,
+          "max_class_methods": 10,
+          "preserve_imports": true,
+          "include_comments": true,
+          "doc_by_paragraph": true,
+          "config_by_object": true
+        }
+      },
+      "llm_enrichment": {
+        "enabled": true,
+        "provider": "fake",
+        "model": "test-model",
+        "temperature": 0.1,
+        "max_tokens": 500,
+        "timeout_ms": 10000,
+        "batch_size": 5,
+        "features": [
+          "summary",
+          "keywords"
+        ],
+        "cache_enabled": false,
+        "cache_ttl_seconds": 3600
+      }
+    },
+    "pipeline": {
+      "auto_start": true,
+      "concurrent_workers": 2,
+      "max_queue_size": 100,
+      "retry_attempts": 3,
       "retry_delay_ms": 1000
+    }
+  },
+  "activated_rag": {
+    "description": "Configuration de l'outil maître activated_rag",
+    "input_schema": {
+      "project_path": {
+        "required": false,
+        "description": "Chemin du projet (auto-détecté si non fourni)"
+      },
+      "mode": {
+        "required": false,
+        "default": "auto",
+        "enum": [
+          "auto",
+          "full",
+          "incremental",
+          "update"
+        ],
+        "description": "Mode d'indexation"
+      },
+      "force_reindex": {
+        "required": false,
+        "default": false,
+        "description": "Forcer la réindexation complète"
+      }
     },
-    "metrics": {
-      "enabled": true,
-      "track_success_rate": true,
-      "track_enrichment_time": true,
-      "track_confidence_scores": true,
-      "track_cache_hits": true
+    "output_schema": {
+      "include_metrics": true,
+      "include_chunks": false,
+      "include_errors": true,
+      "format": "human"
+    },
+    "performance": {
+      "max_concurrent_files": 5,
+      "max_chunks_per_batch": 100,
+      "embedding_batch_size": 10,
+      "timeout_ms": 300000
+    }
+  },
+  "recherche_rag": {
+    "description": "Configuration de l'outil de recherche avancée",
+    "input_schema": {
+      "scope": {
+        "default": "project",
+        "enum": [
+          "project",
+          "global"
+        ]
+      },
+      "search_mode": {
+        "default": "semantic",
+        "enum": [
+          "semantic",
+          "hybrid",
+          "text"
+        ]
+      },
+      "top_k": {
+        "default": 10,
+        "min": 1,
+        "max": 100
+      },
+      "threshold": {
+        "default": 0.3,
+        "min": 0,
+        "max": 1
+      }
+    },
+    "filters": {
+      "content_types": [
+        "code",
+        "doc",
+        "config",
+        "other"
+      ],
+      "languages": [
+        "typescript",
+        "javascript",
+        "python",
+        "markdown",
+        "json",
+        "yaml"
+      ],
+      "roles": [
+        "core",
+        "example",
+        "template",
+        "other"
+      ]
+    },
+    "reranking": {
+      "enabled": false,
+      "weights": {
+        "prefer_recent": 0.3,
+        "prefer_smaller_files": 0.2,
+        "priority_content_types": 0.5
+      }
+    },
+    "output": {
+      "format_human": true,
+      "include_metadata": false,
+      "include_content": true,
+      "max_content_length": 500
     }
   },
   "limits": {
@@ -137,6 +302,15 @@
       "min": 0,
       "max": 1,
       "default": 0.3
+    },
+    "file_size": {
+      "max_mb": 50,
+      "warning_mb": 10
+    },
+    "concurrent": {
+      "max_files": 10,
+      "max_chunks": 1000,
+      "max_embeddings": 100
     },
     "preparation_batch_size": {
       "min": 1,
@@ -176,7 +350,8 @@
       "build/",
       ".git/"
     ],
-    "recursive_default": true
+    "recursive_default": true,
+    "follow_symlinks": false
   },
   "indexing": {
     "max_file_size_mb": 10,
@@ -193,6 +368,31 @@
       ".css",
       ".scss"
     ],
+    "content_type_mapping": {
+      "code": [
+        ".js",
+        ".ts",
+        ".py",
+        ".java",
+        ".cpp",
+        ".go",
+        ".rs"
+      ],
+      "doc": [
+        ".md",
+        ".txt"
+      ],
+      "config": [
+        ".json",
+        ".yaml",
+        ".yml"
+      ],
+      "web": [
+        ".html",
+        ".css",
+        ".scss"
+      ]
+    },
     "text_extensions": [
       ".md",
       ".txt",
@@ -213,8 +413,14 @@
     "default_limit": 20,
     "max_limit": 50,
     "similarity_threshold": 0.3,
+    "dynamic_threshold": false,
     "format_results": true,
-    "include_context_lines": 3
+    "include_context_lines": 3,
+    "hybrid_search": {
+      "enabled": true,
+      "semantic_weight": 0.7,
+      "text_weight": 0.3
+    }
   },
   "environments": {
     "development": {
@@ -231,5 +437,19 @@
       "cache_enabled": true,
       "batch_size": 50
     }
+  },
+  "migration": {
+    "from_version": "1.0.0",
+    "auto_migrate": true,
+    "backup_old_config": true,
+    "preserve_legacy_tools": true,
+    "migration_script": "scripts/migrate-config-v2.js",
+    "migrated_from": "2.0.0",
+    "migrated_at": "2026-01-13T03:44:15.065Z",
+    "backup_location": "/home/ali/Documents/Cline/MCP/rag-mcp-server/config/rag-config.json.backup"
+  },
+  "cache": {
+    "enabled": true,
+    "ttl_seconds": 3600
   }
 }
