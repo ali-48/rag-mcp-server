@@ -849,10 +849,10 @@ async function textSearch(query, options = {}) {
                 params.push(prepareTextSearchTerm(term, prefixSearch, suffixSearch, substringSearch, caseSensitive));
                 const fieldConditions = [];
                 if (textField === 'content' || textField === 'both') {
-                    fieldConditions.push(`content ILIKE ${paramName}`);
+                    fieldConditions.push(`content ILIKE ${paramName}::text`);
                 }
                 if (textField === 'file_path' || textField === 'both') {
-                    fieldConditions.push(`file_path ILIKE ${paramName}`);
+                    fieldConditions.push(`file_path ILIKE ${paramName}::text`);
                 }
                 if (fieldConditions.length > 0) {
                     conditions.push(`(${fieldConditions.join(' OR ')})`);
@@ -1318,7 +1318,7 @@ export async function getProjectStats(projectPath) {
         MIN(created_at) as indexed_at,
         MAX(updated_at) as last_updated
        FROM ${tableName}
-       WHERE project_path = $1`, [projectPath]);
+       WHERE project_path = $1::text`, [projectPath]);
         const row = statsResult.rows[0];
         const totalChunks = parseInt(row.total_chunks) || 0;
         // Compter les fichiers uniques (approximation basée sur file_path sans chunk index)
@@ -1424,7 +1424,7 @@ export async function getVersionStats(chunkId) {
         let sql = 'SELECT * FROM rag_store_v2_version_stats';
         const params = [];
         if (chunkId) {
-            sql += ' WHERE chunk_id = $1';
+            sql += ' WHERE chunk_id = $1::text';
             params.push(chunkId);
         }
         sql += ' ORDER BY total_versions DESC';

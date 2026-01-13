@@ -91,7 +91,7 @@ export const LLMErrorSchema = z.object({
     model: z.string(),
     timestamp: z.date(),
     retryable: z.boolean(),
-    details: z.record(z.any()).optional(),
+    details: z.record(z.string(), z.any()).optional(),
 });
 
 /**

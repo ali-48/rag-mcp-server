@@ -662,7 +662,7 @@ export class IntelligentChunker {
                 dependencies.push(match[1]);
             }
         }
-        return [...new Set(dependencies)]; // Éliminer les doublons
+        return Array.from(new Set(dependencies)); // Éliminer les doublons
     }
     /**
      * Détecte les références entre chunks
