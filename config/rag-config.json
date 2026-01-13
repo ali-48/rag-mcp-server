@@ -5,8 +5,7 @@
   "system": {
     "mode": "autonomous",
     "exposed_tools": [
-      "activated_rag",
-      "recherche_rag"
+      "activated_rag"
     ],
     "legacy_tools": [
       "injection_rag",
@@ -16,7 +15,7 @@
       "manage_projects",
       "recherche_rag"
     ],
-    "legacy_mode": true,
+    "legacy_mode": false,
     "auto_detect_vscode": true,
     "auto_watch_files": true,
     "auto_index_changes": true

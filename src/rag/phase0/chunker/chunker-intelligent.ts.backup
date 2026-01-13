@@ -64,82 +64,51 @@ export class IntelligentChunker {
      * Initialise les types de nœuds par langage (inspiré de QwenRag)
      */
     private initializeNodeTypes(): void {
-        // Types de nœuds pour les fonctions (multi-langages) - AMÉLIORÉ
+        // Types de nœuds pour les fonctions (multi-langages)
         this.functionTypes = new Set([
-            // TypeScript/JavaScript - Types étendus
-            'function_declaration', 'function_expression', 'arrow_function',
-            'method_definition', 'generator_function', 'async_function_declaration',
-            'async_arrow_function', 'async_function_expression', 'method_declaration',
-            'constructor_definition', 'getter', 'setter',
-
-            // Python - Types étendus
-            'function_definition', 'async_function_definition', 'lambda',
-            'decorated_definition', 'decorator',
-
+            // TypeScript/JavaScript
+            'function_declaration', 'function_expression', 'arrow_function', 'method_definition',
+            'method_declaration', 'constructor_definition',
+            // Python
+            'function_definition', 'async_function_definition',
             // Java
             'method_declaration', 'constructor_declaration',
-
             // C/C++
             'function_definition', 'function_declarator',
-
             // Rust
             'function_item', 'method_declaration',
-
             // Go
             'function_declaration', 'method_declaration',
-
             // C#
             'method_declaration', 'constructor_declaration',
-
             // Générique
             'function', 'method', 'constructor'
         ]);
 
-        // Types de nœuds pour les classes (multi-langages) - AMÉLIORÉ
+        // Types de nœuds pour les classes (multi-langages)
         this.classTypes = new Set([
-            // TypeScript/JavaScript - Types étendus
-            'class_declaration', 'class_expression', 'abstract_class_declaration',
-            'interface_declaration', 'type_alias_declaration', 'enum_declaration',
-            'type_parameter', 'generic_type',
-
-            // Python - Types étendus
-            'class_definition', 'decorated_class',
-
+            // TypeScript/JavaScript
+            'class_declaration', 'class_definition',
+            // Python
+            'class_definition',
             // Java
             'class_declaration', 'interface_declaration',
-
             // C/C++
             'class_specifier', 'struct_specifier',
-
             // Rust
             'struct_item', 'impl_item', 'trait_item', 'enum_item',
-
             // Go
             'type_spec', 'struct_type', 'interface_type',
-
             // C#
             'class_declaration', 'struct_declaration', 'interface_declaration',
-
             // Générique
             'class', 'interface', 'struct', 'enum', 'trait'
         ]);
 
-        // Types de nœuds pour les blocs - AMÉLIORÉ
+        // Types de nœuds pour les blocs
         this.blockTypes = new Set([
             'block', 'statement_block', 'compound_statement',
-            'function_body', 'class_body', 'declaration_list',
-
-            // Blocs conditionnels et de contrôle
-            'if_statement', 'else_clause', 'for_statement', 'while_statement',
-            'do_statement', 'switch_statement', 'case_clause', 'default_clause',
-            'try_statement', 'catch_clause', 'finally_clause',
-
-            // Python spécifique
-            'with_statement', 'match_statement', 'try_statement',
-
-            // Imports et exports
-            'import_statement', 'import_declaration', 'import_from_statement',
-            'export_statement', 'export_declaration', 'namespace_import', 'named_imports'
+            'function_body', 'class_body', 'declaration_list'
         ]);
     }
 
@@ -191,7 +160,7 @@ export class IntelligentChunker {
                 priority: 100,
             },
 
-            // Règle 2: Classes complètes (mode atomique)
+            // Règle 2: Classes complètes
             {
                 name: 'class_chunk',
                 description: 'Extrait les classes complètes comme chunks atomiques',
@@ -231,82 +200,6 @@ export class IntelligentChunker {
                     )];
                 },
                 priority: 90,
-            },
-
-            // Règle 2b: Classes hiérarchiques (1 classe = N chunks)
-            {
-                name: 'class_hierarchical_chunk',
-                description: 'Divise les classes complexes en chunks hiérarchiques',
-                condition: (node, context) => {
-                    const classTypes = ['class_declaration', 'class_definition'];
-                    return classTypes.includes(node.type) &&
-                        context.config.rules?.neverSplitClasses === false &&
-                        this.shouldSplitClass(node, context.parseResult.language);
-                },
-                action: (node, context) => {
-                    const sourceCode = context.parseResult.sourceCode;
-                    const chunks: SemanticChunk[] = [];
-
-                    // 1. Chunk pour la définition de classe
-                    const classDefinition = this.extractClassDefinition(node, sourceCode);
-                    if (classDefinition) {
-                        chunks.push(ChunkFactory.createChunk(
-                            'class',
-                            'atomic',
-                            classDefinition,
-                            {
-                                tags: ['class', 'definition', 'atomic', context.parseResult.language],
-                                complexity: this.estimateComplexity(node),
-                                typeSpecific: {
-                                    class: {
-                                        methods: this.extractClassMethods(node, context.parseResult.language),
-                                        properties: this.extractClassProperties(node, context.parseResult.language),
-                                        extends: this.extractExtends(node, context.parseResult.language),
-                                        implements: this.extractImplements(node, context.parseResult.language),
-                                    },
-                                },
-                            },
-                            context.parseResult.filePath,
-                            context.parseResult.language,
-                            {
-                                startLine: node.startPosition.row + 1,
-                                startColumn: node.startPosition.column + 1,
-                                endLine: node.startPosition.row + 3, // Juste la définition
-                                endColumn: node.startPosition.column + classDefinition.split('\n')[0].length,
-                            }
-                        ));
-                    }
-
-                    // 2. Chunks pour les méthodes (groupées par visibilité)
-                    const methods = this.extractClassMethodsWithDetails(node, context.parseResult.language, sourceCode);
-                    const groupedMethods = this.groupMethodsByVisibility(methods);
-
-                    for (const [visibility, methodGroup] of Object.entries(groupedMethods)) {
-                        if (methodGroup.length > 0) {
-                            const methodChunks = this.createMethodGroupChunks(
-                                methodGroup,
-                                context.parseResult.filePath,
-                                context.parseResult.language,
-                                visibility
-                            );
-                            chunks.push(...methodChunks);
-                        }
-                    }
-
-                    // 3. Chunk pour les propriétés
-                    const properties = this.extractClassPropertiesWithDetails(node, context.parseResult.language, sourceCode);
-                    if (properties.length > 0) {
-                        const propertyChunk = this.createPropertyGroupChunk(
-                            properties,
-                            context.parseResult.filePath,
-                            context.parseResult.language
-                        );
-                        chunks.push(propertyChunk);
-                    }
-
-                    return chunks;
-                },
-                priority: 85,
             },
 
             // Règle 3: Imports groupés
@@ -1536,245 +1429,5 @@ export class IntelligentChunker {
                 },
             },
         };
-    }
-
-    // ============================================
-    // Méthodes pour le chunking hiérarchique des classes
-    // ============================================
-
-    /**
-     * Détermine si une classe doit être divisée
-     */
-    private shouldSplitClass(node: any, language: string): boolean {
-        // Diviser les classes avec plus de 3 méthodes ou plus de 5 propriétés
-        const methodCount = this.extractClassMethods(node, language).length;
-        const propertyCount = this.extractClassProperties(node, language).length;
-
-        return methodCount > 3 || propertyCount > 5 || this.estimateComplexity(node) > 5;
-    }
-
-    /**
-     * Extrait la définition de classe (premières lignes)
-     */
-    private extractClassDefinition(node: any, sourceCode: string): string {
-        const startLine = node.startPosition.row;
-        const endLine = Math.min(node.startPosition.row + 3, node.endPosition.row);
-
-        const lines = sourceCode.split('\n');
-        const definitionLines = lines.slice(startLine, endLine + 1);
-
-        return definitionLines.join('\n');
-    }
-
-    /**
-     * Extrait les méthodes avec détails
-     */
-    private extractClassMethodsWithDetails(node: any, language: string, sourceCode: string): Array<{
-        name: string;
-        code: string;
-        startLine: number;
-        endLine: number;
-        visibility: 'public' | 'private' | 'protected';
-    }> {
-        const methods: Array<{
-            name: string;
-            code: string;
-            startLine: number;
-            endLine: number;
-            visibility: 'public' | 'private' | 'protected';
-        }> = [];
-
-        const traverse = (n: any) => {
-            if (n.type === 'method_definition' ||
-                (language === 'python' && n.type === 'function_definition')) {
-                const name = this.extractName(n, language);
-                if (name) {
-                    const code = sourceCode.substring(n.startIndex, n.endIndex);
-                    const visibility = this.extractVisibility(n, language);
-
-                    methods.push({
-                        name,
-                        code,
-                        startLine: n.startPosition.row,
-                        endLine: n.endPosition.row,
-                        visibility
-                    });
-                }
-            }
-            for (let i = 0; i < n.childCount; i++) {
-                const child = n.child(i);
-                if (child) traverse(child);
-            }
-        };
-
-        traverse(node);
-        return methods;
-    }
-
-    /**
-     * Groupe les méthodes par visibilité
-     */
-    private groupMethodsByVisibility(methods: Array<{
-        name: string;
-        code: string;
-        startLine: number;
-        endLine: number;
-        visibility: 'public' | 'private' | 'protected';
-    }>): Record<string, typeof methods> {
-        const grouped: Record<string, typeof methods> = {
-            public: [],
-            private: [],
-            protected: []
-        };
-
-        for (const method of methods) {
-            grouped[method.visibility].push(method);
-        }
-
-        return grouped;
-    }
-
-    /**
-     * Crée des chunks pour un groupe de méthodes
-     */
-    private createMethodGroupChunks(
-        methods: Array<{
-            name: string;
-            code: string;
-            startLine: number;
-            endLine: number;
-            visibility: 'public' | 'private' | 'protected';
-        }>,
-        filePath: string,
-        language: string,
-        visibility: string
-    ): SemanticChunk[] {
-        const chunks: SemanticChunk[] = [];
-
-        // Grouper les méthodes par lots de 3 maximum
-        const batchSize = 3;
-        for (let i = 0; i < methods.length; i += batchSize) {
-            const batch = methods.slice(i, i + batchSize);
-            const batchCode = batch.map(m => m.code).join('\n\n');
-            const startLine = batch[0].startLine;
-            const endLine = batch[batch.length - 1].endLine;
-
-            chunks.push(ChunkFactory.createChunk(
-                'method',
-                'logical',
-                batchCode,
-                {
-                    tags: ['method', 'group', visibility, language],
-                    complexity: this.estimateComplexityFromMethods(batch),
-                },
-                filePath,
-                language,
-                {
-                    startLine: startLine + 1,
-                    startColumn: 1,
-                    endLine: endLine + 1,
-                    endColumn: batch[batch.length - 1].code.split('\n').pop()?.length || 1,
-                }
-            ));
-        }
-
-        return chunks;
-    }
-
-    /**
-     * Extrait les propriétés avec détails
-     */
-    private extractClassPropertiesWithDetails(node: any, language: string, sourceCode: string): Array<{
-        name: string;
-        code: string;
-        startLine: number;
-        endLine: number;
-    }> {
-        const properties: Array<{
-            name: string;
-            code: string;
-            startLine: number;
-            endLine: number;
-        }> = [];
-
-        const traverse = (n: any) => {
-            if (n.type === 'property_definition' || n.type === 'field_definition') {
-                const name = this.extractName(n, language);
-                if (name) {
-                    const code = sourceCode.substring(n.startIndex, n.endIndex);
-
-                    properties.push({
-                        name,
-                        code,
-                        startLine: n.startPosition.row,
-                        endLine: n.endPosition.row
-                    });
-                }
-            }
-            for (let i = 0; i < n.childCount; i++) {
-                const child = n.child(i);
-                if (child) traverse(child);
-            }
-        };
-
-        traverse(node);
-        return properties;
-    }
-
-    /**
-     * Crée un chunk pour un groupe de propriétés
-     */
-    private createPropertyGroupChunk(
-        properties: Array<{
-            name: string;
-            code: string;
-            startLine: number;
-            endLine: number;
-        }>,
-        filePath: string,
-        language: string
-    ): SemanticChunk {
-        const propertyCode = properties.map(p => p.code).join('\n');
-        const startLine = properties[0].startLine;
-        const endLine = properties[properties.length - 1].endLine;
-
-        return ChunkFactory.createChunk(
-            'type_definition',
-            'logical',
-            propertyCode,
-            {
-                tags: ['property', 'group', language],
-                complexity: Math.min(properties.length, 10),
-            },
-            filePath,
-            language,
-            {
-                startLine: startLine + 1,
-                startColumn: 1,
-                endLine: endLine + 1,
-                endColumn: properties[properties.length - 1].code.split('\n').pop()?.length || 1,
-            }
-        );
-    }
-
-    /**
-     * Estime la complexité à partir d'un groupe de méthodes
-     */
-    private estimateComplexityFromMethods(methods: Array<{
-        name: string;
-        code: string;
-        startLine: number;
-        endLine: number;
-        visibility: 'public' | 'private' | 'protected';
-    }>): number {
-        let totalComplexity = 0;
-
-        for (const method of methods) {
-            // Estimation simplifiée : 1 point par 10 lignes
-            const lines = method.code.split('\n').length;
-            totalComplexity += Math.ceil(lines / 10);
-        }
-
-        return Math.min(totalComplexity, 10);
     }
 }
