@@ -1177,11 +1177,11 @@ async function textSearch(
         const fieldConditions: string[] = [];
 
         if (textField === 'content' || textField === 'both') {
-          fieldConditions.push(`content ILIKE ${paramName}`);
+          fieldConditions.push(`content ILIKE ${paramName}::text`);
         }
 
         if (textField === 'file_path' || textField === 'both') {
-          fieldConditions.push(`file_path ILIKE ${paramName}`);
+          fieldConditions.push(`file_path ILIKE ${paramName}::text`);
         }
 
         if (fieldConditions.length > 0) {
@@ -1216,7 +1216,7 @@ async function textSearch(
 
   // Pour la recherche textuelle, nous utilisons un score basé sur le nombre de correspondances
   // et la pertinence (simplifié pour l'exemple)
-  sql += ` ORDER BY similarity DESC LIMIT $${paramIndex}`;
+  sql += ` ORDER BY similarity DESC LIMIT $${paramIndex}::int`;
   params.push(limit);
 
   try {
@@ -1458,14 +1458,14 @@ export async function semanticSearch(
              created_at, updated_at,
              (1 - (vector <=> $1::vector)) as similarity
       FROM rag_store_v2
-      WHERE (1 - (vector <=> $1::vector)) >= $2
+      WHERE (1 - (vector <=> $1::vector)) >= $2::float
     `;
   } else {
     sql = `
       SELECT id, project_path, file_path, content,
              (1 - (vector <=> $1::vector)) as similarity
       FROM rag_store
-      WHERE (1 - (vector <=> $1::vector)) >= $2
+      WHERE (1 - (vector <=> $1::vector)) >= $2::float
     `;
   }
 
@@ -1486,7 +1486,7 @@ export async function semanticSearch(
     excludeCompressed
   }, useV2);
 
-  sql += ` ORDER BY similarity DESC LIMIT $${paramIndex}`;
+  sql += ` ORDER BY similarity DESC LIMIT $${paramIndex}::int`;
   params.push(limit);
 
   try {
@@ -1593,7 +1593,7 @@ function applyFiltersToQuery(
 
   // Filtre par projet
   if (filters.projectFilter) {
-    sql += ` AND project_path = $${currentParamIndex}`;
+    sql += ` AND project_path = $${currentParamIndex}::text`;
     params.push(filters.projectFilter);
     currentParamIndex++;
   }
@@ -1604,13 +1604,13 @@ function applyFiltersToQuery(
     if (filters.contentTypeFilter) {
       if (Array.isArray(filters.contentTypeFilter)) {
         if (filters.contentTypeFilter.length > 0) {
-          const placeholders = filters.contentTypeFilter.map((_, i) => `$${currentParamIndex + i}`).join(', ');
+          const placeholders = filters.contentTypeFilter.map((_, i) => `$${currentParamIndex + i}::text`).join(', ');
           sql += ` AND content_type IN (${placeholders})`;
           params.push(...filters.contentTypeFilter);
           currentParamIndex += filters.contentTypeFilter.length;
         }
       } else {
-        sql += ` AND content_type = $${currentParamIndex}`;
+        sql += ` AND content_type = $${currentParamIndex}::text`;
         params.push(filters.contentTypeFilter);
         currentParamIndex++;
       }
@@ -1620,13 +1620,13 @@ function applyFiltersToQuery(
     if (filters.roleFilter) {
       if (Array.isArray(filters.roleFilter)) {
         if (filters.roleFilter.length > 0) {
-          const placeholders = filters.roleFilter.map((_, i) => `$${currentParamIndex + i}`).join(', ');
+          const placeholders = filters.roleFilter.map((_, i) => `$${currentParamIndex + i}::text`).join(', ');
           sql += ` AND role IN (${placeholders})`;
           params.push(...filters.roleFilter);
           currentParamIndex += filters.roleFilter.length;
         }
       } else {
-        sql += ` AND role = $${currentParamIndex}`;
+        sql += ` AND role = $${currentParamIndex}::text`;
         params.push(filters.roleFilter);
         currentParamIndex++;
       }
@@ -1636,13 +1636,13 @@ function applyFiltersToQuery(
     if (filters.fileExtensionFilter) {
       if (Array.isArray(filters.fileExtensionFilter)) {
         if (filters.fileExtensionFilter.length > 0) {
-          const placeholders = filters.fileExtensionFilter.map((_, i) => `$${currentParamIndex + i}`).join(', ');
+          const placeholders = filters.fileExtensionFilter.map((_, i) => `$${currentParamIndex + i}::text`).join(', ');
           sql += ` AND file_extension IN (${placeholders})`;
           params.push(...filters.fileExtensionFilter);
           currentParamIndex += filters.fileExtensionFilter.length;
         }
       } else {
-        sql += ` AND file_extension = $${currentParamIndex}`;
+        sql += ` AND file_extension = $${currentParamIndex}::text`;
         params.push(filters.fileExtensionFilter);
         currentParamIndex++;
       }
@@ -1652,13 +1652,13 @@ function applyFiltersToQuery(
     if (filters.languageFilter) {
       if (Array.isArray(filters.languageFilter)) {
         if (filters.languageFilter.length > 0) {
-          const placeholders = filters.languageFilter.map((_, i) => `$${currentParamIndex + i}`).join(', ');
+          const placeholders = filters.languageFilter.map((_, i) => `$${currentParamIndex + i}::text`).join(', ');
           sql += ` AND language IN (${placeholders})`;
           params.push(...filters.languageFilter);
           currentParamIndex += filters.languageFilter.length;
         }
       } else {
-        sql += ` AND language = $${currentParamIndex}`;
+        sql += ` AND language = $${currentParamIndex}::text`;
         params.push(filters.languageFilter);
         currentParamIndex++;
       }
@@ -1666,46 +1666,46 @@ function applyFiltersToQuery(
 
     // Filtres par taille de fichier
     if (filters.minFileSizeBytes !== undefined) {
-      sql += ` AND file_size_bytes >= $${currentParamIndex}`;
+      sql += ` AND file_size_bytes >= $${currentParamIndex}::int`;
       params.push(filters.minFileSizeBytes);
       currentParamIndex++;
     }
 
     if (filters.maxFileSizeBytes !== undefined) {
-      sql += ` AND file_size_bytes <= $${currentParamIndex}`;
+      sql += ` AND file_size_bytes <= $${currentParamIndex}::int`;
       params.push(filters.maxFileSizeBytes);
       currentParamIndex++;
     }
 
     // Filtres par nombre de lignes
     if (filters.minLinesCount !== undefined) {
-      sql += ` AND lines_count >= $${currentParamIndex}`;
+      sql += ` AND lines_count >= $${currentParamIndex}::int`;
       params.push(filters.minLinesCount);
       currentParamIndex++;
     }
 
     if (filters.maxLinesCount !== undefined) {
-      sql += ` AND lines_count <= $${currentParamIndex}`;
+      sql += ` AND lines_count <= $${currentParamIndex}::int`;
       params.push(filters.maxLinesCount);
       currentParamIndex++;
     }
 
     // Filtres par date
     if (filters.dateFrom) {
-      sql += ` AND created_at >= $${currentParamIndex}`;
+      sql += ` AND created_at >= $${currentParamIndex}::timestamp`;
       params.push(filters.dateFrom);
       currentParamIndex++;
     }
 
     if (filters.dateTo) {
-      sql += ` AND created_at <= $${currentParamIndex}`;
+      sql += ` AND created_at <= $${currentParamIndex}::timestamp`;
       params.push(filters.dateTo);
       currentParamIndex++;
     }
 
     // Filtres par compression
     if (filters.includeCompressed !== undefined) {
-      sql += ` AND is_compressed = $${currentParamIndex}`;
+      sql += ` AND is_compressed = $${currentParamIndex}::boolean`;
       params.push(filters.includeCompressed);
       currentParamIndex++;
     }
@@ -1772,7 +1772,7 @@ export async function getProjectStats(projectPath: string): Promise<{
         MIN(created_at) as indexed_at,
         MAX(updated_at) as last_updated
        FROM ${tableName}
-       WHERE project_path = $1`,
+       WHERE project_path = $1::text`,
       [projectPath]
     );
 
@@ -1945,7 +1945,7 @@ export async function getVersionStats(
     const params: any[] = [];
 
     if (chunkId) {
-      sql += ' WHERE chunk_id = $1';
+      sql += ' WHERE chunk_id = $1::text';
       params.push(chunkId);
     }
 
