@@ -251,7 +251,18 @@ build_node_command() {
         # Pour dry-run, on pourrait ajouter un flag spécifique si l'outil le supporte
     fi
     
-    echo "{\"name\": \"injection_rag\", \"arguments\": {$tool_args}}"
+    # Construire la requête JSON-RPC
+    local jsonrpc_request="{
+  \"jsonrpc\": \"2.0\",
+  \"id\": 1,
+  \"method\": \"tools/call\",
+  \"params\": {
+    \"name\": \"injection_rag\",
+    \"arguments\": {$tool_args}
+  }
+}"
+    
+    echo "$jsonrpc_request"
 }
 
 # Exécuter l'injection
@@ -332,7 +343,8 @@ main() {
     fi
     
     # Extraire les arguments
-    IFS=$'\n' read -d '' -r -a args_array <<< "$args_result"
+    # Utiliser mapfile pour lire les lignes dans un tableau
+    mapfile -t args_array <<< "$args_result"
     
     # Vérifier si c'est une demande d'aide
     if [ "${args_array[0]}" = "HELP" ]; then

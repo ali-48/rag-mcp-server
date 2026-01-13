@@ -9,10 +9,10 @@ const gunzipAsync = promisify(gunzip);
 // Configuration de la connexion PostgreSQL
 const pool = new Pool({
   host: "localhost",
-  port: 16432,
-  database: "rag_mcp_memory",
+  port: 5432,
+  database: "rag_db",
   user: "rag_user",
-  password: "secure_rag_password",
+  password: "rag_password",
   max: 20,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 2000,

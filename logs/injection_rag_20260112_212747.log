@@ -1,0 +1,9 @@
+=== INJECTION RAG v1.0.0 - 20260112_212747 ===
+Commande: [1;33m[WARNING][0m ⚠️  MODE DRY-RUN ACTIVÉ - Aucune modification ne sera effectuée
+{"name": "injection_rag", "arguments": {"project_path": "/home/ali/Documents/Cline/MCP/rag-mcp-server", "log_level": "DEBUG"}}
+
+RAG MCP Server running on stdio
+
+=== FIN D'EXÉCUTION ===
+Code de sortie: 0
+Timestamp: lun. 12 janv. 2026 21:27:47 CET

@@ -1,10 +1,12 @@
 import fg from "fast-glob";
 import fs from "fs";
+import { getRagConfigManager } from "../config/rag-config.js";
 import { analyzeSegmentation, optimizeChunksWithSuggestions } from "./ai-segmenter.js";
 import { preprocessCode } from "./code-preprocessor.js";
 import { ContentType, ProgrammingLanguage, detectContentType } from "./content-detector.js";
 import { shouldIgnoreFile } from "./ignore-filter.js";
 import { getLlmCache } from "./llm-cache.js";
+import { initLLMEnricher } from "./phase0/llm-enrichment/index.js";
 import { IndexOptions } from "./types.js";
 import { embedAndStore } from "./vector-store.js";
 
@@ -306,6 +308,7 @@ export async function indexProject(
   ignoredFiles: number;
   errors: number;
   chunksCreated: number;
+  phase03Metrics?: any;
 }> {
   const {
     filePatterns = ["**/*.{js,ts,py,md,txt,json,yaml,yml,html,css,scss}"],
@@ -317,6 +320,30 @@ export async function indexProject(
   // Initialiser le cache LLM
   const llmCache = getLlmCache();
   console.log(`🧠 Cache LLM initialisé: TTL=${llmCache.getStats().maxSize} entrées max`);
+
+  // Initialiser le service LLM Enricher (Phase 0.3)
+  const configManager = getRagConfigManager();
+  const config = configManager.getConfig();
+  const phase03Config = (config as any).phase0_3 || { enabled: false };
+
+  const llmEnricher = initLLMEnricher({
+    enabled: phase03Config.enabled || false,
+    provider: phase03Config.provider || 'ollama',
+    model: phase03Config.model || 'llama3.1:latest',
+    temperature: phase03Config.temperature || 0.1,
+    maxTokens: phase03Config.max_tokens || 1000,
+    timeoutMs: phase03Config.timeout_ms || 30000,
+    batchSize: phase03Config.batch_size || 5,
+    features: phase03Config.features || ['summary', 'keywords', 'entities'],
+    cacheEnabled: phase03Config.cache_enabled || true,
+    cacheTtlSeconds: phase03Config.cache_ttl_seconds || 3600,
+  });
+
+  if (llmEnricher.isEnrichmentEnabled()) {
+    console.log(`🧠 Phase 0.3 - LLM Enrichment ACTIVÉ: ${phase03Config.provider}/${phase03Config.model}`);
+  } else {
+    console.log(`🧠 Phase 0.3 - LLM Enrichment DÉSACTIVÉ (feature flag)`);
+  }
 
   const stats = {
     totalFiles: 0,
@@ -372,21 +399,82 @@ export async function indexProject(
           ? await chunkIntelligently(content, filePath, contentType, language, chunkSize, chunkOverlap)
           : [content];
 
+        // Phase 0.3 - Enrichissement LLM optionnel
+        const enrichedChunks: Array<{ id: string; content: string; metadata: any }> = [];
+
+        for (let i = 0; i < chunks.length; i++) {
+          const chunk = chunks[i];
+          const chunkId = `${filePath}#chunk${i}`;
+
+          enrichedChunks.push({
+            id: chunkId,
+            content: chunk,
+            metadata: {
+              language,
+              fileType: contentType,
+              filePath,
+              projectPath,
+              chunkIndex: i,
+              totalChunks: chunks.length,
+              role: contentType === 'code' ? 'core' :
+                contentType === 'doc' ? 'example' :
+                  contentType === 'config' ? 'template' : 'other',
+              contentType,
+            }
+          });
+        }
+
+        // Enrichir les chunks si Phase 0.3 activée
+        let enrichedResults = null;
+        if (llmEnricher.isEnrichmentEnabled() && enrichedChunks.length > 0) {
+          try {
+            console.log(`🧠 Phase 0.3 - Enrichissement de ${enrichedChunks.length} chunks...`);
+            enrichedResults = await llmEnricher.enrichBatch(enrichedChunks);
+            console.log(`🧠 Phase 0.3 - Enrichissement terminé: ${enrichedResults.filter(r => r !== null).length}/${enrichedChunks.length} succès`);
+          } catch (enrichmentError) {
+            console.error(`❌ Erreur Phase 0.3: ${enrichmentError instanceof Error ? enrichmentError.message : String(enrichmentError)}`);
+            enrichedResults = null;
+          }
+        }
+
         // Stocker chaque chunk dans le vector store avec métadonnées
         for (let i = 0; i < chunks.length; i++) {
           const chunk = chunks[i];
           const chunkFilePath = chunks.length > 1 ? `${filePath}#chunk${i}` : filePath;
 
-          await embedAndStore(projectPath, chunkFilePath, chunk, {
+          // Utiliser le contenu enrichi si disponible, sinon le contenu original
+          let chunkContent = chunk;
+          let enrichmentMetadata = {};
+
+          if (enrichedResults && enrichedResults[i]) {
+            const enriched = enrichedResults[i];
+            if (enriched) {
+              chunkContent = enriched.enrichedContent;
+              enrichmentMetadata = {
+                enrichment_summary: enriched.metadata.summary,
+                enrichment_keywords: enriched.metadata.keywords,
+                enrichment_entities: enriched.metadata.entities,
+                enrichment_complexity: enriched.metadata.complexity,
+                enrichment_category: enriched.metadata.category,
+                enrichment_language: enriched.metadata.language,
+                enrichment_confidence: enriched.metadata.confidence,
+                enrichment_model: enriched.modelUsed,
+                enrichment_time_ms: enriched.enrichmentTimeMs,
+              };
+            }
+          }
+
+          await embedAndStore(projectPath, chunkFilePath, chunkContent, {
             chunkIndex: i,
             totalChunks: chunks.length,
             contentType: contentType,
             language: language,
             fileExtension: filePath.split('.').pop() || undefined,
-            linesCount: chunk.split('\n').length,
+            linesCount: chunkContent.split('\n').length,
             role: contentType === 'code' ? 'core' :
               contentType === 'doc' ? 'example' :
-                contentType === 'config' ? 'template' : 'other'
+                contentType === 'config' ? 'template' : 'other',
+            ...enrichmentMetadata,
           });
 
           stats.chunksCreated++;
@@ -408,6 +496,17 @@ export async function indexProject(
     const cacheStats = llmCache.getStats();
     console.error(`📊 Statistiques cache LLM: ${cacheStats.hits} hits, ${cacheStats.misses} misses, ratio: ${(cacheStats.hitRatio * 100).toFixed(1)}%`);
 
+    // Récupérer les métriques Phase 0.3
+    const phase03Metrics = llmEnricher.getStats();
+    if (llmEnricher.isEnrichmentEnabled()) {
+      console.error(`🧠 Phase 0.3 Métriques:`);
+      console.error(`  Chunks traités: ${phase03Metrics.totalProcessed}`);
+      console.error(`  Chunks enrichis: ${phase03Metrics.totalEnriched}`);
+      console.error(`  Taux succès: ${(phase03Metrics.successRate * 100).toFixed(1)}%`);
+      console.error(`  Temps moyen: ${phase03Metrics.averageTimeMs.toFixed(0)}ms`);
+      console.error(`  Erreurs: ${phase03Metrics.errors}`);
+    }
+
     console.error(`Indexation terminée pour ${projectPath}`);
     console.error(`  Total fichiers: ${stats.totalFiles}`);
     console.error(`  Indexés: ${stats.indexedFiles}`);
@@ -415,7 +514,10 @@ export async function indexProject(
     console.error(`  Ignorés: ${stats.ignoredFiles}`);
     console.error(`  Erreurs: ${stats.errors}`);
 
-    return stats;
+    return {
+      ...stats,
+      phase03Metrics: llmEnricher.isEnrichmentEnabled() ? phase03Metrics : undefined
+    };
   } catch (error) {
     console.error(`Error indexing project ${projectPath}:`, error);
     throw error;
@@ -434,6 +536,7 @@ export async function updateProject(
   modifiedFiles: number;
   deletedFiles: number;
   unchangedFiles: number;
+  phase03Metrics?: any;
 }> {
   const {
     filePatterns = ["**/*.{js,ts,py,md,txt,json,yaml,yml,html,css,scss}"],
@@ -441,6 +544,24 @@ export async function updateProject(
     chunkSize = 1000,
     chunkOverlap = 200,
   } = options;
+
+  // Initialiser le service LLM Enricher (Phase 0.3)
+  const configManager = getRagConfigManager();
+  const config = configManager.getConfig();
+  const phase03Config = (config as any).phase0_3 || { enabled: false };
+
+  const llmEnricher = initLLMEnricher({
+    enabled: phase03Config.enabled || false,
+    provider: phase03Config.provider || 'ollama',
+    model: phase03Config.model || 'llama3.1:latest',
+    temperature: phase03Config.temperature || 0.1,
+    maxTokens: phase03Config.max_tokens || 1000,
+    timeoutMs: phase03Config.timeout_ms || 30000,
+    batchSize: phase03Config.batch_size || 5,
+    features: phase03Config.features || ['summary', 'keywords', 'entities'],
+    cacheEnabled: phase03Config.cache_enabled || true,
+    cacheTtlSeconds: phase03Config.cache_ttl_seconds || 3600,
+  });
 
   const stats = {
     totalFiles: 0,
@@ -537,6 +658,44 @@ export async function updateProject(
           ? await chunkIntelligently(content, filePath, contentType, language, chunkSize, chunkOverlap)
           : [content];
 
+        // Phase 0.3 - Enrichissement LLM optionnel
+        const enrichedChunks: Array<{ id: string; content: string; metadata: any }> = [];
+
+        for (let i = 0; i < chunks.length; i++) {
+          const chunk = chunks[i];
+          const chunkId = `${filePath}#chunk${i}`;
+
+          enrichedChunks.push({
+            id: chunkId,
+            content: chunk,
+            metadata: {
+              language,
+              fileType: contentType,
+              filePath,
+              projectPath,
+              chunkIndex: i,
+              totalChunks: chunks.length,
+              role: contentType === 'code' ? 'core' :
+                contentType === 'doc' ? 'example' :
+                  contentType === 'config' ? 'template' : 'other',
+              contentType,
+            }
+          });
+        }
+
+        // Enrichir les chunks si Phase 0.3 activée
+        let enrichedResults = null;
+        if (llmEnricher.isEnrichmentEnabled() && enrichedChunks.length > 0) {
+          try {
+            console.log(`🧠 Phase 0.3 - Enrichissement de ${enrichedChunks.length} chunks...`);
+            enrichedResults = await llmEnricher.enrichBatch(enrichedChunks);
+            console.log(`🧠 Phase 0.3 - Enrichissement terminé: ${enrichedResults.filter(r => r !== null).length}/${enrichedChunks.length} succès`);
+          } catch (enrichmentError) {
+            console.error(`❌ Erreur Phase 0.3: ${enrichmentError instanceof Error ? enrichmentError.message : String(enrichmentError)}`);
+            enrichedResults = null;
+          }
+        }
+
         // Supprimer les anciens chunks de ce fichier
         await deleteFileFromIndex(projectPath, filePath);
 
@@ -545,16 +704,39 @@ export async function updateProject(
           const chunk = chunks[i];
           const chunkFilePath = chunks.length > 1 ? `${filePath}#chunk${i}` : filePath;
 
-          await embedAndStore(projectPath, chunkFilePath, chunk, {
+          // Utiliser le contenu enrichi si disponible, sinon le contenu original
+          let chunkContent = chunk;
+          let enrichmentMetadata = {};
+
+          if (enrichedResults && enrichedResults[i]) {
+            const enriched = enrichedResults[i];
+            if (enriched) {
+              chunkContent = enriched.enrichedContent;
+              enrichmentMetadata = {
+                enrichment_summary: enriched.metadata.summary,
+                enrichment_keywords: enriched.metadata.keywords,
+                enrichment_entities: enriched.metadata.entities,
+                enrichment_complexity: enriched.metadata.complexity,
+                enrichment_category: enriched.metadata.category,
+                enrichment_language: enriched.metadata.language,
+                enrichment_confidence: enriched.metadata.confidence,
+                enrichment_model: enriched.modelUsed,
+                enrichment_time_ms: enriched.enrichmentTimeMs,
+              };
+            }
+          }
+
+          await embedAndStore(projectPath, chunkFilePath, chunkContent, {
             chunkIndex: i,
             totalChunks: chunks.length,
             contentType: contentType,
             language: language,
             fileExtension: filePath.split('.').pop() || undefined,
-            linesCount: chunk.split('\n').length,
+            linesCount: chunkContent.split('\n').length,
             role: contentType === 'code' ? 'core' :
               contentType === 'doc' ? 'example' :
-                contentType === 'config' ? 'template' : 'other'
+                contentType === 'config' ? 'template' : 'other',
+            ...enrichmentMetadata,
           });
 
           stats.chunksCreated++;
@@ -576,6 +758,17 @@ export async function updateProject(
     // Compter les fichiers inchangés
     stats.unchangedFiles = stats.totalFiles - (stats.modifiedFiles + stats.deletedFiles + stats.ignoredFiles);
 
+    // Récupérer les métriques Phase 0.3
+    const phase03Metrics = llmEnricher.getStats();
+    if (llmEnricher.isEnrichmentEnabled()) {
+      console.error(`🧠 Phase 0.3 Métriques:`);
+      console.error(`  Chunks traités: ${phase03Metrics.totalProcessed}`);
+      console.error(`  Chunks enrichis: ${phase03Metrics.totalEnriched}`);
+      console.error(`  Taux succès: ${(phase03Metrics.successRate * 100).toFixed(1)}%`);
+      console.error(`  Temps moyen: ${phase03Metrics.averageTimeMs.toFixed(0)}ms`);
+      console.error(`  Erreurs: ${phase03Metrics.errors}`);
+    }
+
     console.error(`Incremental reindex completed for ${projectPath}`);
     console.error(`  Total files: ${stats.totalFiles}`);
     console.error(`  Modified/added: ${stats.modifiedFiles}`);
@@ -585,7 +778,10 @@ export async function updateProject(
     console.error(`  Ignored: ${stats.ignoredFiles}`);
     console.error(`  Errors: ${stats.errors}`);
 
-    return stats;
+    return {
+      ...stats,
+      phase03Metrics: llmEnricher.isEnrichmentEnabled() ? phase03Metrics : undefined
+    };
   } catch (error) {
     console.error(`Error updating project ${projectPath}:`, error);
     throw error;

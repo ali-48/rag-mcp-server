@@ -41,9 +41,85 @@ Le système de configuration RAG centralisée permet de gérer tous les paramèt
     "chunk_overlap": { "min": 0, "max": 1000, "default": 200 },
     "search_limit": { "min": 1, "max": 50, "default": 10 },
     "search_threshold": { "min": 0, "max": 1, "default": 0 }
+  },
+
+  "phase0_3": {
+    "enabled": false,
+    "provider": "ollama",
+    "model": "llama3.1:latest",
+    "temperature": 0.1,
+    "max_tokens": 1000,
+    "timeout_ms": 30000,
+    "batch_size": 5,
+    "features": ["summary", "keywords", "entities"],
+    "cache_enabled": true,
+    "cache_ttl_seconds": 3600
   }
 }
 ```
+
+## 🧠 Phase 0.3 - LLM Enrichment Configuration
+
+### Configuration de la Phase 0.3
+
+La Phase 0.3 ajoute une couche d'enrichissement LLM optionnelle entre le chunking intelligent (Phase 0.2) et les embeddings (Phase 1). Cette fonctionnalité est contrôlée par un feature flag.
+
+**Paramètres configurables :**
+
+```json
+"phase0_3": {
+  "enabled": false,                    // Activer/désactiver Phase 0.3
+  "provider": "ollama",                // Fournisseur LLM (ollama, fake)
+  "model": "llama3.1:latest",          // Modèle LLM à utiliser
+  "temperature": 0.1,                  // Température sampling (0.0-1.0)
+  "max_tokens": 1000,                  // Tokens maximum par réponse
+  "timeout_ms": 30000,                 // Timeout pour les appels LLM
+  "batch_size": 5,                     // Taille des batches d'enrichissement
+  "features": ["summary", "keywords", "entities"], // Fonctionnalités d'enrichissement
+  "cache_enabled": true,               // Activer le cache LLM
+  "cache_ttl_seconds": 3600            // TTL du cache en secondes
+}
+```
+
+**Fonctionnalités d'enrichissement disponibles :**
+
+- `summary` : Résumé sémantique du chunk
+- `keywords` : Mots-clés pertinents extraits
+- `entities` : Entités identifiées (classes, fonctions, variables)
+- `complexity` : Complexité du code (low/medium/high)
+- `category` : Catégorie (utility-class, api-endpoint, etc.)
+- `language` : Langage de programmation détecté
+
+**Exemple d'activation :**
+
+```json
+"phase0_3": {
+  "enabled": true,
+  "provider": "ollama",
+  "model": "llama3.1:latest",
+  "temperature": 0.1,
+  "max_tokens": 1000,
+  "timeout_ms": 30000,
+  "batch_size": 5,
+  "features": ["summary", "keywords", "entities", "complexity"],
+  "cache_enabled": true,
+  "cache_ttl_seconds": 3600
+}
+```
+
+### Métriques Phase 0.3
+
+Lorsque la Phase 0.3 est activée, les métriques suivantes sont collectées :
+
+- `totalChunksProcessed` : Nombre total de chunks traités
+- `totalChunksEnriched` : Nombre de chunks enrichis avec succès
+- `totalEnrichmentTimeMs` : Temps total d'enrichissement
+- `averageEnrichmentTimeMs` : Temps moyen par chunk
+- `successRate` : Taux de succès (chunks enrichis / traités)
+- `errors` : Nombre d'erreurs LLM
+- `byModel` : Statistiques par modèle LLM utilisé
+
+Ces métriques sont disponibles dans les résultats de `indexProject` et `updateProject` via la propriété `phase03Metrics`.
 
 ## 🔧 Utilisation dans les Outils
 
@@ -63,6 +139,37 @@ const chunk_size = configManager.applyLimits('chunk_size', args.chunk_size || de
 // Validation automatique des limites
 // Si chunk_size = 50 → devient 100 (minimum)
 // Si chunk_size = 20000 → devient 10000 (maximum)
+```
+
+### index_project et update_project avec Phase 0.3
+
+Lorsque la Phase 0.3 est activée, les outils d'indexation utilisent automatiquement le service d'enrichissement :
+
+```typescript
+// Chargement de la configuration Phase 0.3
+const configManager = getRagConfigManager();
+const config = configManager.getConfig();
+const phase03Config = config.phase0_3 || { enabled: false };
+
+// Initialisation du service LLM Enricher
+const llmEnricher = initLLMEnricher({
+  enabled: phase03Config.enabled || false,
+  provider: phase03Config.provider || 'ollama',
+  model: phase03Config.model || 'llama3.1:latest',
+  temperature: phase03Config.temperature || 0.1,
+  maxTokens: phase03Config.max_tokens || 1000,
+  timeoutMs: phase03Config.timeout_ms || 30000,
+  batchSize: phase03Config.batch_size || 5,
+  features: phase03Config.features || ['summary', 'keywords', 'entities'],
+  cacheEnabled: phase03Config.cache_enabled || true,
+  cacheTtlSeconds: phase03Config.cache_ttl_seconds || 3600,
+});
+
+// Les métriques Phase 0.3 sont incluses dans les résultats
+const stats = await indexProject('/chemin/projet', options);
+if (stats.phase03Metrics) {
+  console.log('Métriques Phase 0.3:', stats.phase03Metrics);
+}
 ```
 
 ### search_code
@@ -90,10 +197,53 @@ node test-config-integration.js
 3. **Test des outils** : Vérifie que chaque outil utilise la configuration
 4. **Test des valeurs par défaut** : Vérifie les valeurs par défaut
 
-### Exemple de Sortie de Test
+🧪 Test 1: Configuration RAG
+✅ Configuration RAG valide
+📊 Version: 1.0.0
+📊 Fournisseurs disponibles: fake, ollama, sentence-transformers
+
+🧪 Test 2: Gestionnaire de configuration
+📊 Limites chunk_size: 100-10000
+📊 Validation chunk_size 500: ✅
+📊 Validation chunk_size 50000: ❌ (attendu: false)
+
+🧪 Test 3: Outil index_project
+✅ Test index_project réussi
+
+🎉 TOUS LES TESTS ONT RÉUSSI !
 
 ```
+### Exemple de Sortie de Test avec Phase 0.3
+
+```
+
 🚀 Démarrage des tests d'intégration RAG
+
+🧪 Test 1: Configuration RAG
+✅ Configuration RAG valide
+📊 Version: 1.0.0
+📊 Fournisseurs disponibles: fake, ollama, sentence-transformers
+🧠 Phase 0.3: DÉSACTIVÉ (feature flag)
+
+🧪 Test 2: Gestionnaire de configuration
+📊 Limites chunk_size: 100-10000
+📊 Validation chunk_size 500: ✅
+📊 Validation chunk_size 50000: ❌ (attendu: false)
+
+🧪 Test 3: Outil index_project
+✅ Test index_project réussi
+
+🧪 Test 4: Phase 0.3 - LLM Enrichment
+🧠 Phase 0.3 activée: ollama/llama3.1:latest
+📊 Chunks traités: 15
+📊 Chunks enrichis: 14
+📊 Taux succès: 93.3%
+📊 Temps moyen: 245ms
+✅ Test Phase 0.3 réussi
+
+🎉 TOUS LES TESTS ONT RÉUSSI !
+
+```
 ============================================================
 
 🧪 Test 1: Configuration RAG
@@ -132,6 +282,31 @@ node test-config-integration.js
     "endpoint": "http://localhost:8080"
   }
 }
+```
+
+### Configurer la Phase 0.3
+
+Pour activer la Phase 0.3, modifiez la section `phase0_3` :
+
+```json
+"phase0_3": {
+  "enabled": true,
+  "provider": "ollama",
+  "model": "llama3.1:latest",
+  "temperature": 0.1,
+  "max_tokens": 1000,
+  "timeout_ms": 30000,
+  "batch_size": 5,
+  "features": ["summary", "keywords", "entities", "complexity", "category"],
+  "cache_enabled": true,
+  "cache_ttl_seconds": 7200
+}
+```
+
+**Remarque :** Assurez-vous que Ollama est en cours d'exécution si vous utilisez le provider `ollama` :
+
+```bash
+ollama serve
 ```
 
 ### Ajuster les Limites
@@ -245,6 +420,26 @@ use_mcp_tool("rag-mcp-server", "index_project", {
 
 **Solution** : Utilisez un fournisseur de la liste : `fake`, `ollama`, `sentence-transformers`
 
+#### Erreur Phase 0.3
+
+```
+❌ Erreur Phase 0.3: LLM API timeout
+```
+
+**Solution** : Vérifiez que Ollama est en cours d'exécution si vous utilisez le provider `ollama` :
+
+```bash
+ollama serve
+```
+
+#### JSON Parsing Error Phase 0.3
+
+```
+❌ Sortie LLM invalide: Invalid JSON format
+```
+
+**Solution** : Réduisez la température ou vérifiez le prompt système dans `src/rag/phase0/llm-enrichment/prompts.ts`
+
 ### Logs de Débogage
 
 Activez les logs détaillés dans la configuration :
@@ -267,6 +462,22 @@ La configuration centralisée améliore :
 - **Sécurité** : Validation automatique des limites
 - **Testabilité** : Tests d'intégration complets
 
+### Métriques Phase 0.3
+
+La Phase 0.3 ajoute des métriques d'enrichissement détaillées :
+
+- **Qualité** : Taux de succès d'enrichissement, confiance moyenne
+- **Performance** : Temps d'enrichissement, latence LLM
+- **Utilisation** : Modèles utilisés, fonctionnalités activées
+- **Fiabilité** : Taux d'erreur, timeouts, validations échouées
+
+Ces métriques permettent d'optimiser :
+
+- Choix du modèle LLM
+- Taille des batches
+- Configuration du cache
+- Timeouts et retries
+
 ## 🔄 Mises à Jour
 
 ### Procédure de Mise à Jour
@@ -284,6 +495,7 @@ La configuration centralisée améliore :
 
 ---
 
-**Dernière mise à jour** : 28/12/2025  
+**Dernière mise à jour** : 13/01/2026  
 **Auteur** : Système de Configuration RAG  
-**Statut** : Production Ready ✅
+**Statut** : Production Ready ✅  
+**Phase 0.3** : Disponible (feature flag)

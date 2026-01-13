@@ -83,6 +83,40 @@
     "batch_size": 5,
     "max_content_length": 10000
   },
+  "phase0_3": {
+    "enabled": false,
+    "description": "Phase 0.3 - LLM Enrichment avant embeddings",
+    "provider": "ollama",
+    "model": "llama3.1:latest",
+    "temperature": 0.1,
+    "max_tokens": 1000,
+    "timeout_ms": 30000,
+    "batch_size": 5,
+    "features": [
+      "summary",
+      "keywords",
+      "entities",
+      "complexity",
+      "category"
+    ],
+    "cache_enabled": true,
+    "cache_ttl_seconds": 3600,
+    "provider_options": {},
+    "limits": {
+      "min_content_length": 10,
+      "max_content_length": 10000,
+      "max_chunks_per_batch": 50,
+      "max_retries": 3,
+      "retry_delay_ms": 1000
+    },
+    "metrics": {
+      "enabled": true,
+      "track_success_rate": true,
+      "track_enrichment_time": true,
+      "track_confidence_scores": true,
+      "track_cache_hits": true
+    }
+  },
   "limits": {
     "chunk_size": {
       "min": 100,

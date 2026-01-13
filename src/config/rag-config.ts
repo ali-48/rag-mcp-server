@@ -101,6 +101,35 @@ export interface RagConfig {
       cache_enabled: boolean;
     };
   };
+
+  phase0_3?: {
+    enabled: boolean;
+    description?: string;
+    provider?: string;
+    model?: string;
+    temperature?: number;
+    max_tokens?: number;
+    timeout_ms?: number;
+    batch_size?: number;
+    features?: string[];
+    cache_enabled?: boolean;
+    cache_ttl_seconds?: number;
+    provider_options?: Record<string, any>;
+    limits?: {
+      min_content_length?: number;
+      max_content_length?: number;
+      max_chunks_per_batch?: number;
+      max_retries?: number;
+      retry_delay_ms?: number;
+    };
+    metrics?: {
+      enabled?: boolean;
+      track_success_rate?: boolean;
+      track_enrichment_time?: boolean;
+      track_confidence_scores?: boolean;
+      track_cache_hits?: boolean;
+    };
+  };
 }
 
 /**
