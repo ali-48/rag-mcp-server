@@ -1,0 +1,190 @@
+# .ragignore - Fichier d'ignorance pour RAG
+# Version: 2.0.0
+# Généré: {{generated_at}}
+
+# ========== DOSSERTS IGNORÉS PAR DÉFAUT ==========
+
+# Dossiers système
+**/.git/
+**/.svn/
+**/.hg/
+**/.DS_Store/
+**/Thumbs.db
+**/__pycache__/
+**/node_modules/
+**/dist/
+**/build/
+**/out/
+**/target/
+**/.next/
+**/.nuxt/
+**/.cache/
+**/.idea/
+**/.vscode/
+**/.vs/
+**/.history/
+
+# Dossiers de dépendances
+**/vendor/
+**/bower_components/
+**/jspm_packages/
+**/typings/
+**/.yarn/
+**/.pnp.*
+**/.npm/
+**/.pnpm-store/
+
+# Dossiers de logs et temporaires
+**/logs/
+**/log/
+**/tmp/
+**/temp/
+**/.tmp/
+**/.temp/
+**/coverage/
+**/.nyc_output/
+
+# ========== FICHIERS IGNORÉS PAR DÉFAUT ==========
+
+# Fichiers système
+.DS_Store
+Thumbs.db
+desktop.ini
+*.bak
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# Fichiers de lock
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+Cargo.lock
+composer.lock
+Gemfile.lock
+Pipfile.lock
+poetry.lock
+
+# Fichiers de configuration locale
+.env
+.env.local
+.env.*.local
+.env.development
+.env.production
+.env.test
+.local.env
+.secrets
+*.secret
+*.key
+*.pem
+*.crt
+
+# Fichiers de build
+*.min.js
+*.min.css
+*.map
+*.bundle.js
+*.chunk.js
+*.d.ts
+*.d.ts.map
+
+# Fichiers binaires
+*.exe
+*.dll
+*.so
+*.dylib
+*.bin
+*.o
+*.obj
+*.class
+*.jar
+*.war
+*.ear
+*.pyc
+*.pyo
+*.pyd
+*.egg
+*.whl
+
+# Fichiers média
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.bmp
+*.tiff
+*.svg
+*.mp3
+*.mp4
+*.avi
+*.mov
+*.wmv
+*.pdf
+*.doc
+*.docx
+*.xls
+*.xlsx
+*.ppt
+*.pptx
+*.zip
+*.tar
+*.gz
+*.7z
+*.rar
+
+# ========== EXTENSIONS SPÉCIFIQUES ==========
+
+# Fichiers de lock spécifiques
+**/yarn-error.log
+**/npm-debug.log*
+**/pnpm-debug.log*
+**/.eslintcache
+**/.stylelintcache
+**/.cache/
+
+# Fichiers de test
+**/*.spec.js
+**/*.spec.ts
+**/*.test.js
+**/*.test.ts
+**/*.spec.py
+**/*.test.py
+**/__tests__/
+**/__mocks__/
+**/test/
+**/tests/
+**/fixtures/
+**/mocks/
+
+# Fichiers de documentation générés
+**/docs/api/
+**/docs/build/
+**/docs/_build/
+**/docs/_site/
+**/docs/.vuepress/dist/
+**/docs/.next/
+**/docs/.docusaurus/
+
+# ========== CONFIGURATION PROJET ==========
+
+# Personnaliser pour votre projet
+# Exemples:
+# **/private/
+# **/confidential/
+# **/secrets/
+# **/migrations/ (si vous ne voulez pas indexer les migrations)
+
+# ========== NOTES ==========
+
+# 1. Les patterns utilisent la syntaxe glob standard
+# 2. **/ correspond à n'importe quel niveau de répertoire
+# 3. * correspond à n'importe quel caractère sauf /
+# 4. Les commentaires commencent par #
+# 5. Les patterns sont évalués dans l'ordre
+
+# Pour inclure un fichier normalement ignoré, utilisez ! devant le pattern
+# Exemple: !**/important-file.md
+
+# ========== FIN DU FICHIER ==========

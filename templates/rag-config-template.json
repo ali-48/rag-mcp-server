@@ -1,0 +1,81 @@
+{
+    "version": "2.0.0",
+    "project_id": "{{project_id}}",
+    "project_path": "{{project_path}}",
+    "initialized_at": "{{initialized_at}}",
+    "rag_state": "initialized",
+    "file_patterns": [
+        "**/*.ts",
+        "**/*.js",
+        "**/*.py",
+        "**/*.md",
+        "**/*.json",
+        "**/*.yaml",
+        "**/*.yml",
+        "**/*.txt"
+    ],
+    "chunking": {
+        "strategy": "logical",
+        "max_chunk_size": 1000,
+        "chunk_overlap": 200,
+        "min_chunk_size": 100,
+        "preserve_structure": true
+    },
+    "embeddings": {
+        "provider": "ollama",
+        "default_model": "nomic-embed-text",
+        "code_model": "nomic-embed-code",
+        "text_model": "nomic-embed-text",
+        "config_model": "bge-small",
+        "batch_size": 10,
+        "timeout_ms": 30000
+    },
+    "indexing": {
+        "recursive": true,
+        "max_file_size_mb": 10,
+        "ignore_hidden": true,
+        "follow_symlinks": false,
+        "concurrency": 4
+    },
+    "database": {
+        "type": "sqlite",
+        "path": "{{db_path}}",
+        "schema_version": "v2",
+        "auto_migrate": true,
+        "backup_enabled": true
+    },
+    "phase0": {
+        "enabled": true,
+        "workspace_detection": true,
+        "file_watcher": false,
+        "llm_enrichment": false,
+        "log_level": "info"
+    },
+    "metadata": {
+        "content_types": [
+            "code",
+            "doc",
+            "config",
+            "other"
+        ],
+        "languages": [
+            "typescript",
+            "javascript",
+            "python",
+            "markdown"
+        ],
+        "roles": [
+            "core",
+            "example",
+            "template",
+            "test"
+        ],
+        "tags": []
+    },
+    "validation": {
+        "atomicity_threshold": 0.8,
+        "coherence_threshold": 0.7,
+        "similarity_threshold": 0.3,
+        "max_errors_per_file": 5
+    }
+}

@@ -1,0 +1,74 @@
+{
+    "version": "2.0.0",
+    "database": {
+        "type": "sqlite",
+        "path": "{{db_path}}",
+        "schema_version": "v2",
+        "auto_migrate": true,
+        "backup_enabled": true,
+        "backup_path": "{{backup_path}}",
+        "max_backups": 5
+    },
+    "connection": {
+        "pool_size": 5,
+        "connection_timeout_ms": 5000,
+        "query_timeout_ms": 30000,
+        "idle_timeout_ms": 60000
+    },
+    "performance": {
+        "cache_size_mb": 100,
+        "journal_mode": "WAL",
+        "synchronous": "NORMAL",
+        "temp_store": "MEMORY",
+        "page_size": 4096
+    },
+    "tables": {
+        "chunks": {
+            "name": "rag_chunks_v2",
+            "indexes": [
+                "project_id",
+                "file_path",
+                "content_type",
+                "language"
+            ],
+            "fulltext_index": true
+        },
+        "embeddings": {
+            "name": "rag_embeddings_v2",
+            "indexes": [
+                "chunk_id",
+                "model_name",
+                "dimensions"
+            ],
+            "vector_index": true
+        },
+        "projects": {
+            "name": "rag_projects_v2",
+            "indexes": [
+                "project_id",
+                "project_path",
+                "initialized_at"
+            ]
+        },
+        "metadata": {
+            "name": "rag_metadata_v2",
+            "indexes": [
+                "project_id",
+                "key",
+                "value"
+            ]
+        }
+    },
+    "maintenance": {
+        "vacuum_on_startup": false,
+        "analyze_on_startup": true,
+        "auto_vacuum_threshold_mb": 100,
+        "backup_before_vacuum": true
+    },
+    "monitoring": {
+        "enable_stats": true,
+        "stats_interval_minutes": 60,
+        "log_slow_queries_ms": 1000,
+        "max_query_history": 1000
+    }
+}
