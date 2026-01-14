@@ -1,0 +1,193 @@
+{
+    "$schema": "./pipeline-schema.json",
+    "version": "1.0.0",
+    "name": "rag-pipeline-default",
+    "description": "Pipeline déclaratif pour l'orchestration des étapes RAG",
+    "created_at": "2025-01-14T08:00:00Z",
+    "author": "rag-mcp-server",
+    "phases": [
+        {
+            "id": "phase0",
+            "name": "Workspace Detection & Analysis",
+            "description": "Détection automatique du workspace et analyse statique des fichiers",
+            "tool": "scan_rag",
+            "enabled": true,
+            "required": false,
+            "config": {
+                "enable_workspace_detection": true,
+                "enable_file_watcher": false,
+                "file_patterns": [
+                    "**/*"
+                ],
+                "content_types": [
+                    "code",
+                    "doc",
+                    "config",
+                    "other"
+                ],
+                "max_depth": 10,
+                "include_hidden": false
+            },
+            "outputs": [
+                "project_metadata",
+                "file_analysis",
+                "stats"
+            ],
+            "next_phases": [
+                "phase1",
+                "phase2"
+            ]
+        },
+        {
+            "id": "phase1",
+            "name": "Intelligent Chunking",
+            "description": "Découpage intelligent des fichiers en chunks sémantiques",
+            "tool": "index_rag",
+            "enabled": true,
+            "required": true,
+            "config": {
+                "mode": "full",
+                "chunking_strategy": "logical",
+                "max_chunk_size": 1000,
+                "chunk_overlap": 200,
+                "embedding_model": "nomic-embed-text",
+                "enable_llm_enrichment": false,
+                "recursive": true
+            },
+            "inputs": [
+                "project_metadata",
+                "file_analysis"
+            ],
+            "outputs": [
+                "chunks",
+                "index_stats"
+            ],
+            "next_phases": [
+                "phase2"
+            ]
+        },
+        {
+            "id": "phase2",
+            "name": "Semantic Search",
+            "description": "Recherche sémantique dans les chunks indexés",
+            "tool": "query_rag",
+            "enabled": true,
+            "required": false,
+            "config": {
+                "scope": "project",
+                "top_k": 10,
+                "threshold": 0.3,
+                "search_mode": "semantic",
+                "enable_reranking": false,
+                "include_content": true,
+                "max_content_length": 500
+            },
+            "inputs": [
+                "chunks"
+            ],
+            "outputs": [
+                "search_results",
+                "search_stats"
+            ],
+            "next_phases": []
+        }
+    ],
+    "workflows": [
+        {
+            "id": "full_indexing",
+            "name": "Full Indexing Workflow",
+            "description": "Workflow complet d'indexation (scan + index)",
+            "phases": [
+                "phase0",
+                "phase1"
+            ],
+            "default_config": {
+                "project_path": null,
+                "force_reindex": false
+            }
+        },
+        {
+            "id": "incremental_update",
+            "name": "Incremental Update Workflow",
+            "description": "Mise à jour incrémentale de l'index",
+            "phases": [
+                "phase1"
+            ],
+            "default_config": {
+                "mode": "incremental",
+                "project_path": null
+            }
+        },
+        {
+            "id": "search_only",
+            "name": "Search Only Workflow",
+            "description": "Recherche seulement (nécessite index pré-existant)",
+            "phases": [
+                "phase2"
+            ],
+            "default_config": {
+                "project_path": null,
+                "query": null
+            }
+        },
+        {
+            "id": "analyze_and_index",
+            "name": "Analyze and Index Workflow",
+            "description": "Analyse approfondie puis indexation",
+            "phases": [
+                "phase0",
+                "phase1"
+            ],
+            "default_config": {
+                "enable_llm_enrichment": true,
+                "chunking_strategy": "ai_enhanced"
+            }
+        }
+    ],
+    "dependencies": {
+        "phase0": [],
+        "phase1": [
+            "phase0"
+        ],
+        "phase2": [
+            "phase1"
+        ]
+    },
+    "validation_rules": [
+        {
+            "rule": "project_path_required",
+            "condition": "all",
+            "message": "project_path est requis pour toutes les phases"
+        },
+        {
+            "rule": "rag_initialized",
+            "condition": "phase1,phase2",
+            "message": "Le RAG doit être initialisé avec init_rag avant d'exécuter cette phase"
+        },
+        {
+            "rule": "index_exists",
+            "condition": "phase2",
+            "message": "Un index doit exister avant d'exécuter la recherche"
+        }
+    ],
+    "metadata": {
+        "max_concurrent_phases": 1,
+        "allow_parallel_execution": false,
+        "timeout_seconds": 3600,
+        "retry_policy": {
+            "max_retries": 3,
+            "backoff_factor": 2,
+            "retryable_errors": [
+                "NETWORK_ERROR",
+                "TIMEOUT",
+                "RATE_LIMIT"
+            ]
+        },
+        "logging": {
+            "level": "info",
+            "format": "json",
+            "output": "file",
+            "file_path": "./logs/pipeline.log"
+        }
+    }
+}

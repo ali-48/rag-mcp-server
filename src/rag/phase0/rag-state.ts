@@ -244,7 +244,7 @@ export function computeProjectId(projectPath: string): string {
 }
 
 // Export pour les tests
-export { RagConfig };
+export type { RagConfig };
 
 // Test si exécuté directement (commenté pour éviter les erreurs de compilation)
 // if (import.meta.url === `file://${process.argv[1]}`) {

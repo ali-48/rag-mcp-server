@@ -42,7 +42,7 @@ export const manageProjectsHandler = async (args) => {
         }
     }
     catch (error) {
-        console.error("Error in manage_projects tool:", error);
+        // Pas de logs sur stderr pour compatibilité MCP
         throw error;
     }
 };
@@ -50,7 +50,7 @@ export const manageProjectsHandler = async (args) => {
  * Test de l'outil (pour usage en développement)
  */
 export async function testManageProjects() {
-    console.log("Testing manage_projects tool...");
+    // Pas de logs sur stderr pour compatibilité MCP
     try {
         // D'abord indexer un projet de test
         const testProjectPath = "/tmp/test-project-manage";
@@ -62,32 +62,40 @@ export async function testManageProjects() {
         // Créer un fichier de test
         const testFile = path.join(testProjectPath, "manage-test.js");
         fs.writeFileSync(testFile, "// Test file for manage_projects\nconsole.log('Manage test');");
-        // Indexer le projet
-        const { indexProjectHandler } = await import("./index-project.js");
-        await indexProjectHandler({
+        // Initialiser le projet avec init_rag
+        const { initRagHandler } = await import("./init-rag.js");
+        await initRagHandler({
             project_path: testProjectPath,
-            file_patterns: ["**/*.js"],
-            recursive: true,
-            embedding_provider: "fake"
+            mode: "default",
+            force: false,
+            verbose: false
         });
-        console.log(`✅ Indexed test project at: ${testProjectPath}`);
+        // Indexer le projet avec activated_rag
+        const { activatedRagHandler } = await import("./activated-rag.js");
+        await activatedRagHandler({
+            project_path: testProjectPath,
+            mode: "full",
+            file_patterns: ["**/*.js"],
+            enable_phase0: true
+        });
+        // Pas de logs sur stderr pour compatibilité MCP
         // Tester l'action 'list'
-        console.log("Test 1: Action 'list'");
+        // Pas de logs sur stderr pour compatibilité MCP
         const listResult = await manageProjectsHandler({ action: "list" });
-        console.log("✅ manage_projects 'list' fonctionne:", listResult ? "Oui" : "Non");
+        // Pas de logs sur stderr pour compatibilité MCP
         // Tester l'action 'stats'
-        console.log("Test 2: Action 'stats'");
+        // Pas de logs sur stderr pour compatibilité MCP
         const statsResult = await manageProjectsHandler({
             action: "stats",
             project_path: testProjectPath
         });
-        console.log("✅ manage_projects 'stats' fonctionne:", statsResult ? "Oui" : "Non");
+        // Pas de logs sur stderr pour compatibilité MCP
         // Nettoyer
         fs.rmSync(testProjectPath, { recursive: true, force: true });
         return { listResult, statsResult };
     }
     catch (error) {
-        console.error("❌ Test failed:", error);
+        // Pas de logs sur stderr pour compatibilité MCP
         throw error;
     }
 }

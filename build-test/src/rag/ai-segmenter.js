@@ -22,13 +22,13 @@ export async function analyzeSegmentation(content, filePath, contentType, langua
     // Vérifier si l'analyse LLM est activée
     if (configManager.isLlmAnalysisEnabled()) {
         try {
-            console.log(`🧠 Analyse LLM activée pour ${filePath} (${contentType})`);
+            // Pas de logs sur stderr pour compatibilité MCP
             // Vérifier le cache d'abord
             const cache = getLlmCache();
             const cacheKey = `${filePath}:${contentType}:suggest_structure`;
             const cachedAnalysis = cache.get(content, filePath, 'suggest_structure', contentType);
             if (cachedAnalysis) {
-                console.log(`✅ Utilisation du cache pour ${filePath}`);
+                // Pas de logs sur stderr pour compatibilité MCP
                 return parseLlmAnalysis(cachedAnalysis, content, contentType, language);
             }
             // Si pas dans le cache, appeler le service LLM
@@ -36,12 +36,12 @@ export async function analyzeSegmentation(content, filePath, contentType, langua
             const llmAnalysis = await llmService.analyzeContent(content, filePath, contentType, 'suggest_structure');
             // Stocker dans le cache
             cache.set(content, filePath, 'suggest_structure', llmAnalysis, contentType);
-            console.log(`💾 Analyse LLM mise en cache pour ${filePath}`);
+            // Pas de logs sur stderr pour compatibilité MCP
             // Parser la réponse LLM en suggestions
             return parseLlmAnalysis(llmAnalysis, content, contentType, language);
         }
         catch (error) {
-            console.error(`❌ Analyse LLM échouée, fallback aux règles: ${error}`);
+            // Pas de logs sur stderr pour compatibilité MCP
             // Fallback aux règles heuristiques
         }
     }
@@ -102,7 +102,7 @@ async function analyzeCodeSegmentation(content, language, filePath) {
         }
     }
     catch (error) {
-        console.error(`Erreur lors de l'analyse de segmentation du code: ${error.message}`);
+        // Pas de logs sur stderr pour compatibilité MCP
     }
     // Fallback: analyse générique
     return analyzeGenericSegmentation(content, filePath || 'unknown');
@@ -369,7 +369,7 @@ function parseLlmAnalysis(llmAnalysis, content, contentType, language) {
         }
     }
     catch (error) {
-        console.error(`❌ Erreur parsing réponse LLM: ${error}`);
+        // Pas de logs sur stderr pour compatibilité MCP
     }
     // Si aucune suggestion LLM, créer une suggestion générique
     if (suggestions.length === 0) {
@@ -407,7 +407,7 @@ function parseLlmAnalysis(llmAnalysis, content, contentType, language) {
  */
 export async function getClineSegmentationSuggestions(content, filePath, contentType) {
     // Pour l'instant, utiliser le service LLM
-    console.log(`🧠 Utilisation du service LLM pour ${filePath}`);
+    // Pas de logs sur stderr pour compatibilité MCP
     const analysis = await analyzeSegmentation(content, filePath, contentType);
     return analysis.suggestions;
 }

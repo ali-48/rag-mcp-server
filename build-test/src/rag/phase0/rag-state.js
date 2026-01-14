@@ -1,47 +1,8 @@
-"use strict";
 // src/rag/phase0/rag-state.ts
 // Module B : Vérification de l'état RAG (lecture seule)
 // Responsabilités : B1 - Vérification minimale, B2 - État détaillé
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.isRagInitialized = isRagInitialized;
-exports.getRagState = getRagState;
-exports.isValidProjectPath = isValidProjectPath;
-exports.computeProjectId = computeProjectId;
-const fs_1 = require("fs");
-const path = __importStar(require("path"));
+import { promises as fs } from 'fs';
+import * as path from 'path';
 /**
  * B1 - Vérification minimale
  * Vérifie si un projet est initialisé pour RAG
@@ -49,18 +10,18 @@ const path = __importStar(require("path"));
  * @param projectPath Chemin vers le projet
  * @returns true si le projet est RAG-initialized
  */
-async function isRagInitialized(projectPath) {
+export async function isRagInitialized(projectPath) {
     try {
         const configPath = path.join(projectPath, 'rag', 'config', 'rag.config.json');
         // Vérifier l'existence du fichier de configuration
         try {
-            await fs_1.promises.access(configPath);
+            await fs.access(configPath);
         }
         catch {
             return false; // Fichier non trouvé
         }
         // Lire et parser la configuration
-        const configContent = await fs_1.promises.readFile(configPath, 'utf-8');
+        const configContent = await fs.readFile(configPath, 'utf-8');
         const config = JSON.parse(configContent);
         // Vérifier le flag rag_initialized
         return config.rag_initialized === true;
@@ -78,7 +39,7 @@ async function isRagInitialized(projectPath) {
  * @param projectPath Chemin vers le projet
  * @returns État détaillé du RAG
  */
-async function getRagState(projectPath) {
+export async function getRagState(projectPath) {
     const state = {
         initialized: false,
         projectPath,
@@ -96,7 +57,7 @@ async function getRagState(projectPath) {
         const configPath = path.join(ragPath, 'config', 'rag.config.json');
         // Vérifier l'existence de la structure de base
         try {
-            await fs_1.promises.access(configPath);
+            await fs.access(configPath);
         }
         catch {
             state.errors?.push(`Configuration RAG non trouvée: ${configPath}`);
@@ -105,7 +66,7 @@ async function getRagState(projectPath) {
         // Lire la configuration
         let config = {};
         try {
-            const configContent = await fs_1.promises.readFile(configPath, 'utf-8');
+            const configContent = await fs.readFile(configPath, 'utf-8');
             config = JSON.parse(configContent);
         }
         catch (error) {
@@ -127,7 +88,7 @@ async function getRagState(projectPath) {
         if (config.infrastructure?.memory_db) {
             try {
                 const dbPath = config.infrastructure.memory_db.replace('sqlite://', '');
-                await fs_1.promises.access(dbPath);
+                await fs.access(dbPath);
                 state.memoryDbStatus = 'ok';
             }
             catch {
@@ -157,7 +118,7 @@ async function getRagState(projectPath) {
         ];
         for (const dir of requiredDirs) {
             try {
-                await fs_1.promises.access(dir);
+                await fs.access(dir);
             }
             catch {
                 state.warnings?.push(`Dossier manquant: ${dir}`);
@@ -166,7 +127,7 @@ async function getRagState(projectPath) {
         // Vérifier l'existence de .ragignore
         const ragIgnorePath = path.join(normalizedPath, '.ragignore');
         try {
-            await fs_1.promises.access(ragIgnorePath);
+            await fs.access(ragIgnorePath);
         }
         catch {
             state.warnings?.push('.ragignore non trouvé');
@@ -184,9 +145,9 @@ async function getRagState(projectPath) {
  * @param projectPath Chemin à vérifier
  * @returns true si le chemin existe et est accessible
  */
-async function isValidProjectPath(projectPath) {
+export async function isValidProjectPath(projectPath) {
     try {
-        const stats = await fs_1.promises.stat(projectPath);
+        const stats = await fs.stat(projectPath);
         return stats.isDirectory();
     }
     catch {
@@ -199,7 +160,7 @@ async function isValidProjectPath(projectPath) {
  * @param projectPath Chemin du projet
  * @returns Hash MD5 du chemin normalisé
  */
-function computeProjectId(projectPath) {
+export function computeProjectId(projectPath) {
     // Pour l'instant, utilisation d'un hash simple basé sur le chemin
     // Pourrait être remplacé par SHA-256 ou autre algorithme plus robuste
     const normalizedPath = path.resolve(projectPath);
@@ -249,3 +210,4 @@ function computeProjectId(projectPath) {
 // 
 //     runTest().catch(console.error);
 // }
+//# sourceMappingURL=rag-state.js.map

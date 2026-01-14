@@ -233,7 +233,7 @@ describe('Phase 0.3 - Integration Tests', () => {
                 enrichBatch: vi.fn().mockImplementation(async (chunks) => {
                     // Simuler un délai d'enrichissement
                     await new Promise(resolve => setTimeout(resolve, 50));
-                    return chunks.map(chunk => ({
+                    return chunks.map((chunk) => ({
                         id: chunk.id,
                         originalContent: chunk.content,
                         enrichedContent: `Enriched: ${chunk.content.substring(0, 50)}...`,

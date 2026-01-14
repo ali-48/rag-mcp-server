@@ -1,75 +1,27 @@
 // src/tools/rag/activated-rag.ts
-// Outil maître: activated_rag - Orchestration complète du pipeline RAG (5 phases)
-// Remplace: injection_rag, index_project, update_project, analyse_code
-// Version: v2.0.0
-import { getRagConfigManager } from "../../config/rag-config.js";
-import { indexProject, updateProject } from "../../rag/indexer.js";
-import { createPhase0IntegrationWithIndexing } from "../../rag/phase0/phase0-integration.js";
-import { setEmbeddingProvider } from "../../rag/vector-store.js";
-// Système de logs simplifié (sans émojis pour compatibilité MCP)
-var LogLevel;
-(function (LogLevel) {
-    LogLevel["INFO"] = "INFO";
-    LogLevel["DEBUG"] = "DEBUG";
-    LogLevel["ERROR"] = "ERROR";
-})(LogLevel || (LogLevel = {}));
-class ActivatedRagLogger {
-    static instance;
-    logLevel = LogLevel.ERROR; // Par défaut ERROR seulement pour MCP
-    useEmojis = false;
-    constructor() { }
-    static getInstance() {
-        if (!ActivatedRagLogger.instance) {
-            ActivatedRagLogger.instance = new ActivatedRagLogger();
-        }
-        return ActivatedRagLogger.instance;
-    }
-    setLogLevel(level) {
-        this.logLevel = level;
-    }
-    disableEmojis() {
-        this.useEmojis = false;
-    }
-    shouldLog(level) {
-        const levels = [LogLevel.ERROR, LogLevel.INFO, LogLevel.DEBUG];
-        return levels.indexOf(level) <= levels.indexOf(this.logLevel);
-    }
-    log(level, message, data) {
-        if (this.shouldLog(level)) {
-            const timestamp = new Date().toISOString();
-            const logMessage = `[${timestamp}] [${level}] ${message}`;
-            if (level === LogLevel.ERROR) {
-                console.error(logMessage);
-            }
-        }
-    }
-    info(message, data) {
-        this.log(LogLevel.INFO, message, data);
-    }
-    debug(message, data) {
-        this.log(LogLevel.DEBUG, message, data);
-    }
-    error(message, error) {
-        this.log(LogLevel.ERROR, message, error);
-    }
-    warn(message, data) {
-        this.log(LogLevel.INFO, `WARN: ${message}`, data);
-    }
-}
+// Outil maître refactorisé: activated_rag - Orchestration via pipeline déclaratif
+// Utilise les outils distincts: scan_rag, index_rag, query_rag
+// Version: v3.0.0
+// Responsabilités: Orchestration pipeline, gestion d'état, exécution séquentielle
+import { readFileSync } from 'fs';
+import { join } from 'path';
+import { logger } from "../../core/logger.js";
+import { toolRegistry } from "../../core/tool-registry.js";
+import { getRagState, isRagInitialized } from "../../rag/phase0/rag-state.js";
 /**
- * Définition de l'outil activated_rag
+ * Définition de l'outil activated_rag refactorisé
  */
 export const activatedRagTool = {
     name: "activated_rag",
-    description: "Outil maître d'orchestration RAG complet (5 phases: Workspace → Analyse → Chunking → Embeddings → Injection)",
+    description: "Outil maître d'orchestration RAG via pipeline déclaratif (scan → index → query)",
     inputSchema: {
         type: "object",
         properties: {
             // Mode d'opération
             mode: {
                 type: "string",
-                description: "Mode d'opération",
-                enum: ["full", "incremental", "watch", "analyze_only"],
+                description: "Mode d'opération ou workflow prédéfini",
+                enum: ["full", "incremental", "watch", "analyze_only", "search_only", "custom"],
                 default: "full"
             },
             // Cible
@@ -77,11 +29,14 @@ export const activatedRagTool = {
                 type: "string",
                 description: "Chemin absolu vers le projet (auto-détecté si vide)"
             },
-            file_patterns: {
-                type: "array",
-                items: { type: "string" },
-                description: "Patterns de fichiers à inclure",
-                default: ["**/*"]
+            // Pipeline personnalisé
+            pipeline_path: {
+                type: "string",
+                description: "Chemin vers un fichier pipeline.json personnalisé"
+            },
+            workflow_id: {
+                type: "string",
+                description: "ID du workflow à exécuter (si pipeline_path spécifié)"
             },
             // Options avancées
             enable_phase0: {
@@ -96,7 +51,7 @@ export const activatedRagTool = {
             },
             enable_llm_enrichment: {
                 type: "boolean",
-                description: "Activer l'enrichissement LLM optionnel (Phase 0.3)",
+                description: "Activer l'enrichissement LLM optionnel",
                 default: false
             },
             // Filtres
@@ -139,349 +94,425 @@ export const activatedRagTool = {
             metadata_overrides: {
                 type: "object",
                 description: "Surcharges de métadonnées"
+            },
+            // Options d'exécution
+            validate_pipeline: {
+                type: "boolean",
+                description: "Valider le pipeline avant exécution",
+                default: true
+            },
+            stop_on_error: {
+                type: "boolean",
+                description: "Arrêter l'exécution en cas d'erreur",
+                default: true
+            },
+            max_concurrent_phases: {
+                type: "number",
+                description: "Nombre maximum de phases concurrentes",
+                default: 1,
+                minimum: 1,
+                maximum: 10
             }
         }
     },
 };
 /**
- * Handler pour l'outil activated_rag
+ * Handler pour l'outil activated_rag refactorisé
  */
 export const activatedRagHandler = async (args) => {
-    const logger = ActivatedRagLogger.getInstance();
-    logger.disableEmojis();
-    // Configuration du niveau de logs
-    const logLevel = LogLevel.ERROR; // Pour MCP, ERROR par défaut
-    logger.setLogLevel(logLevel);
     const startTime = Date.now();
-    let phase0Integration = null;
-    let projectMetadata = null;
+    const executionId = `exec_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     try {
-        // ========== PHASE 0: Workspace Detection & File Watcher ==========
-        logger.info("🔍 Phase 0 - Détection Workspace & Surveillance");
-        // Détection automatique du projet si non spécifié
+        logger.info("rag.activated.refactored.start", "Début de l'orchestration pipeline", {
+            execution_id: executionId,
+            mode: args.mode,
+            project_path: args.project_path
+        });
+        // ========== DÉTECTION AUTOMATIQUE DU PROJET ==========
         let projectPath = args.project_path;
         if (!projectPath) {
-            try {
-                // Tentative de détection automatique
-                const fs = await import('fs');
-                const path = await import('path');
-                const cwd = process.cwd();
-                // Vérifier si cwd contient des fichiers de projet
-                const projectFiles = ['.git', 'package.json', 'pyproject.toml', 'Cargo.toml', 'go.mod'];
-                const hasProjectFile = projectFiles.some(file => fs.existsSync(path.join(cwd, file)));
-                if (hasProjectFile) {
-                    projectPath = cwd;
-                    logger.info(`📁 Projet auto-détecté: ${projectPath}`);
-                }
-                else {
-                    throw new Error("Impossible de détecter automatiquement le projet. Spécifiez 'project_path'.");
-                }
-            }
-            catch (error) {
-                logger.error("Erreur de détection automatique", error);
-                throw error;
-            }
+            projectPath = await detectProjectPath();
+            logger.info("rag.activated.refactored.project.detected", "Projet auto-détecté", { project_path: projectPath });
         }
-        // Vérification des permissions
-        try {
-            const fs = await import('fs');
-            const path = await import('path');
-            if (!fs.existsSync(projectPath)) {
-                throw new Error(`Le chemin du projet n'existe pas: ${projectPath}`);
-            }
-            // Vérifier les permissions
-            const testWritePath = path.join(projectPath, ".rag-test-permission");
-            try {
-                fs.writeFileSync(testWritePath, "test");
-                fs.unlinkSync(testWritePath);
-                logger.debug("✅ Permissions d'écriture vérifiées");
-            }
-            catch (error) {
-                logger.warn("⚠️ Permissions d'écriture limitées, continuation en mode lecture seule");
-            }
+        // ========== VÉRIFICATION RAG INITIALISÉ ==========
+        const isInitialized = await isRagInitialized(projectPath);
+        if (!isInitialized) {
+            const errorMessage = `RAG non initialisé pour le projet: ${projectPath}. Utilisez d'abord l'outil init_rag.`;
+            logger.error("rag.activated.refactored.not_initialized", errorMessage, { project_path: projectPath });
+            return {
+                content: [{
+                        type: "text",
+                        text: JSON.stringify({
+                            success: false,
+                            error: "RAG_NOT_INITIALIZED",
+                            message: errorMessage,
+                            required_action: "run_init_rag",
+                            details: {
+                                project_path: projectPath,
+                                rag_state: await getRagState(projectPath),
+                                timestamp: new Date().toISOString()
+                            }
+                        }, null, 2)
+                    }]
+            };
         }
-        catch (error) {
-            logger.error("Erreur lors de la vérification des permissions", error);
-            throw error;
-        }
-        // Initialisation Phase 0.1 si activée
-        if (args.enable_phase0 !== false) {
-            try {
-                const onIndexNeeded = async (filePath, eventType) => {
-                    logger.info(`🔍 Indexation automatique déclenchée: ${eventType} ${filePath}`);
-                };
-                phase0Integration = await createPhase0IntegrationWithIndexing(onIndexNeeded, {
-                    enableWorkspaceDetection: true,
-                    enableFileWatcher: args.enable_watcher === true,
-                    enableLogging: true,
-                    fileWatcherOptions: {
-                        debounceDelay: 500,
-                        recursive: true,
-                        logEvents: true,
-                    },
-                    loggerOptions: {
-                        minLevel: 'info',
-                        enableConsole: true,
-                        enableMemoryStorage: true,
-                    },
-                }, projectPath);
-                logger.info("✅ Phase 0.1 initialisée avec succès");
-                // Récupérer les métadonnées du workspace
-                const workspace = phase0Integration.getWorkspace();
-                if (workspace) {
-                    projectMetadata = {
-                        path: workspace.path,
-                        vscodeWorkspace: workspace.vscodeWorkspace,
-                        language: workspace.language,
-                        fileCount: workspace.metadata.fileCount,
-                        isGitRepo: workspace.metadata.isGitRepo,
-                        detectedBy: workspace.metadata.detectedBy,
-                    };
-                    logger.info("📋 Workspace détecté", projectMetadata);
-                }
-            }
-            catch (error) {
-                logger.error("Erreur Phase 0.1, continuation sans", error);
-            }
-        }
-        // ========== PHASE 1: Static Analysis ==========
-        logger.info("🔬 Phase 1 - Analyse Statique");
-        let analysisResults = null;
-        if (args.mode === 'analyze_only' || args.chunking_strategy === 'logical') {
-            try {
-                // Note: analyzeProjectStructure sera implémenté dans phase0/analyzer/
-                // Pour l'instant, on utilise une structure vide
-                analysisResults = {
-                    files: [],
-                    symbols: [],
-                    languages: [],
-                    metadata: {}
-                };
-                logger.info("✅ Analyse statique simulée (à implémenter)");
-            }
-            catch (error) {
-                logger.error("Erreur analyse statique, continuation avec chunking fixe", error);
-            }
-        }
-        // ========== PHASE 2: Intelligent Chunking Configuration ==========
-        logger.info("✂️ Phase 2 - Configuration Chunking Intelligent");
-        const configManager = getRagConfigManager();
-        const defaults = configManager.getDefaults();
-        // Configuration du chunking basée sur la stratégie
-        const chunkingStrategy = args.chunking_strategy || 'logical';
-        const maxChunkSize = args.max_chunk_size || defaults.chunk_size;
-        const chunkOverlap = configManager.applyLimits('chunk_overlap', defaults.chunk_overlap);
-        const chunkingOptions = {
-            strategy: chunkingStrategy,
-            maxChunkSize,
-            chunkOverlap,
-            analysisResults: analysisResults,
-            contentTypes: args.content_types,
-            languages: args.languages
-        };
-        logger.info("📊 Configuration chunking", chunkingOptions);
-        // ========== PHASE 3: Specialized Embeddings Configuration ==========
-        logger.info("🧠 Phase 3 - Configuration Embeddings Spécialisés");
-        // Configuration des modèles par type
-        const embeddingModels = args.embedding_models || {};
-        const defaultModels = {
-            code: 'nomic-embed-code',
-            text: 'nomic-embed-text',
-            config: 'bge-small',
-            fallback: 'qwen3-embedding:8b'
-        };
-        // Configurer le provider d'embeddings
-        const embeddingProvider = defaults.embedding_provider;
-        setEmbeddingProvider(embeddingProvider, defaultModels.fallback);
-        // Note: Le routage embeddings par type sera implémenté dans vector-store.ts
-        logger.info("🔧 Configuration embeddings", {
-            provider: embeddingProvider,
-            models: { ...defaultModels, ...embeddingModels },
-            routingEnabled: false // À implémenter dans vector-store.ts
+        // ========== CHARGEMENT DU PIPELINE ==========
+        const pipeline = await loadPipeline(args.pipeline_path);
+        logger.info("rag.activated.refactored.pipeline.loaded", "Pipeline chargé", {
+            name: pipeline.name,
+            version: pipeline.version,
+            phases_count: pipeline.phases.length,
+            workflows_count: pipeline.workflows.length
         });
-        // ========== PHASE 4: Injection & Update ==========
-        logger.info("🚀 Phase 4 - Injection & Mise à Jour");
-        let injectionResult;
-        const options = {
-            filePatterns: args.file_patterns || defaults.file_patterns,
-            recursive: args.recursive !== undefined ? args.recursive : defaults.recursive,
-            chunkSize: maxChunkSize,
-            chunkOverlap: chunkOverlap,
-            chunkingStrategy: chunkingStrategy,
-            analysisResults: analysisResults,
-            contentTypes: args.content_types,
-            languages: args.languages,
-            metadataOverrides: args.metadata_overrides
-        };
-        // Sélection du mode d'opération
-        switch (args.mode || 'full') {
-            case 'full':
-                logger.info("📦 Mode: Indexation complète");
-                injectionResult = await indexProject(projectPath, options);
-                break;
-            case 'incremental':
-                logger.info("🔄 Mode: Mise à jour incrémentale");
-                injectionResult = await updateProject(projectPath, options);
-                break;
-            case 'watch':
-                logger.info("👁️ Mode: Surveillance temps réel");
-                // Pour le mode watch, on fait une indexation initiale puis on laisse le watcher actif
-                injectionResult = await indexProject(projectPath, options);
-                logger.info("✅ Indexation initiale terminée, watcher actif");
-                break;
-            case 'analyze_only':
-                logger.info("📊 Mode: Analyse seulement");
-                // Retourner les résultats d'analyse sans injection
-                const endTime = Date.now();
-                const duration = ((endTime - startTime) / 1000).toFixed(2);
-                return {
-                    content: [{
-                            type: "text",
-                            text: JSON.stringify({
-                                success: true,
-                                version: "v2.0.0",
-                                duration_seconds: duration,
-                                mode: "analyze_only",
-                                analysis_results: analysisResults,
-                                project_metadata: projectMetadata,
-                                config_used: {
-                                    chunking_strategy: chunkingStrategy,
-                                    max_chunk_size: maxChunkSize,
-                                    content_types: args.content_types,
-                                    languages: args.languages
-                                },
-                                pipeline: {
-                                    phase_0: phase0Integration ? "✓" : "✗",
-                                    phase_1: analysisResults ? "✓" : "✗",
-                                    phase_2: "N/A",
-                                    phase_3: "N/A",
-                                    phase_4: "N/A"
-                                }
-                            }, null, 2)
-                        }]
-                };
-            default:
-                throw new Error(`Mode non supporté: ${args.mode}`);
+        // ========== VALIDATION DU PIPELINE ==========
+        if (args.validate_pipeline !== false) {
+            await validatePipeline(pipeline, projectPath);
+            logger.info("rag.activated.refactored.pipeline.validated", "Pipeline validé avec succès");
         }
+        // ========== SÉLECTION DU WORKFLOW ==========
+        const workflow = selectWorkflow(pipeline, args.mode, args.workflow_id);
+        logger.info("rag.activated.refactored.workflow.selected", "Workflow sélectionné", {
+            workflow_id: workflow.id,
+            workflow_name: workflow.name,
+            phases_count: workflow.phases.length
+        });
+        // ========== PRÉPARATION DE LA CONFIGURATION ==========
+        const phaseConfigs = preparePhaseConfigs(pipeline, workflow, args);
+        logger.info("rag.activated.refactored.config.prepared", "Configurations préparées", {
+            phases: Object.keys(phaseConfigs)
+        });
+        // ========== EXÉCUTION SÉQUENTIELLE DES PHASES ==========
+        const executionResults = await executePipelineSequentially(pipeline, workflow, phaseConfigs, projectPath, args);
         // ========== FINALISATION ==========
         const endTime = Date.now();
         const duration = ((endTime - startTime) / 1000).toFixed(2);
-        // Arrêter Phase 0.1 si nécessaire (sauf en mode watch)
-        if (phase0Integration && phase0Integration.isActive() && args.mode !== 'watch') {
-            try {
-                await phase0Integration.stop();
-                logger.info("✅ Phase 0.1 arrêtée proprement");
-            }
-            catch (error) {
-                logger.warn("⚠️ Erreur lors de l'arrêt de Phase 0.1", error);
-            }
-        }
-        // Collecter les statistiques Phase 0
-        const phase0Stats = phase0Integration ? {
-            enabled: true,
-            file_watcher: args.enable_watcher === true,
-            file_events: phase0Integration.getFileWatcherStats()?.totalEvents || 0,
-            logs: phase0Integration.getLoggerStats()?.totalLogs || 0,
-            workspace: projectMetadata
-        } : {
-            enabled: false,
-            file_watcher: false
-        };
-        // Préparer la réponse
-        logger.info("✅ Pipeline activated_rag terminé avec succès", {
+        const summary = generateExecutionSummary(executionResults, pipeline, workflow, duration, executionId);
+        logger.info("rag.activated.refactored.completed", "Orchestration pipeline terminée", {
+            execution_id: executionId,
             duration: `${duration}s`,
-            mode: args.mode || 'full',
-            total_files: injectionResult.totalFiles,
-            chunks_created: injectionResult.chunksCreated
+            success: summary.success,
+            phases_executed: summary.phases_executed,
+            phases_failed: summary.phases_failed
+        });
+        return {
+            content: [{
+                    type: "text",
+                    text: JSON.stringify(summary, null, 2)
+                }]
+        };
+    }
+    catch (error) {
+        // ========== GESTION DES ERREURS ==========
+        const endTime = Date.now();
+        const duration = ((endTime - startTime) / 1000).toFixed(2);
+        logger.error("rag.activated.refactored.error", "Erreur dans l'orchestration pipeline", {
+            execution_id: executionId,
+            error: error.message,
+            stack: error.stack,
+            duration: `${duration}s`
         });
         return {
             content: [{
                     type: "text",
                     text: JSON.stringify({
-                        success: true,
-                        version: "v2.0.0",
-                        duration_seconds: duration,
-                        // Statistiques
-                        stats: {
-                            total_files: injectionResult.totalFiles,
-                            indexed_files: injectionResult.indexedFiles,
-                            ignored_files: injectionResult.ignoredFiles || 0,
-                            errors: injectionResult.errors || 0,
-                            chunks_created: injectionResult.chunksCreated
-                        },
-                        // Pipeline exécuté
-                        pipeline: {
-                            phase_0: phase0Integration ? "✓" : args.enable_phase0 === false ? "✗" : "N/A",
-                            phase_1: analysisResults ? "✓" : "✗",
-                            phase_2: chunkingStrategy !== 'fixed' ? "✓" : "✗",
-                            phase_3: "✗", // À implémenter dans vector-store.ts
-                            phase_4: "✓"
-                        },
-                        // Métadonnées projet
-                        project_metadata: {
-                            project_path: projectPath,
-                            project_hash: "N/A", // À implémenter dans indexer.ts
-                            last_indexed: new Date().toISOString(),
-                            total_size_bytes: 0,
-                            file_types: {}
-                        },
-                        // Configuration utilisée
-                        config_used: {
-                            mode: args.mode || 'full',
-                            enable_phase0: args.enable_phase0 !== false,
-                            enable_watcher: args.enable_watcher === true,
-                            chunking_strategy: chunkingStrategy,
-                            max_chunk_size: maxChunkSize,
-                            embedding_provider: embeddingProvider,
-                            embedding_models: { ...defaultModels, ...embeddingModels }
-                        },
-                        // Statistiques Phase 0
-                        phase0_stats: phase0Stats,
-                        // Erreurs (si any)
-                        errors: injectionResult.errors > 0 ? [] : undefined
+                        success: false,
+                        execution_id: executionId,
+                        error: "PIPELINE_ORCHESTRATION_ERROR",
+                        message: error.message,
+                        duration_seconds: parseFloat(duration),
+                        timestamp: new Date().toISOString(),
+                        stack_trace: error.stack
                     }, null, 2)
                 }]
         };
     }
-    catch (error) {
-        const endTime = Date.now();
-        const duration = ((endTime - startTime) / 1000).toFixed(2);
-        logger.error("❌ Erreur dans le pipeline activated_rag", {
-            duration: `${duration}s`,
-            error: error instanceof Error ? error.message : String(error)
-        });
-        throw error;
-    }
 };
 /**
- * Test de l'outil (pour usage en développement)
+ * Détecte automatiquement le chemin du projet
  */
-export async function testActivatedRag() {
-    console.log("🧪 Test de l'outil activated_rag v2.0.0...");
-    const logger = ActivatedRagLogger.getInstance();
-    logger.setLogLevel(LogLevel.DEBUG);
+async function detectProjectPath() {
+    const fs = await import('fs');
+    const path = await import('path');
+    const cwd = process.cwd();
+    // Vérifier si cwd contient des fichiers de projet
+    const projectFiles = ['.git', 'package.json', 'pyproject.toml', 'Cargo.toml', 'go.mod'];
+    const hasProjectFile = projectFiles.some(file => fs.existsSync(path.join(cwd, file)));
+    if (hasProjectFile) {
+        return cwd;
+    }
+    throw new Error("Impossible de détecter automatiquement le projet. Spécifiez 'project_path'.");
+}
+/**
+ * Charge un pipeline depuis un fichier ou utilise le pipeline par défaut
+ */
+async function loadPipeline(pipelinePath) {
+    if (pipelinePath) {
+        try {
+            const fileContent = readFileSync(pipelinePath, 'utf-8');
+            return JSON.parse(fileContent);
+        }
+        catch (error) {
+            throw new Error(`Erreur lors du chargement du pipeline: ${error.message}`);
+        }
+    }
+    // Charger le pipeline par défaut
+    const defaultPipelinePath = join(__dirname, '../../../config/pipeline.json');
     try {
-        const testProjectPath = process.cwd(); // Utiliser le répertoire courant pour le test
-        logger.info(`✅ Test avec projet: ${testProjectPath}`);
-        // Tester le mode analyze_only
-        const result = await activatedRagHandler({
-            mode: "analyze_only",
-            project_path: testProjectPath,
-            file_patterns: ["**/*.ts", "**/*.js"],
-            chunking_strategy: "logical",
-            enable_phase0: true
-        });
-        logger.info("✅ Test réussi", {
-            has_result: !!result,
-            success: true
-        });
-        return result;
+        const fileContent = readFileSync(defaultPipelinePath, 'utf-8');
+        return JSON.parse(fileContent);
     }
     catch (error) {
-        logger.error("❌ Test échoué", error);
+        throw new Error(`Erreur lors du chargement du pipeline par défaut: ${error.message}`);
+    }
+}
+/**
+ * Valide un pipeline
+ */
+async function validatePipeline(pipeline, projectPath) {
+    // Vérifier que le pipeline_validator existe
+    if (!toolRegistry.hasTool('pipeline_validator')) {
+        logger.warn("rag.activated.refactored.validator.missing", "Pipeline validator non disponible, validation ignorée");
+        return;
+    }
+    try {
+        // Créer un fichier temporaire pour la validation
+        const fs = await import('fs');
+        const os = await import('os');
+        const path = await import('path');
+        const tempDir = os.tmpdir();
+        const tempPipelinePath = path.join(tempDir, `pipeline_${Date.now()}.json`);
+        fs.writeFileSync(tempPipelinePath, JSON.stringify(pipeline, null, 2));
+        // Exécuter la validation
+        const validationResult = await toolRegistry.execute('pipeline_validator', {
+            pipeline_path: tempPipelinePath,
+            validate_schema: true,
+            validate_dependencies: true,
+            validate_io_compatibility: true,
+            validate_workflows: true,
+            strict_mode: true
+        });
+        // Nettoyer le fichier temporaire
+        fs.unlinkSync(tempPipelinePath);
+        // Vérifier le résultat
+        const resultContent = validationResult.content[0].text;
+        const result = JSON.parse(resultContent);
+        if (!result.validation_results.overall.valid) {
+            const errors = result.validation_results.overall.warnings || [];
+            throw new Error(`Pipeline invalide: ${errors.join('; ')}`);
+        }
+    }
+    catch (error) {
+        if (error.message.includes('Pipeline validator non disponible')) {
+            // Ignorer si le validateur n'est pas disponible
+            return;
+        }
         throw error;
     }
 }
-// Export pour les tests
-export { ActivatedRagLogger, LogLevel };
+/**
+ * Sélectionne un workflow basé sur le mode ou l'ID
+ */
+function selectWorkflow(pipeline, mode, workflowId) {
+    if (workflowId) {
+        const workflow = pipeline.workflows.find(w => w.id === workflowId);
+        if (!workflow) {
+            throw new Error(`Workflow '${workflowId}' non trouvé dans le pipeline`);
+        }
+        return workflow;
+    }
+    // Mapper les modes aux workflows
+    const modeToWorkflow = {
+        'full': 'full_indexing',
+        'incremental': 'incremental_update',
+        'watch': 'full_indexing', // Même que full pour l'instant
+        'analyze_only': 'analyze_and_index',
+        'search_only': 'search_only',
+        'custom': 'full_indexing' // Par défaut
+    };
+    const workflowIdFromMode = modeToWorkflow[mode];
+    if (!workflowIdFromMode) {
+        throw new Error(`Mode '${mode}' non supporté`);
+    }
+    const workflow = pipeline.workflows.find(w => w.id === workflowIdFromMode);
+    if (!workflow) {
+        throw new Error(`Workflow pour mode '${mode}' (${workflowIdFromMode}) non trouvé`);
+    }
+    return workflow;
+}
+/**
+ * Prépare les configurations pour chaque phase
+ */
+function preparePhaseConfigs(pipeline, workflow, args) {
+    const configs = {};
+    for (const phaseId of workflow.phases) {
+        const phase = pipeline.phases.find(p => p.id === phaseId);
+        if (!phase) {
+            throw new Error(`Phase '${phaseId}' non trouvée dans le pipeline`);
+        }
+        // Configuration de base de la phase
+        let config = { ...phase.config };
+        // Appliquer la configuration par défaut du workflow
+        if (workflow.default_config) {
+            config = { ...config, ...workflow.default_config };
+        }
+        // Appliquer les arguments de l'utilisateur
+        config = applyUserArgsToConfig(config, args, phase.tool);
+        // Ajouter le chemin du projet
+        config.project_path = args.project_path;
+        configs[phaseId] = config;
+    }
+    return configs;
+}
+/**
+ * Applique les arguments de l'utilisateur à la configuration
+ */
+function applyUserArgsToConfig(config, args, toolName) {
+    const toolConfigMap = {
+        'scan_rag': ['enable_phase0', 'enable_watcher', 'enable_llm_enrichment', 'content_types', 'languages'],
+        'index_rag': ['chunking_strategy', 'max_chunk_size', 'embedding_models', 'content_types', 'languages', 'metadata_overrides'],
+        'query_rag': ['content_types', 'languages']
+    };
+    const relevantArgs = toolConfigMap[toolName] || [];
+    const result = { ...config };
+    for (const argName of relevantArgs) {
+        if (args[argName] !== undefined) {
+            result[argName] = args[argName];
+        }
+    }
+    return result;
+}
+/**
+ * Exécute les phases séquentiellement
+ */
+async function executePipelineSequentially(pipeline, workflow, phaseConfigs, projectPath, args) {
+    const results = {};
+    const phaseOutputs = new Map();
+    for (const phaseId of workflow.phases) {
+        const phase = pipeline.phases.find(p => p.id === phaseId);
+        const config = phaseConfigs[phaseId];
+        logger.info("rag.activated.refactored.phase.start", `Début de la phase: ${phase.name}`, {
+            phase_id: phase.id,
+            tool: phase.tool
+        });
+        try {
+            // Vérifier que l'outil existe
+            if (!toolRegistry.hasTool(phase.tool)) {
+                throw new Error(`Outil '${phase.tool}' non disponible`);
+            }
+            // Préparer les arguments avec les outputs des phases précédentes
+            const toolArgs = { ...config };
+            // Ajouter les outputs des phases précédentes si disponibles
+            for (const input of phase.inputs || []) {
+                for (const [prevPhaseId, outputs] of phaseOutputs.entries()) {
+                    if (outputs && outputs[input] !== undefined) {
+                        toolArgs[input] = outputs[input];
+                        break;
+                    }
+                }
+            }
+            // Exécuter l'outil
+            const startPhaseTime = Date.now();
+            const toolResult = await toolRegistry.execute(phase.tool, toolArgs);
+            const endPhaseTime = Date.now();
+            const phaseDuration = ((endPhaseTime - startPhaseTime) / 1000).toFixed(2);
+            // Extraire le résultat
+            const resultContent = toolResult.content[0].text;
+            const result = JSON.parse(resultContent);
+            // Stocker les résultats
+            results[phaseId] = {
+                success: result.success !== false,
+                duration: parseFloat(phaseDuration),
+                result: result,
+                timestamp: new Date().toISOString()
+            };
+            // Stocker les outputs pour les phases suivantes
+            if (phase.outputs && result.outputs) {
+                phaseOutputs.set(phaseId, result.outputs);
+            }
+            else if (result.data) {
+                // Fallback: utiliser data comme output
+                phaseOutputs.set(phaseId, { data: result.data });
+            }
+            logger.info("rag.activated.refactored.phase.completed", `Phase terminée: ${phase.name}`, {
+                phase_id: phase.id,
+                duration: `${phaseDuration}s`,
+                success: results[phaseId].success
+            });
+            // Arrêter en cas d'erreur si demandé
+            if (!results[phaseId].success && args.stop_on_error !== false) {
+                throw new Error(`Phase '${phase.name}' a échoué: ${result.message || 'Erreur inconnue'}`);
+            }
+        }
+        catch (error) {
+            logger.error("rag.activated.refactored.phase.error", `Erreur dans la phase: ${phase.name}`, {
+                phase_id: phase.id,
+                error: error.message
+            });
+            results[phaseId] = {
+                success: false,
+                error: error.message,
+                timestamp: new Date().toISOString()
+            };
+            if (args.stop_on_error !== false) {
+                throw error;
+            }
+        }
+    }
+    return results;
+}
+/**
+ * Génère un résumé d'exécution
+ */
+function generateExecutionSummary(executionResults, pipeline, workflow, duration, executionId) {
+    const phasesExecuted = Object.keys(executionResults).length;
+    const phasesFailed = Object.values(executionResults).filter(r => !r.success).length;
+    const success = phasesFailed === 0;
+    // Calculer les statistiques
+    const totalDuration = parseFloat(duration);
+    const avgPhaseDuration = phasesExecuted > 0
+        ? (totalDuration / phasesExecuted).toFixed(2)
+        : "0.00";
+    // Préparer les détails par phase
+    const phaseDetails = {};
+    for (const [phaseId, result] of Object.entries(executionResults)) {
+        const phase = pipeline.phases.find(p => p.id === phaseId);
+        phaseDetails[phaseId] = {
+            name: phase?.name || phaseId,
+            tool: phase?.tool || 'unknown',
+            success: result.success,
+            duration: result.duration || 0,
+            timestamp: result.timestamp
+        };
+    }
+    return {
+        success: success,
+        execution_id: executionId,
+        duration_seconds: totalDuration,
+        summary: {
+            workflow_id: workflow.id,
+            workflow_name: workflow.name,
+            phases_executed: phasesExecuted,
+            phases_failed: phasesFailed,
+            phases_total: workflow.phases.length,
+            success_rate: phasesExecuted > 0 ? ((phasesExecuted - phasesFailed) / phasesExecuted * 100).toFixed(1) + '%' : '0%',
+            avg_phase_duration_seconds: parseFloat(avgPhaseDuration)
+        },
+        phases: phaseDetails,
+        pipeline: {
+            name: pipeline.name,
+            version: pipeline.version,
+            description: pipeline.description
+        },
+        recommendations: success ? [
+            "Pipeline exécuté avec succès",
+            "Les données sont maintenant disponibles pour la recherche",
+            "Utilisez query_rag pour effectuer des recherches sémantiques"
+        ] : [
+            "Certaines phases ont échoué",
+            "Vérifiez les logs pour plus de détails",
+            "Corrigez les erreurs et réexécutez le pipeline"
+        ],
+        timestamp: new Date().toISOString()
+    };
+}
 //# sourceMappingURL=activated-rag.js.map

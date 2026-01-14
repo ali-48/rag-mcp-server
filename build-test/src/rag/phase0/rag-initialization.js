@@ -1,45 +1,9 @@
-"use strict";
 // src/rag/phase0/rag-initialization.ts
 // Module A : Initialisation de l'infrastructure RAG (8 étapes atomiques)
 // Responsabilités : A1-A8 - Logique métier pure, zéro MCP
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.initializeRagInfrastructure = initializeRagInfrastructure;
-const fs_1 = require("fs");
-const path = __importStar(require("path"));
-const rag_state_js_1 = require("./rag-state.js");
+import { promises as fs } from 'fs';
+import * as path from 'path';
+import { computeProjectId, isValidProjectPath } from './rag-state.js';
 /**
  * Configuration par défaut pour .ragignore
  */
@@ -152,13 +116,13 @@ CREATE INDEX IF NOT EXISTS idx_events_type ON events(event_type);
 async function resolveProjectPath(projectPath) {
     try {
         // Vérifier que le chemin existe et est un dossier
-        if (!await (0, rag_state_js_1.isValidProjectPath)(projectPath)) {
+        if (!await isValidProjectPath(projectPath)) {
             throw new Error(`Chemin de projet invalide: ${projectPath}`);
         }
         // Normaliser le chemin
         const rootPath = path.resolve(projectPath);
         // Calculer le hash du projet
-        const projectIdHash = (0, rag_state_js_1.computeProjectId)(rootPath);
+        const projectIdHash = computeProjectId(rootPath);
         return { rootPath, projectIdHash };
     }
     catch (error) {
@@ -183,12 +147,12 @@ async function ensureRagDirectories(rootPath) {
     ];
     for (const dir of directories) {
         try {
-            await fs_1.promises.access(dir);
+            await fs.access(dir);
             // Dossier existe déjà
         }
         catch {
             // Créer le dossier
-            await fs_1.promises.mkdir(dir, { recursive: true });
+            await fs.mkdir(dir, { recursive: true });
             createdDirs.push(dir);
         }
     }
@@ -204,12 +168,12 @@ async function ensureRagIgnore(rootPath) {
     const ragIgnorePath = path.join(rootPath, '.ragignore');
     try {
         // Vérifier si le fichier existe déjà
-        await fs_1.promises.access(ragIgnorePath);
+        await fs.access(ragIgnorePath);
         return false; // Fichier existe déjà
     }
     catch {
         // Créer le fichier avec le contenu par défaut
-        await fs_1.promises.writeFile(ragIgnorePath, DEFAULT_RAGIGNORE_CONTENT, 'utf-8');
+        await fs.writeFile(ragIgnorePath, DEFAULT_RAGIGNORE_CONTENT, 'utf-8');
         return true; // Fichier créé
     }
 }
@@ -226,7 +190,7 @@ async function ensureRagConfig(rootPath, projectId, mode) {
     let existingConfig = {};
     try {
         // Essayer de lire la config existante
-        const content = await fs_1.promises.readFile(configPath, 'utf-8');
+        const content = await fs.readFile(configPath, 'utf-8');
         existingConfig = JSON.parse(content);
     }
     catch {
@@ -241,7 +205,7 @@ async function ensureRagConfig(rootPath, projectId, mode) {
         initialized_at: new Date().toISOString()
     };
     // Écrire la config
-    await fs_1.promises.writeFile(configPath, JSON.stringify(config, null, 2), 'utf-8');
+    await fs.writeFile(configPath, JSON.stringify(config, null, 2), 'utf-8');
     return configPath;
 }
 /**
@@ -256,7 +220,7 @@ async function ensureDbConfig(rootPath, mode) {
     let existingConfig = {};
     try {
         // Essayer de lire la config existante
-        const content = await fs_1.promises.readFile(configPath, 'utf-8');
+        const content = await fs.readFile(configPath, 'utf-8');
         existingConfig = JSON.parse(content);
     }
     catch {
@@ -268,7 +232,7 @@ async function ensureDbConfig(rootPath, mode) {
         config.vectors = { type: 'none' };
     }
     // Écrire la config
-    await fs_1.promises.writeFile(configPath, JSON.stringify(config, null, 2), 'utf-8');
+    await fs.writeFile(configPath, JSON.stringify(config, null, 2), 'utf-8');
     return configPath;
 }
 /**
@@ -281,9 +245,9 @@ async function initMemoryDatabase(sqlitePath) {
     // Le vrai test se fera lors de l'utilisation réelle
     // Créer le dossier parent si nécessaire
     const dir = path.dirname(sqlitePath);
-    await fs_1.promises.mkdir(dir, { recursive: true });
+    await fs.mkdir(dir, { recursive: true });
     // Créer un fichier SQLite vide
-    await fs_1.promises.writeFile(sqlitePath, '');
+    await fs.writeFile(sqlitePath, '');
     // Log silencieux pour MCP
 }
 /**
@@ -297,18 +261,20 @@ async function testVectorStoreConnection(dbConfig) {
     if (!dbConfig.vectors || dbConfig.vectors.type === 'none') {
         return true; // Pas de DB vectorielle à tester
     }
-    if (dbConfig.vectors.type === 'sqlite') {
+    const vectorType = dbConfig.vectors.type;
+    console.error(`DEBUG: vector type = "${vectorType}"`);
+    if (vectorType === 'sqlite') {
         // Pour SQLite, on simule simplement le test
         // Le vrai test se fera lors de l'utilisation réelle
         return true;
     }
-    if (dbConfig.vectors.type === 'postgres') {
+    if (vectorType === 'postgres') {
         // Simulation de test de connexion (pour compatibilité)
         // Log silencieux pour MCP
         return true;
     }
     // Type de DB non supporté
-    throw new Error(`Type de base de données vectorielle non supporté: ${dbConfig.vectors.type}`);
+    throw new Error(`Type de base de données vectorielle non supporté: ${vectorType}`);
 }
 /**
  * A8 — Enregistrement MCP
@@ -330,7 +296,7 @@ async function registerProjectInRegistry(projectInfo) {
  * @param mode Mode d'initialisation
  * @returns Résultat détaillé de l'initialisation
  */
-async function initializeRagInfrastructure(projectPath, mode = 'default') {
+export async function initializeRagInfrastructure(projectPath, mode = 'default') {
     const result = {
         status: 'error',
         projectPath,
@@ -419,7 +385,7 @@ async function initializeRagInfrastructure(projectPath, mode = 'default') {
         try {
             // Lire la config DB pour le test
             const dbConfigPath = path.join(result.projectPath, 'rag', 'config', 'db.config.json');
-            const dbConfigContent = await fs_1.promises.readFile(dbConfigPath, 'utf-8');
+            const dbConfigContent = await fs.readFile(dbConfigPath, 'utf-8');
             const dbConfig = JSON.parse(dbConfigContent);
             const tested = await testVectorStoreConnection(dbConfig);
             result.details.stepA7 = { success: true, tested };
@@ -453,3 +419,4 @@ async function initializeRagInfrastructure(projectPath, mode = 'default') {
         return result;
     }
 }
+//# sourceMappingURL=rag-initialization.js.map

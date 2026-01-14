@@ -1,81 +1,48 @@
 // src/rag/vector-store-sqlite.ts
-// Backend SQLite pour le stockage vectoriel RAG
+// Backend SQLite pour le stockage vectoriel RAG - Implémente IVectorStore
 
 import * as sqlite3 from 'sqlite3';
 import { getDbConfigManager } from '../config/db-config.js';
-import { logger } from '../core/logger.js';
-
-/**
- * Interface pour les options d'embedding et de stockage
- */
-export interface EmbedAndStoreOptions {
-    chunkIndex?: number;
-    totalChunks?: number;
-    contentType?: string;
-    role?: string;
-    fileExtension?: string;
-    language?: string;
-    linesCount?: number;
-    isCompressed?: boolean;
-}
-
-/**
- * Interface pour les options de recherche sémantique
- */
-export interface SemanticSearchOptions {
-    projectFilter?: string;
-    limit?: number;
-    threshold?: number;
-    dynamicThreshold?: boolean;
-    contentTypeFilter?: string | string[];
-    roleFilter?: string | string[];
-    fileExtensionFilter?: string | string[];
-    languageFilter?: string | string[];
-    minFileSizeBytes?: number;
-    maxFileSizeBytes?: number;
-    minLinesCount?: number;
-    maxLinesCount?: number;
-    dateFrom?: Date;
-    dateTo?: Date;
-    includeCompressed?: boolean;
-    excludeCompressed?: boolean;
-    enableReranking?: boolean;
-}
-
-/**
- * Interface pour les résultats de recherche
- */
-export interface SearchResult {
-    id: string;
-    filePath: string;
-    content: string;
-    score: number;
-    metadata: {
-        projectPath: string;
-        fileSize: number;
-        originalSize: number;
-        lines: number;
-        contentType: string | null;
-        role: string | null;
-        fileExtension: string | null;
-        language: string | null;
-        linesCount: number | null;
-        isCompressed: boolean;
-        compressionRatio: string | null;
-        createdAt: Date | null;
-        updatedAt: Date | null;
-    };
-}
+import {
+    EmbedAndStoreOptions,
+    IVectorStore,
+    ProjectStats,
+    SearchResult,
+    SemanticSearchOptions,
+    StoreStats,
+    VectorStoreConfig,
+    VectorStoreLogger,
+    createDocumentId
+} from './vector-store-interface.js';
 
 /**
  * Classe principale pour le backend SQLite vectoriel
+ * Implémente l'interface IVectorStore pour l'abstraction
  */
-export class VectorStoreSQLite {
+export class VectorStoreSQLite implements IVectorStore {
     private db: sqlite3.Database;
     private dbConfigManager = getDbConfigManager();
+    private config: VectorStoreConfig;
 
-    constructor() {
-        this.db = this.dbConfigManager.getSqliteConnection('vectors');
+    constructor(config?: VectorStoreConfig) {
+        if (config) {
+            this.config = config;
+            // Utiliser la configuration fournie
+            if (config.sqlite?.file) {
+                this.db = new sqlite3.Database(config.sqlite.file);
+            } else {
+                // Fallback à la configuration existante
+                this.db = this.dbConfigManager.getSqliteConnection('vectors');
+            }
+        } else {
+            // Compatibilité avec l'ancien code
+            this.db = this.dbConfigManager.getSqliteConnection('vectors');
+            this.config = {
+                type: 'sqlite',
+                sqlite: { file: ':memory:' } // Valeur par défaut
+            };
+        }
+
         this.initializeTable();
     }
 
@@ -114,7 +81,7 @@ export class VectorStoreSQLite {
             CREATE INDEX IF NOT EXISTS idx_rag_vectors_updated ON rag_vectors(updated_at);
         `);
 
-        logger.info('rag.vectorstore.sqlite.init', 'Table rag_vectors initialisée');
+        VectorStoreLogger.info('init', 'Table rag_vectors initialisée');
     }
 
     /**
@@ -171,6 +138,7 @@ export class VectorStoreSQLite {
 
     /**
      * Stocke un document avec son embedding
+     * Implémentation de IVectorStore.embedAndStore
      */
     async embedAndStore(
         projectPath: string,
@@ -190,13 +158,8 @@ export class VectorStoreSQLite {
             isCompressed = false
         } = options;
 
-        // Nettoyer le filePath pour éviter les duplications de #chunk
-        const cleanedFilePath = this.cleanFilePath(filePath);
-
-        // Générer l'ID unique avec chunk index si nécessaire
-        const id = totalChunks > 1
-            ? `${projectPath}:${cleanedFilePath}#chunk${chunkIndex}`
-            : `${projectPath}:${cleanedFilePath}`;
+        // Utiliser la fonction utilitaire pour créer l'ID
+        const id = createDocumentId(projectPath, filePath, chunkIndex);
 
         // Calculer les métadonnées automatiquement si non fournies
         const finalFileExtension = fileExtension || filePath.split('.').pop() || null;
@@ -234,7 +197,7 @@ export class VectorStoreSQLite {
                 ]
             );
 
-            logger.info('rag.vectorstore.sqlite.store', `Document stocké: ${id}`, {
+            VectorStoreLogger.info('store', `Document stocké: ${id}`, {
                 projectPath,
                 filePath,
                 contentType,
@@ -242,8 +205,9 @@ export class VectorStoreSQLite {
                 totalChunks
             });
         } catch (error) {
-            logger.error('rag.vectorstore.sqlite.store.error', `Erreur lors du stockage du document ${id}`, {
-                error: error instanceof Error ? error.message : String(error)
+            VectorStoreLogger.error('store', `Erreur lors du stockage du document ${id}`, error as Error, {
+                projectPath,
+                filePath
             });
             throw error;
         }
@@ -251,6 +215,7 @@ export class VectorStoreSQLite {
 
     /**
      * Recherche sémantique avec similarité cosinus
+     * Implémentation de IVectorStore.semanticSearch
      */
     async semanticSearch(
         queryEmbedding: number[],
@@ -404,7 +369,7 @@ export class VectorStoreSQLite {
             results.sort((a, b) => b.similarity - a.similarity);
             const limitedResults = results.slice(0, limit);
 
-            logger.info('rag.vectorstore.sqlite.search', `Recherche terminée: ${limitedResults.length} résultats`, {
+            VectorStoreLogger.info('search', `Recherche terminée: ${limitedResults.length} résultats`, {
                 totalCandidates: rows.length,
                 filteredResults: results.length,
                 finalResults: limitedResults.length,
@@ -413,23 +378,16 @@ export class VectorStoreSQLite {
 
             return limitedResults;
         } catch (error) {
-            logger.error('rag.vectorstore.sqlite.search.error', 'Erreur lors de la recherche sémantique', {
-                error: error instanceof Error ? error.message : String(error)
-            });
+            VectorStoreLogger.error('search', 'Erreur lors de la recherche sémantique', error as Error);
             throw error;
         }
     }
 
     /**
      * Obtient les statistiques d'un projet
+     * Implémentation de IVectorStore.getProjectStats
      */
-    async getProjectStats(projectPath: string): Promise<{
-        totalFiles: number;
-        totalChunks: number;
-        indexedAt: Date | null;
-        lastUpdated: Date | null;
-        contentTypes: Record<string, number>;
-    }> {
+    async getProjectStats(projectPath: string): Promise<ProjectStats> {
         try {
             // Statistiques de base
             const statsResult = await this.getQuery(
@@ -482,15 +440,14 @@ export class VectorStoreSQLite {
                 contentTypes,
             };
         } catch (error) {
-            logger.error('rag.vectorstore.sqlite.stats.error', `Erreur lors de la récupération des stats pour ${projectPath}`, {
-                error: error instanceof Error ? error.message : String(error)
-            });
+            VectorStoreLogger.error('stats', `Erreur lors de la récupération des stats pour ${projectPath}`, error as Error);
             throw error;
         }
     }
 
     /**
      * Liste tous les projets indexés
+     * Implémentation de IVectorStore.listProjects
      */
     async listProjects(): Promise<string[]> {
         try {
@@ -500,15 +457,14 @@ export class VectorStoreSQLite {
 
             return result.map(row => row.project_path);
         } catch (error) {
-            logger.error('rag.vectorstore.sqlite.list.error', 'Erreur lors du listing des projets', {
-                error: error instanceof Error ? error.message : String(error)
-            });
+            VectorStoreLogger.error('list', 'Erreur lors du listing des projets', error as Error);
             throw error;
         }
     }
 
     /**
      * Supprime un document par son ID
+     * Implémentation de IVectorStore.deleteDocument
      */
     async deleteDocument(id: string): Promise<boolean> {
         try {
@@ -519,35 +475,33 @@ export class VectorStoreSQLite {
 
             const deleted = result.changes > 0;
             if (deleted) {
-                logger.info('rag.vectorstore.sqlite.delete', `Document supprimé: ${id}`);
+                VectorStoreLogger.info('delete', `Document supprimé: ${id}`);
             }
 
             return deleted;
         } catch (error) {
-            logger.error('rag.vectorstore.sqlite.delete.error', `Erreur lors de la suppression du document ${id}`, {
-                error: error instanceof Error ? error.message : String(error)
-            });
+            VectorStoreLogger.error('delete', `Erreur lors de la suppression du document ${id}`, error as Error);
             throw error;
         }
     }
 
     /**
      * Vide la table (pour les tests)
+     * Implémentation de IVectorStore.clearAll
      */
     async clearAll(): Promise<void> {
         try {
             await this.runQuery('DELETE FROM rag_vectors');
-            logger.info('rag.vectorstore.sqlite.clear', 'Tous les documents ont été supprimés');
+            VectorStoreLogger.info('clear', 'Tous les documents ont été supprimés');
         } catch (error) {
-            logger.error('rag.vectorstore.sqlite.clear.error', 'Erreur lors du vidage de la table', {
-                error: error instanceof Error ? error.message : String(error)
-            });
+            VectorStoreLogger.error('clear', 'Erreur lors du vidage de la table', error as Error);
             throw error;
         }
     }
 
     /**
      * Fonction utilitaire pour nettoyer le filePath
+     * @deprecated Utiliser createDocumentId à la place
      */
     private cleanFilePath(filePath: string): string {
         return filePath.replace(/#chunk\d+$/, '');
@@ -600,6 +554,7 @@ export class VectorStoreSQLite {
 
     /**
      * Supprime les documents correspondant à un pattern (LIKE)
+     * Implémentation de IVectorStore.deleteDocumentsByPattern
      */
     async deleteDocumentsByPattern(pattern: string): Promise<number> {
         try {
@@ -609,16 +564,246 @@ export class VectorStoreSQLite {
             );
 
             const deletedCount = result.changes || 0;
-            logger.info('rag.vectorstore.sqlite.delete.pattern', `Documents supprimés avec pattern: ${pattern}`, {
+            VectorStoreLogger.info('delete.pattern', `Documents supprimés avec pattern: ${pattern}`, {
                 pattern,
                 deletedCount
             });
 
             return deletedCount;
         } catch (error) {
-            logger.error('rag.vectorstore.sqlite.delete.pattern.error', `Erreur lors de la suppression avec pattern ${pattern}`, {
-                error: error instanceof Error ? error.message : String(error)
-            });
+            VectorStoreLogger.error('delete.pattern', `Erreur lors de la suppression avec pattern ${pattern}`, error as Error);
+            throw error;
+        }
+    }
+
+    /**
+     * Obtient les statistiques globales du store
+     * Implémentation de IVectorStore.getStats
+     */
+    async getStats(): Promise<StoreStats> {
+        try {
+            // Statistiques globales
+            const statsResult = await this.getQuery(`
+                SELECT 
+                    COUNT(*) as total_documents,
+                    COUNT(DISTINCT project_path) as total_projects,
+                    SUM(file_size_bytes) as total_size_bytes,
+                    AVG(LENGTH(embedding) / 4) as avg_vector_dimension,
+                    MAX(updated_at) as last_updated
+                FROM rag_vectors
+            `);
+
+            return {
+                totalDocuments: parseInt(statsResult.total_documents) || 0,
+                totalProjects: parseInt(statsResult.total_projects) || 0,
+                totalSizeBytes: parseInt(statsResult.total_size_bytes) || 0,
+                averageVectorDimension: parseFloat(statsResult.avg_vector_dimension) || 0,
+                lastUpdated: statsResult.last_updated ? new Date(statsResult.last_updated) : null
+            };
+        } catch (error) {
+            VectorStoreLogger.error('stats.global', 'Erreur lors de la récupération des statistiques globales', error as Error);
+            throw error;
+        }
+    }
+
+    /**
+     * Initialise les tables/schémas si nécessaire
+     * Implémentation de IVectorStore.initialize
+     */
+    async initialize(): Promise<void> {
+        // L'initialisation est déjà faite dans le constructeur
+        // Cette méthode permet de réinitialiser si nécessaire
+        this.initializeTable();
+        VectorStoreLogger.info('initialize', 'Vector store SQLite initialisé');
+    }
+
+    /**
+     * Vérifie la connectivité au backend
+     * Implémentation de IVectorStore.testConnection
+     */
+    async testConnection(): Promise<boolean> {
+        try {
+            // Exécuter une requête simple pour tester la connexion
+            await this.getQuery('SELECT 1 as test');
+            VectorStoreLogger.debug('testConnection', 'Connexion SQLite testée avec succès');
+            return true;
+        } catch (error) {
+            VectorStoreLogger.error('testConnection', 'Échec du test de connexion SQLite', error as Error);
+            return false;
+        }
+    }
+
+    /**
+     * Met à jour un document existant
+     * Implémentation de IVectorStore.updateDocument
+     */
+    async updateDocument(
+        id: string,
+        updates: Partial<{
+            content: string;
+            embedding: number[];
+            metadata: Partial<EmbedAndStoreOptions>;
+        }>
+    ): Promise<boolean> {
+        try {
+            const { content, embedding, metadata } = updates;
+            const params: any[] = [];
+            const updatesSql: string[] = [];
+
+            if (content !== undefined) {
+                updatesSql.push('content = ?');
+                params.push(content);
+            }
+
+            if (embedding !== undefined) {
+                updatesSql.push('embedding = ?');
+                const embeddingBuffer = Buffer.from(new Float32Array(embedding).buffer);
+                params.push(embeddingBuffer);
+            }
+
+            if (metadata) {
+                if (metadata.contentType !== undefined) {
+                    updatesSql.push('content_type = ?');
+                    params.push(metadata.contentType);
+                }
+                if (metadata.role !== undefined) {
+                    updatesSql.push('role = ?');
+                    params.push(metadata.role);
+                }
+                if (metadata.language !== undefined) {
+                    updatesSql.push('language = ?');
+                    params.push(metadata.language);
+                }
+            }
+
+            if (updatesSql.length === 0) {
+                VectorStoreLogger.warn('update', 'Aucune mise à jour spécifiée', { id });
+                return false;
+            }
+
+            updatesSql.push('updated_at = CURRENT_TIMESTAMP');
+            params.push(id);
+
+            const sql = `UPDATE rag_vectors SET ${updatesSql.join(', ')} WHERE id = ?`;
+            const result = await this.runQuery(sql, params);
+
+            const updated = result.changes > 0;
+            if (updated) {
+                VectorStoreLogger.info('update', `Document mis à jour: ${id}`, {
+                    id,
+                    updates: Object.keys(updates)
+                });
+            }
+
+            return updated;
+        } catch (error) {
+            VectorStoreLogger.error('update', `Erreur lors de la mise à jour du document ${id}`, error as Error);
+            throw error;
+        }
+    }
+
+    /**
+     * Recherche hybride (sémantique + textuelle)
+     * Implémentation optionnelle de IVectorStore.hybridSearch
+     */
+    async hybridSearch(
+        queryEmbedding: number[],
+        textQuery: string,
+        options?: SemanticSearchOptions & {
+            semanticWeight?: number;
+            textWeight?: number;
+        }
+    ): Promise<SearchResult[]> {
+        // Pour l'instant, on utilise seulement la recherche sémantique
+        // Une implémentation complète nécessiterait une recherche textuelle
+        VectorStoreLogger.warn('hybridSearch', 'Recherche hybride non implémentée, fallback sur recherche sémantique', {
+            textQuery
+        });
+        return this.semanticSearch(queryEmbedding, options);
+    }
+
+    /**
+     * Recherche par métadonnées
+     * Implémentation optionnelle de IVectorStore.searchByMetadata
+     */
+    async searchByMetadata(
+        filters: Partial<EmbedAndStoreOptions> & {
+            projectPath?: string;
+            dateRange?: { from?: Date; to?: Date };
+        }
+    ): Promise<SearchResult[]> {
+        try {
+            let sql = `
+                SELECT id, project_path, file_path, content, content_type, role,
+                       file_extension, lines_count, language, is_compressed, original_size_bytes,
+                       embedding, created_at, updated_at
+                FROM rag_vectors
+                WHERE 1=1
+            `;
+
+            const params: any[] = [];
+
+            // Appliquer les filtres
+            if (filters.projectPath) {
+                sql += ' AND project_path = ?';
+                params.push(filters.projectPath);
+            }
+
+            if (filters.contentType) {
+                sql += ' AND content_type = ?';
+                params.push(filters.contentType);
+            }
+
+            if (filters.role) {
+                sql += ' AND role = ?';
+                params.push(filters.role);
+            }
+
+            if (filters.language) {
+                sql += ' AND language = ?';
+                params.push(filters.language);
+            }
+
+            if (filters.dateRange?.from) {
+                sql += ' AND created_at >= ?';
+                params.push(filters.dateRange.from.toISOString());
+            }
+
+            if (filters.dateRange?.to) {
+                sql += ' AND created_at <= ?';
+                params.push(filters.dateRange.to.toISOString());
+            }
+
+            sql += ' ORDER BY created_at DESC LIMIT 100';
+
+            const rows = await this.allQuery(sql, params);
+
+            // Convertir les résultats au format SearchResult
+            return rows.map(row => ({
+                id: row.id,
+                filePath: row.file_path,
+                content: row.content,
+                score: 1.0, // Score par défaut pour la recherche par métadonnées
+                metadata: {
+                    projectPath: row.project_path,
+                    fileSize: row.file_size_bytes,
+                    originalSize: row.original_size_bytes || row.file_size_bytes,
+                    lines: row.content.split('\n').length,
+                    contentType: row.content_type || null,
+                    role: row.role || null,
+                    fileExtension: row.file_extension || null,
+                    language: row.language || null,
+                    linesCount: row.lines_count || null,
+                    isCompressed: row.is_compressed === 1,
+                    compressionRatio: row.is_compressed === 1 && row.original_size_bytes
+                        ? ((row.content.length / row.original_size_bytes) * 100).toFixed(1) + '%'
+                        : null,
+                    createdAt: row.created_at ? new Date(row.created_at) : null,
+                    updatedAt: row.updated_at ? new Date(row.updated_at) : null,
+                },
+            }));
+        } catch (error) {
+            VectorStoreLogger.error('searchByMetadata', 'Erreur lors de la recherche par métadonnées', error as Error);
             throw error;
         }
     }

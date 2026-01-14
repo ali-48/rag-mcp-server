@@ -1,0 +1,258 @@
+{
+    "mcpServers": {
+        "rag-mcp-server": {
+            "command": "node",
+            "args": [
+                "/home/ali/Documents/Cline/MCP/rag-mcp-server/build/index.js"
+            ],
+            "env": {
+                "NODE_ENV": "production",
+                "RAG_LOG_LEVEL": "info",
+                "RAG_LOG_FILE": "/home/ali/Documents/Cline/MCP/rag-mcp-server/logs/rag.log"
+            },
+            "description": "RAG MCP Server v3.0 - Multi-backends, JSON strict, pipeline déclaratif"
+        }
+    },
+    "tools": {
+        "init_rag": {
+            "description": "Initialiser un projet RAG",
+            "parameters": {
+                "project_path": {
+                    "type": "string",
+                    "description": "Chemin absolu vers le projet à initialiser"
+                },
+                "mode": {
+                    "type": "string",
+                    "enum": [
+                        "default",
+                        "memory-only",
+                        "full"
+                    ],
+                    "default": "default",
+                    "description": "Mode d'initialisation"
+                },
+                "force": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Forcer l'initialisation même si déjà initialisé"
+                }
+            }
+        },
+        "scan_rag": {
+            "description": "Scanner et analyser les fichiers d'un projet",
+            "parameters": {
+                "project_path": {
+                    "type": "string",
+                    "description": "Chemin absolu vers le projet"
+                },
+                "file_patterns": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "default": [
+                        "**/*"
+                    ],
+                    "description": "Patterns de fichiers à inclure"
+                },
+                "content_types": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "enum": [
+                            "code",
+                            "doc",
+                            "config",
+                            "other"
+                        ]
+                    },
+                    "description": "Types de contenu à inclure"
+                }
+            }
+        },
+        "index_rag": {
+            "description": "Indexer les documents et calculer les embeddings",
+            "parameters": {
+                "project_path": {
+                    "type": "string",
+                    "description": "Chemin absolu vers le projet"
+                },
+                "scan_results": {
+                    "type": "object",
+                    "description": "Résultats du scan (optionnel)"
+                },
+                "embedding_model": {
+                    "type": "string",
+                    "default": "nomic-embed-text",
+                    "description": "Modèle d'embedding à utiliser"
+                }
+            }
+        },
+        "query_rag": {
+            "description": "Recherche sémantique dans les documents indexés",
+            "parameters": {
+                "query": {
+                    "type": "string",
+                    "description": "Requête de recherche sémantique"
+                },
+                "project_filter": {
+                    "type": "string",
+                    "description": "Filtrer par chemin de projet spécifique"
+                },
+                "top_k": {
+                    "type": "number",
+                    "default": 10,
+                    "minimum": 1,
+                    "maximum": 100,
+                    "description": "Nombre maximum de résultats"
+                },
+                "content_types": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "enum": [
+                            "code",
+                            "doc",
+                            "config",
+                            "other"
+                        ]
+                    },
+                    "description": "Types de contenu à inclure"
+                }
+            }
+        },
+        "activated_rag": {
+            "description": "Orchestration complète du pipeline RAG (rétrocompatible)",
+            "parameters": {
+                "project_path": {
+                    "type": "string",
+                    "description": "Chemin absolu vers le projet"
+                },
+                "mode": {
+                    "type": "string",
+                    "enum": [
+                        "full",
+                        "incremental",
+                        "watch",
+                        "analyze_only"
+                    ],
+                    "default": "full",
+                    "description": "Mode d'opération"
+                },
+                "enable_phase0": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Activer la Phase 0 (Workspace detection automatique)"
+                }
+            }
+        },
+        "recherche_rag": {
+            "description": "Recherche RAG avancée avec filtres (rétrocompatible)",
+            "parameters": {
+                "query": {
+                    "type": "string",
+                    "description": "Requête de recherche sémantique"
+                },
+                "scope": {
+                    "type": "string",
+                    "enum": [
+                        "project",
+                        "global"
+                    ],
+                    "default": "project",
+                    "description": "Scope de recherche"
+                },
+                "project_filter": {
+                    "type": "string",
+                    "description": "Filtrer par chemin de projet spécifique"
+                }
+            }
+        }
+    },
+    "config": {
+        "rag": {
+            "version": "3.0.0",
+            "vector_store": {
+                "default_backend": "sqlite",
+                "sqlite": {
+                    "file": "./rag/db/vectors.sqlite",
+                    "memory": false
+                },
+                "postgresql": {
+                    "enabled": false,
+                    "host": "localhost",
+                    "port": 5432,
+                    "database": "rag",
+                    "user": "postgres",
+                    "password": ""
+                }
+            },
+            "defaults": {
+                "embedding_provider": "ollama",
+                "embedding_models": {
+                    "code": "nomic-embed-code",
+                    "text": "nomic-embed-text",
+                    "config": "nomic-embed-text"
+                },
+                "chunk_size": 1000,
+                "chunk_overlap": 200
+            }
+        }
+    },
+    "examples": [
+        {
+            "name": "Initialiser un projet",
+            "tool": "init_rag",
+            "parameters": {
+                "project_path": "/chemin/vers/mon/projet",
+                "mode": "default"
+            }
+        },
+        {
+            "name": "Scanner un projet",
+            "tool": "scan_rag",
+            "parameters": {
+                "project_path": "/chemin/vers/mon/projet",
+                "file_patterns": [
+                    "**/*.ts",
+                    "**/*.js",
+                    "**/*.md"
+                ],
+                "content_types": [
+                    "code",
+                    "doc"
+                ]
+            }
+        },
+        {
+            "name": "Indexer un projet",
+            "tool": "index_rag",
+            "parameters": {
+                "project_path": "/chemin/vers/mon/projet",
+                "embedding_model": "nomic-embed-text"
+            }
+        },
+        {
+            "name": "Rechercher dans un projet",
+            "tool": "query_rag",
+            "parameters": {
+                "query": "comment implémenter l'authentification",
+                "project_filter": "/chemin/vers/mon/projet",
+                "top_k": 5,
+                "content_types": [
+                    "code",
+                    "doc"
+                ]
+            }
+        },
+        {
+            "name": "Pipeline complet (legacy)",
+            "tool": "activated_rag",
+            "parameters": {
+                "project_path": "/chemin/vers/mon/projet",
+                "mode": "full",
+                "enable_phase0": true
+            }
+        }
+    ]
+}

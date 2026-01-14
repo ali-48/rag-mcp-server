@@ -1,0 +1,310 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "RAG Pipeline Schema",
+    "description": "Schéma JSON pour la validation des pipelines RAG déclaratifs",
+    "type": "object",
+    "required": [
+        "version",
+        "name",
+        "description",
+        "phases",
+        "workflows"
+    ],
+    "properties": {
+        "$schema": {
+            "type": "string",
+            "description": "URI du schéma JSON",
+            "format": "uri"
+        },
+        "version": {
+            "type": "string",
+            "description": "Version du pipeline",
+            "pattern": "^\\d+\\.\\d+\\.\\d+$"
+        },
+        "name": {
+            "type": "string",
+            "description": "Nom du pipeline",
+            "minLength": 1,
+            "maxLength": 100
+        },
+        "description": {
+            "type": "string",
+            "description": "Description du pipeline",
+            "minLength": 1,
+            "maxLength": 500
+        },
+        "created_at": {
+            "type": "string",
+            "description": "Date de création",
+            "format": "date-time"
+        },
+        "author": {
+            "type": "string",
+            "description": "Auteur du pipeline",
+            "minLength": 1,
+            "maxLength": 100
+        },
+        "phases": {
+            "type": "array",
+            "description": "Liste des phases du pipeline",
+            "minItems": 1,
+            "items": {
+                "type": "object",
+                "required": [
+                    "id",
+                    "name",
+                    "description",
+                    "tool",
+                    "enabled"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "description": "Identifiant unique de la phase",
+                        "pattern": "^[a-z0-9_]+$"
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "Nom de la phase",
+                        "minLength": 1,
+                        "maxLength": 100
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "Description de la phase",
+                        "minLength": 1,
+                        "maxLength": 500
+                    },
+                    "tool": {
+                        "type": "string",
+                        "description": "Outil MCP à exécuter",
+                        "enum": [
+                            "scan_rag",
+                            "index_rag",
+                            "query_rag",
+                            "init_rag",
+                            "activated_rag",
+                            "recherche_rag",
+                            "manage_projects"
+                        ]
+                    },
+                    "enabled": {
+                        "type": "boolean",
+                        "description": "Si la phase est activée"
+                    },
+                    "required": {
+                        "type": "boolean",
+                        "description": "Si la phase est requise pour le workflow",
+                        "default": false
+                    },
+                    "config": {
+                        "type": "object",
+                        "description": "Configuration par défaut de l'outil",
+                        "additionalProperties": true
+                    },
+                    "inputs": {
+                        "type": "array",
+                        "description": "Entrées requises pour la phase",
+                        "items": {
+                            "type": "string"
+                        },
+                        "default": []
+                    },
+                    "outputs": {
+                        "type": "array",
+                        "description": "Sorties produites par la phase",
+                        "items": {
+                            "type": "string"
+                        },
+                        "default": []
+                    },
+                    "next_phases": {
+                        "type": "array",
+                        "description": "Phases suivantes possibles",
+                        "items": {
+                            "type": "string"
+                        },
+                        "default": []
+                    }
+                }
+            }
+        },
+        "workflows": {
+            "type": "array",
+            "description": "Liste des workflows prédéfinis",
+            "minItems": 1,
+            "items": {
+                "type": "object",
+                "required": [
+                    "id",
+                    "name",
+                    "description",
+                    "phases"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "description": "Identifiant unique du workflow",
+                        "pattern": "^[a-z0-9_]+$"
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "Nom du workflow",
+                        "minLength": 1,
+                        "maxLength": 100
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "Description du workflow",
+                        "minLength": 1,
+                        "maxLength": 500
+                    },
+                    "phases": {
+                        "type": "array",
+                        "description": "Liste des phases du workflow",
+                        "minItems": 1,
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "default_config": {
+                        "type": "object",
+                        "description": "Configuration par défaut du workflow",
+                        "additionalProperties": true
+                    }
+                }
+            }
+        },
+        "dependencies": {
+            "type": "object",
+            "description": "Dépendances entre les phases",
+            "additionalProperties": {
+                "type": "array",
+                "items": {
+                    "type": "string"
+                }
+            }
+        },
+        "validation_rules": {
+            "type": "array",
+            "description": "Règles de validation du pipeline",
+            "items": {
+                "type": "object",
+                "required": [
+                    "rule",
+                    "condition",
+                    "message"
+                ],
+                "properties": {
+                    "rule": {
+                        "type": "string",
+                        "description": "Nom de la règle",
+                        "minLength": 1
+                    },
+                    "condition": {
+                        "type": "string",
+                        "description": "Condition d'application (noms de phases ou 'all')"
+                    },
+                    "message": {
+                        "type": "string",
+                        "description": "Message d'erreur",
+                        "minLength": 1
+                    }
+                }
+            }
+        },
+        "metadata": {
+            "type": "object",
+            "description": "Métadonnées d'exécution du pipeline",
+            "properties": {
+                "max_concurrent_phases": {
+                    "type": "integer",
+                    "description": "Nombre maximum de phases concurrentes",
+                    "minimum": 1,
+                    "maximum": 10,
+                    "default": 1
+                },
+                "allow_parallel_execution": {
+                    "type": "boolean",
+                    "description": "Autoriser l'exécution parallèle",
+                    "default": false
+                },
+                "timeout_seconds": {
+                    "type": "integer",
+                    "description": "Timeout global en secondes",
+                    "minimum": 1,
+                    "maximum": 86400,
+                    "default": 3600
+                },
+                "retry_policy": {
+                    "type": "object",
+                    "description": "Politique de réessai",
+                    "properties": {
+                        "max_retries": {
+                            "type": "integer",
+                            "description": "Nombre maximum de réessais",
+                            "minimum": 0,
+                            "maximum": 10,
+                            "default": 3
+                        },
+                        "backoff_factor": {
+                            "type": "number",
+                            "description": "Facteur d'attente exponentielle",
+                            "minimum": 1,
+                            "maximum": 10,
+                            "default": 2
+                        },
+                        "retryable_errors": {
+                            "type": "array",
+                            "description": "Types d'erreurs réessayables",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                "logging": {
+                    "type": "object",
+                    "description": "Configuration des logs",
+                    "properties": {
+                        "level": {
+                            "type": "string",
+                            "description": "Niveau de log",
+                            "enum": [
+                                "debug",
+                                "info",
+                                "warn",
+                                "error"
+                            ],
+                            "default": "info"
+                        },
+                        "format": {
+                            "type": "string",
+                            "description": "Format des logs",
+                            "enum": [
+                                "json",
+                                "text"
+                            ],
+                            "default": "json"
+                        },
+                        "output": {
+                            "type": "string",
+                            "description": "Destination des logs",
+                            "enum": [
+                                "file",
+                                "console",
+                                "both"
+                            ],
+                            "default": "file"
+                        },
+                        "file_path": {
+                            "type": "string",
+                            "description": "Chemin du fichier de log",
+                            "default": "./logs/pipeline.log"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

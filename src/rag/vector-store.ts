@@ -1,22 +1,14 @@
-import { Pool } from "pg";
-import { promisify } from "util";
-import { gunzip, gzip } from "zlib";
-import { SearchResult } from "./types.js";
+// src/rag/vector-store.ts
+// Version refactorisée utilisant l'abstraction IVectorStore et VectorStoreFactory
+// Remplace le PostgreSQL hardcodé par une configuration dynamique
 
-const gzipAsync = promisify(gzip);
-const gunzipAsync = promisify(gunzip);
-
-// Configuration de la connexion PostgreSQL
-const pool = new Pool({
-  host: "localhost",
-  port: 5432,
-  database: "rag_db",
-  user: "rag_user",
-  password: "rag_password",
-  max: 20,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
-});
+import { SearchResult } from './types.js';
+import { createVectorStore, createVectorStoreForProject } from './vector-store-factory.js';
+import {
+  IVectorStore,
+  VectorStoreConfig,
+  VectorStoreLogger
+} from './vector-store-interface.js';
 
 // Configuration des embeddings
 let embeddingProvider: string = "fake";
@@ -36,20 +28,50 @@ let batchTimeout: NodeJS.Timeout | null = null;
 const BATCH_DELAY_MS = 50; // Délai avant traitement du batch
 const BATCH_MAX_SIZE = 10; // Taille maximale du batch
 
-// Fonction pour configurer le fournisseur d'embeddings
-export function setEmbeddingProvider(provider: string, model: string = "nomic-embed-text"): void {
-  embeddingProvider = provider;
-  embeddingModel = model;
-  console.error(`Embedding provider configured: ${provider}, model: ${model}`);
+// Instance de vector store (singleton)
+let vectorStoreInstance: IVectorStore | null = null;
+
+/**
+ * Obtient l'instance de vector store (singleton)
+ * Utilise la configuration du projet par défaut
+ */
+function getVectorStore(): IVectorStore {
+  if (!vectorStoreInstance) {
+    // Créer le vector store basé sur la configuration du projet
+    vectorStoreInstance = createVectorStoreForProject(process.cwd());
+    VectorStoreLogger.info('vectorstore.init', 'Vector store initialisé', {
+      type: 'dynamic',
+      projectPath: process.cwd()
+    });
+  }
+  return vectorStoreInstance;
 }
 
 /**
- * Normalise un vecteur selon la norme L2 (norme unitaire).
- * Cette normalisation est essentielle pour la similarité cosinus car elle garantit
- * que les vecteurs ont une norme de 1, ce qui rend la similarité cosinus égale au produit scalaire.
- * 
- * @param vector - Vecteur à normaliser
- * @returns Vecteur normalisé (norme = 1.0)
+ * Configure explicitement le vector store avec une configuration spécifique
+ * @param config Configuration du vector store
+ */
+export function configureVectorStore(config: VectorStoreConfig): void {
+  vectorStoreInstance = createVectorStore(config);
+  VectorStoreLogger.info('vectorstore.configure', 'Vector store configuré', {
+    type: config.type
+  });
+}
+
+/**
+ * Configure le fournisseur d'embeddings
+ */
+export function setEmbeddingProvider(provider: string, model: string = "nomic-embed-text"): void {
+  embeddingProvider = provider;
+  embeddingModel = model;
+  VectorStoreLogger.info('embedding.provider.configured', `Embedding provider configured`, {
+    provider,
+    model
+  });
+}
+
+/**
+ * Normalise un vecteur selon la norme L2
  */
 function normalizeL2(vector: number[]): number[] {
   const norm = Math.sqrt(vector.reduce((sum, val) => sum + val * val, 0));
@@ -57,67 +79,39 @@ function normalizeL2(vector: number[]): number[] {
   return vector.map(val => val / norm);
 }
 
-// Fonction pour générer des embeddings selon le fournisseur configuré
-async function generateEmbedding(text: string): Promise<number[]> {
-  let embedding: number[];
-  switch (embeddingProvider) {
-    case "ollama":
-      embedding = await generateOllamaEmbedding(text);
-      break;
-    case "sentence-transformers":
-      embedding = await generateSentenceTransformerEmbedding(text);
-      break;
-    case "fake":
-    default:
-      embedding = generateFakeEmbedding(text);
-      break;
-  }
-  // Normaliser l'embedding pour une meilleure similarité cosinus
-  return normalizeL2(embedding);
-}
-
 /**
- * Génère des embeddings factices améliorés pour les tests.
- * Cette version améliorée résout le problème des "scores uniformément élevés" en:
- * 1. Utilisant une combinaison de fonctions sin/cos pour réduire la corrélation linéaire
- * 2. Ajoutant une variation basée sur un hash du texte pour plus d'unicité
- * 3. Incluant un bruit aléatoire contrôlé pour éviter les patterns trop réguliers
- * 
- * Résultat: Distribution plus réaliste avec écart-type > 0.1 et plage étendue.
- * 
- * @param text - Texte à encoder
- * @returns Vecteur d'embedding de dimension 768
+ * Génère des embeddings factices améliorés
  */
 function generateFakeEmbedding(text: string): number[] {
-  // Embedding factice de dimension 768 avec meilleure distribution
   const seed = text.length;
   const hash = simpleHash(text);
 
   return Array(768).fill(0).map((_, i) => {
-    // Utiliser une combinaison de fonctions pour réduire la corrélation
     const base = Math.sin(hash * 0.01 + i * 0.017) * 0.3;
     const variation = Math.cos(hash * 0.007 + i * 0.023) * 0.2;
     const noise = (Math.random() - 0.5) * 0.1;
 
-    // Combinaison non-linéaire pour réduire la corrélation linéaire
     return base + variation + noise;
   });
 }
 
-// Fonction de hachage simple pour générer une seed unique à partir du texte
+/**
+ * Fonction de hachage simple
+ */
 function simpleHash(text: string): number {
   let hash = 0;
   for (let i = 0; i < text.length; i++) {
     const char = text.charCodeAt(i);
     hash = ((hash << 5) - hash) + char;
-    hash = hash & hash; // Convertir en entier 32-bit
+    hash = hash & hash;
   }
   return Math.abs(hash);
 }
 
-// Fonction de hachage simple pour le cache
+/**
+ * Fonction de hachage pour le cache
+ */
 function hashText(text: string): string {
-  // Hash simple mais efficace pour le cache
   let hash = 0;
   for (let i = 0; i < Math.min(text.length, 1000); i++) {
     const char = text.charCodeAt(i);
@@ -127,13 +121,17 @@ function hashText(text: string): string {
   return `${embeddingModel}:${hash}:${text.length}`;
 }
 
-// Vérifier le cache
+/**
+ * Récupère un embedding depuis le cache
+ */
 function getCachedEmbedding(text: string): number[] | null {
   const key = hashText(text);
   return embeddingCache.get(key) || null;
 }
 
-// Mettre en cache un embedding
+/**
+ * Met en cache un embedding
+ */
 function cacheEmbedding(text: string, embedding: number[]): void {
   const key = hashText(text);
   embeddingCache.set(key, embedding);
@@ -147,12 +145,16 @@ function cacheEmbedding(text: string, embedding: number[]): void {
   }
 }
 
-// Embeddings avec Ollama (version avec cache et batching)
+/**
+ * Génère un embedding avec Ollama
+ */
 async function generateOllamaEmbedding(text: string): Promise<number[]> {
   // Vérifier le cache d'abord
   const cached = getCachedEmbedding(text);
   if (cached) {
-    console.error(`Using cached embedding for: ${text.substring(0, 50)}...`);
+    VectorStoreLogger.debug('embedding.cache.hit', `Using cached embedding`, {
+      textPreview: text.substring(0, 50)
+    });
     return cached;
   }
 
@@ -161,7 +163,10 @@ async function generateOllamaEmbedding(text: string): Promise<number[]> {
     return generateFakeEmbedding(text);
   }
 
-  console.error(`Queueing embedding for Ollama (${embeddingModel}): ${text.substring(0, 50)}...`);
+  VectorStoreLogger.debug('embedding.ollama.queueing', `Queueing embedding for Ollama`, {
+    model: embeddingModel,
+    textPreview: text.substring(0, 50)
+  });
 
   // Retourner une promesse qui sera résolue par le batch
   return new Promise((resolve, reject) => {
@@ -183,7 +188,9 @@ async function generateOllamaEmbedding(text: string): Promise<number[]> {
   });
 }
 
-// Traiter un batch de requêtes Ollama
+/**
+ * Traiter un batch de requêtes Ollama
+ */
 async function processOllamaBatch(): Promise<void> {
   if (batchTimeout) {
     clearTimeout(batchTimeout);
@@ -197,7 +204,9 @@ async function processOllamaBatch(): Promise<void> {
   const batch = ollamaBatchQueue.splice(0, BATCH_MAX_SIZE);
   const texts = batch.map(item => item.text);
 
-  console.error(`Processing Ollama batch of ${texts.length} texts`);
+  VectorStoreLogger.debug('embedding.ollama.batch', `Processing Ollama batch`, {
+    batchSize: texts.length
+  });
 
   try {
     const response = await fetch('http://localhost:11434/api/embeddings', {
@@ -207,7 +216,7 @@ async function processOllamaBatch(): Promise<void> {
       },
       body: JSON.stringify({
         model: embeddingModel,
-        input: texts, // Ollama supporte le batching avec le champ 'input'
+        input: texts,
       }),
     });
 
@@ -219,7 +228,7 @@ async function processOllamaBatch(): Promise<void> {
 
     if (!data.embeddings || !Array.isArray(data.embeddings)) {
       // Fallback: traiter chaque texte individuellement
-      console.error('Ollama batch API not supported, falling back to individual requests');
+      VectorStoreLogger.warn('embedding.ollama.batch.fallback', 'Ollama batch API not supported, falling back to individual requests');
       await processIndividualOllamaRequests(batch);
       return;
     }
@@ -244,14 +253,15 @@ async function processOllamaBatch(): Promise<void> {
     }
 
   } catch (error) {
-    console.error(`Failed to process Ollama batch: ${error}. Falling back to individual requests.`);
-
+    VectorStoreLogger.error('embedding.ollama.batch.error', `Failed to process Ollama batch`, error as Error);
     // Fallback: traiter chaque texte individuellement
     await processIndividualOllamaRequests(batch);
   }
 }
 
-// Traiter les requêtes Ollama individuellement (fallback)
+/**
+ * Traiter les requêtes Ollama individuellement (fallback)
+ */
 async function processIndividualOllamaRequests(batch: Array<{ text: string; resolve: (embedding: number[]) => void; reject: (error: Error) => void }>): Promise<void> {
   for (const item of batch) {
     try {
@@ -281,7 +291,7 @@ async function processIndividualOllamaRequests(batch: Array<{ text: string; reso
       item.resolve(data.embedding);
 
     } catch (error) {
-      console.error(`Failed to get embedding from Ollama for individual request: ${error}. Falling back to fake embeddings.`);
+      VectorStoreLogger.error('embedding.ollama.individual.error', `Failed to get embedding from Ollama for individual request`, error as Error);
       // Fallback sur les embeddings factices
       const fakeEmbedding = generateFakeEmbedding(item.text);
       cacheEmbedding(item.text, fakeEmbedding);
@@ -290,12 +300,36 @@ async function processIndividualOllamaRequests(batch: Array<{ text: string; reso
   }
 }
 
-// Embeddings avec Sentence Transformers (à implémenter)
+/**
+ * Embeddings avec Sentence Transformers (à implémenter)
+ */
 async function generateSentenceTransformerEmbedding(text: string): Promise<number[]> {
-  console.error(`Generating embedding with Sentence Transformers: ${text.substring(0, 50)}...`);
+  VectorStoreLogger.debug('embedding.sentence-transformers', `Generating embedding with Sentence Transformers`, {
+    textPreview: text.substring(0, 50)
+  });
   // TODO: Implémenter avec @xenova/transformers
-  // Pour l'instant, retourner des embeddings factices
   return generateFakeEmbedding(text);
+}
+
+/**
+ * Génère un embedding selon le fournisseur configuré
+ */
+async function generateEmbedding(text: string): Promise<number[]> {
+  let embedding: number[];
+  switch (embeddingProvider) {
+    case "ollama":
+      embedding = await generateOllamaEmbedding(text);
+      break;
+    case "sentence-transformers":
+      embedding = await generateSentenceTransformerEmbedding(text);
+      break;
+    case "fake":
+    default:
+      embedding = generateFakeEmbedding(text);
+      break;
+  }
+  // Normaliser l'embedding
+  return normalizeL2(embedding);
 }
 
 export interface EmbedAndStoreOptions {
@@ -309,12 +343,9 @@ export interface EmbedAndStoreOptions {
   isCompressed?: boolean;
 }
 
-// Fonction pour nettoyer le filePath en enlevant les suffixes #chunk existants
-function cleanFilePath(filePath: string): string {
-  // Supprimer les suffixes #chunk\d+ à la fin du chemin
-  return filePath.replace(/#chunk\d+$/, '');
-}
-
+/**
+ * Stocke un document avec son embedding
+ */
 export async function embedAndStore(
   projectPath: string,
   filePath: string,
@@ -332,454 +363,37 @@ export async function embedAndStore(
     isCompressed = false
   } = options;
 
-  // Nettoyer le filePath pour éviter les duplications de #chunk
-  const cleanedFilePath = cleanFilePath(filePath);
-
-  // Générer l'ID unique avec chunk index si nécessaire
-  const id = totalChunks > 1
-    ? `${projectPath}:${cleanedFilePath}#chunk${chunkIndex}`
-    : `${projectPath}:${cleanedFilePath}`;
-
+  // Générer l'embedding
   const vector = await generateEmbedding(content);
 
   try {
-    // Convertir le tableau en chaîne de tableau PostgreSQL
-    const vectorStr = `[${vector.join(',')}]`;
+    // Utiliser le vector store abstrait
+    const store = getVectorStore();
+    await store.embedAndStore(projectPath, filePath, content, vector, {
+      chunkIndex,
+      totalChunks,
+      contentType,
+      role: role || undefined,
+      fileExtension: fileExtension || undefined,
+      language: language || undefined,
+      linesCount: linesCount || undefined,
+      isCompressed
+    });
 
-    // Calculer les métadonnées automatiquement si non fournies
-    const finalFileExtension = fileExtension || filePath.split('.').pop() || null;
-    const finalLinesCount = linesCount || content.split('\n').length;
-
-    // Gestion de la compression automatique
-    let finalContent = content;
-    let finalIsCompressed = isCompressed;
-    let finalFileSizeBytes = content.length;
-    let finalOriginalSizeBytes = content.length;
-
-    // Compresser automatiquement si le contenu dépasse le seuil
-    if (shouldCompress(content) && !isCompressed) {
-      try {
-        const { compressed, compressionRatio } = await compressContent(content);
-        finalContent = compressed.toString('base64'); // Stocker en base64
-        finalIsCompressed = true;
-        finalFileSizeBytes = compressed.length;
-        finalOriginalSizeBytes = content.length;
-
-        console.error(`Compressed content for ${filePath}: ${finalOriginalSizeBytes} -> ${finalFileSizeBytes} bytes (${compressionRatio.toFixed(1)}% compression)`);
-      } catch (compressionError) {
-        console.error(`Failed to compress content for ${filePath}:`, compressionError);
-        // Continuer sans compression
-      }
-    } else {
-      finalFileSizeBytes = content.length;
-      finalOriginalSizeBytes = isCompressed ? Buffer.from(content).length : content.length;
-    }
-
-    // Utiliser la table rag_store_v2 si elle existe, sinon rag_store (compatibilité)
-    const tableName = await checkV2TableExists() ? 'rag_store_v2' : 'rag_store';
-
-    if (tableName === 'rag_store_v2') {
-      await pool.query(
-        `INSERT INTO rag_store_v2 (
-          id, project_path, file_path, chunk_index, total_chunks,
-          content, content_type, role, file_extension, file_size_bytes,
-          lines_count, language, vector, is_compressed, original_size_bytes,
-          version, created_at, updated_at, indexed_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13::vector, $14, $15, 1, NOW(), NOW(), NOW())
-        ON CONFLICT (id) DO UPDATE SET
-          content = EXCLUDED.content,
-          content_type = EXCLUDED.content_type,
-          role = EXCLUDED.role,
-          file_extension = EXCLUDED.file_extension,
-          file_size_bytes = EXCLUDED.file_size_bytes,
-          lines_count = EXCLUDED.lines_count,
-          language = EXCLUDED.language,
-          vector = EXCLUDED.vector,
-          is_compressed = EXCLUDED.is_compressed,
-          original_size_bytes = EXCLUDED.original_size_bytes,
-          updated_at = NOW()`,
-        [
-          id, projectPath, filePath, chunkIndex, totalChunks,
-          finalContent, contentType, role, finalFileExtension, finalFileSizeBytes,
-          finalLinesCount, language, vectorStr, finalIsCompressed, finalOriginalSizeBytes
-        ]
-      );
-    } else {
-      // Fallback à l'ancienne table
-      await pool.query(
-        `INSERT INTO rag_store (id, project_path, file_path, content, vector, updated_at)
-         VALUES ($1, $2, $3, $4, $5::vector, NOW())
-         ON CONFLICT (id) DO UPDATE SET
-           content = EXCLUDED.content,
-           vector = EXCLUDED.vector,
-           updated_at = NOW()`,
-        [id, projectPath, filePath, content, vectorStr]
-      );
-    }
+    VectorStoreLogger.info('vectorstore.store', `Document stocké`, {
+      projectPath,
+      filePath,
+      contentType,
+      chunkIndex,
+      totalChunks
+    });
   } catch (error) {
-    console.error(`Error storing document ${id}:`, error);
+    VectorStoreLogger.error('vectorstore.store.error', `Erreur lors du stockage du document`, error as Error, {
+      projectPath,
+      filePath
+    });
     throw error;
   }
-}
-
-// Vérifier si la table rag_store_v2 existe
-async function checkV2TableExists(): Promise<boolean> {
-  try {
-    const result = await pool.query(
-      `SELECT EXISTS (
-        SELECT FROM information_schema.tables 
-        WHERE table_name = 'rag_store_v2'
-      )`
-    );
-    return result.rows[0].exists;
-  } catch (error) {
-    console.error('Error checking for rag_store_v2 table:', error);
-    return false;
-  }
-}
-
-/**
- * Interface pour les paramètres de seuil par type de contenu
- */
-interface ThresholdParameters {
-  /** Multiplicateur de l'écart-type (par défaut: 0.5) */
-  stdMultiplier: number;
-  /** Seuil minimum (par défaut: 0.1) */
-  minThreshold: number;
-  /** Seuil maximum (par défaut: 0.8) */
-  maxThreshold: number;
-  /** Valeur par défaut si pas assez de données (par défaut: 0.3) */
-  defaultThreshold: number;
-  /** Nombre minimum de scores pour calculer (par défaut: 5) */
-  minSamples: number;
-  /** Poids pour l'apprentissage adaptatif (0-1, par défaut: 0.1) */
-  learningRate: number;
-}
-
-/**
- * Paramètres par défaut pour chaque type de contenu
- */
-const DEFAULT_THRESHOLD_PARAMS: Record<string, ThresholdParameters> = {
-  // Code: distributions plus serrées, besoin de seuils plus stricts
-  'code': {
-    stdMultiplier: 0.7,      // Plus strict pour le code
-    minThreshold: 0.2,       // Seuil minimum plus élevé
-    maxThreshold: 0.85,      // Seuil maximum plus élevé
-    defaultThreshold: 0.4,   // Valeur par défaut plus élevée
-    minSamples: 3,           // Moins de samples nécessaires (code plus homogène)
-    learningRate: 0.15       // Apprentissage plus rapide
-  },
-  // Documentation: distributions plus larges
-  'doc': {
-    stdMultiplier: 0.4,      // Plus permissif pour la documentation
-    minThreshold: 0.15,      // Seuil minimum plus bas
-    maxThreshold: 0.75,      // Seuil maximum plus bas
-    defaultThreshold: 0.35,  // Valeur par défaut moyenne
-    minSamples: 5,
-    learningRate: 0.1
-  },
-  // Configuration: distributions variables
-  'config': {
-    stdMultiplier: 0.6,
-    minThreshold: 0.18,
-    maxThreshold: 0.8,
-    defaultThreshold: 0.38,
-    minSamples: 4,
-    learningRate: 0.12
-  },
-  // Autres types: paramètres génériques
-  'other': {
-    stdMultiplier: 0.5,
-    minThreshold: 0.1,
-    maxThreshold: 0.8,
-    defaultThreshold: 0.3,
-    minSamples: 5,
-    learningRate: 0.1
-  }
-};
-
-/**
- * Statistiques historiques pour l'apprentissage par type
- */
-interface ThresholdStats {
-  contentType: string;
-  meanHistory: number[];
-  stdHistory: number[];
-  thresholdHistory: number[];
-  sampleCount: number;
-  lastUpdated: Date;
-}
-
-/**
- * Cache pour les statistiques d'apprentissage
- */
-const thresholdStatsCache = new Map<string, ThresholdStats>();
-
-/**
- * Calcule un seuil de similarité dynamique basé sur la distribution des scores,
- * avec des paramètres adaptés au type de contenu.
- * 
- * Principe amélioré: seuil = moyenne + (multiplier * écart-type)
- * - Paramètres différents selon le type de contenu (code, doc, config, etc.)
- * - Apprentissage adaptatif basé sur l'historique
- * - Limites configurables par type
- * 
- * @param scores - Tableau de scores de similarité (cosinus)
- * @param contentType - Type de contenu (code, doc, config, other)
- * @returns Seuil adaptatif adapté au type de contenu
- */
-function calculateDynamicThreshold(scores: number[], contentType: string = 'other'): number {
-  if (scores.length === 0) {
-    return getDefaultThreshold(contentType);
-  }
-
-  // Récupérer les paramètres pour ce type de contenu
-  const params = getThresholdParameters(contentType);
-
-  // Si pas assez d'échantillons, retourner la valeur par défaut
-  if (scores.length < params.minSamples) {
-    return params.defaultThreshold;
-  }
-
-  // Calculer la moyenne et l'écart-type
-  const mean = scores.reduce((a, b) => a + b, 0) / scores.length;
-  const variance = scores.reduce((sq, n) => sq + Math.pow(n - mean, 2), 0) / scores.length;
-  const std = Math.sqrt(variance);
-
-  // Calculer le seuil avec le multiplicateur spécifique au type
-  const threshold = mean + (params.stdMultiplier * std);
-
-  // Limiter selon les bornes spécifiques au type
-  const boundedThreshold = Math.max(params.minThreshold, Math.min(params.maxThreshold, threshold));
-
-  // Mettre à jour les statistiques d'apprentissage
-  updateThresholdStats(contentType, mean, std, boundedThreshold, scores.length);
-
-  // Ajuster les paramètres si l'apprentissage est activé
-  if (shouldAdjustParameters(contentType)) {
-    adjustThresholdParameters(contentType, mean, std, boundedThreshold);
-  }
-
-  console.error(`Dynamic threshold for ${contentType}: ${boundedThreshold.toFixed(3)} (mean: ${mean.toFixed(3)}, std: ${std.toFixed(3)}, multiplier: ${params.stdMultiplier})`);
-
-  return boundedThreshold;
-}
-
-/**
- * Récupère les paramètres de seuil pour un type de contenu donné
- */
-function getThresholdParameters(contentType: string): ThresholdParameters {
-  // Normaliser le type de contenu
-  const normalizedType = contentType.toLowerCase();
-
-  // Retourner les paramètres spécifiques ou les paramètres par défaut
-  return DEFAULT_THRESHOLD_PARAMS[normalizedType] || DEFAULT_THRESHOLD_PARAMS['other'];
-}
-
-/**
- * Récupère le seuil par défaut pour un type de contenu
- */
-function getDefaultThreshold(contentType: string): number {
-  const params = getThresholdParameters(contentType);
-  return params.defaultThreshold;
-}
-
-/**
- * Met à jour les statistiques d'apprentissage pour un type de contenu
- */
-function updateThresholdStats(
-  contentType: string,
-  mean: number,
-  std: number,
-  threshold: number,
-  sampleCount: number
-): void {
-  const key = contentType.toLowerCase();
-  let stats = thresholdStatsCache.get(key);
-
-  if (!stats) {
-    stats = {
-      contentType: key,
-      meanHistory: [],
-      stdHistory: [],
-      thresholdHistory: [],
-      sampleCount: 0,
-      lastUpdated: new Date()
-    };
-    thresholdStatsCache.set(key, stats);
-  }
-
-  // Garder un historique limité (derniers 100 échantillons)
-  stats.meanHistory.push(mean);
-  stats.stdHistory.push(std);
-  stats.thresholdHistory.push(threshold);
-  stats.sampleCount += sampleCount;
-  stats.lastUpdated = new Date();
-
-  // Limiter la taille de l'historique
-  const maxHistory = 100;
-  if (stats.meanHistory.length > maxHistory) {
-    stats.meanHistory.shift();
-    stats.stdHistory.shift();
-    stats.thresholdHistory.shift();
-  }
-}
-
-/**
- * Détermine si les paramètres doivent être ajustés pour un type de contenu
- */
-function shouldAdjustParameters(contentType: string): boolean {
-  const stats = thresholdStatsCache.get(contentType.toLowerCase());
-  if (!stats) return false;
-
-  // Ajuster après au moins 20 échantillons
-  return stats.sampleCount >= 20 && stats.meanHistory.length >= 10;
-}
-
-/**
- * Ajuste les paramètres de seuil basé sur l'historique d'apprentissage
- */
-function adjustThresholdParameters(
-  contentType: string,
-  currentMean: number,
-  currentStd: number,
-  currentThreshold: number
-): void {
-  const normalizedType = contentType.toLowerCase();
-  const params = getThresholdParameters(normalizedType);
-  const stats = thresholdStatsCache.get(normalizedType);
-
-  if (!stats || stats.meanHistory.length < 5) return;
-
-  // Calculer les moyennes historiques
-  const historicalMean = stats.meanHistory.reduce((a, b) => a + b, 0) / stats.meanHistory.length;
-  const historicalStd = stats.stdHistory.reduce((a, b) => a + b, 0) / stats.stdHistory.length;
-  const historicalThreshold = stats.thresholdHistory.reduce((a, b) => a + b, 0) / stats.thresholdHistory.length;
-
-  // Ajuster le multiplicateur basé sur la stabilité des scores
-  const meanStability = Math.abs(currentMean - historicalMean) / historicalMean;
-  const stdStability = Math.abs(currentStd - historicalStd) / historicalStd;
-
-  // Si la distribution est stable, on peut ajuster le multiplicateur
-  if (meanStability < 0.2 && stdStability < 0.3) {
-    // Ajustement basé sur la performance du seuil historique
-    const performanceRatio = historicalThreshold / currentThreshold;
-
-    // Ajuster doucement le multiplicateur
-    const adjustment = (performanceRatio - 1) * params.learningRate;
-    const newMultiplier = params.stdMultiplier * (1 + adjustment);
-
-    // Limiter les ajustements
-    const boundedMultiplier = Math.max(0.2, Math.min(1.5, newMultiplier));
-
-    // Mettre à jour les paramètres (en mémoire seulement)
-    DEFAULT_THRESHOLD_PARAMS[normalizedType] = {
-      ...params,
-      stdMultiplier: boundedMultiplier
-    };
-
-    console.error(`Adjusted threshold parameters for ${contentType}: multiplier ${params.stdMultiplier.toFixed(3)} -> ${boundedMultiplier.toFixed(3)}`);
-  }
-}
-
-/**
- * Récupère les statistiques d'apprentissage pour un type de contenu
- */
-export function getThresholdStats(contentType?: string): Record<string, any> {
-  if (contentType) {
-    const stats = thresholdStatsCache.get(contentType.toLowerCase());
-    return stats ? {
-      contentType: stats.contentType,
-      meanHistory: stats.meanHistory,
-      stdHistory: stats.stdHistory,
-      thresholdHistory: stats.thresholdHistory,
-      sampleCount: stats.sampleCount,
-      lastUpdated: stats.lastUpdated,
-      currentParams: getThresholdParameters(contentType)
-    } : {};
-  }
-
-  // Retourner toutes les statistiques
-  const allStats: Record<string, any> = {};
-  thresholdStatsCache.forEach((stats, key) => {
-    allStats[key] = {
-      contentType: stats.contentType,
-      meanHistory: stats.meanHistory,
-      stdHistory: stats.stdHistory,
-      thresholdHistory: stats.thresholdHistory,
-      sampleCount: stats.sampleCount,
-      lastUpdated: stats.lastUpdated,
-      currentParams: getThresholdParameters(key)
-    };
-  });
-
-  return allStats;
-}
-
-/**
- * Réinitialise les paramètres d'apprentissage pour un type de contenu
- */
-export function resetThresholdLearning(contentType?: string): void {
-  if (contentType) {
-    thresholdStatsCache.delete(contentType.toLowerCase());
-    // Réinitialiser aux valeurs par défaut
-    const defaultParams = DEFAULT_THRESHOLD_PARAMS['other'];
-    DEFAULT_THRESHOLD_PARAMS[contentType.toLowerCase()] = { ...defaultParams };
-  } else {
-    thresholdStatsCache.clear();
-    // Réinitialiser tous les paramètres aux valeurs par défaut
-    Object.keys(DEFAULT_THRESHOLD_PARAMS).forEach(key => {
-      if (key !== 'other') {
-        DEFAULT_THRESHOLD_PARAMS[key] = { ...DEFAULT_THRESHOLD_PARAMS['other'] };
-      }
-    });
-  }
-}
-
-export interface RerankingWeights {
-  /** Poids pour la similarité sémantique (0-1, par défaut: 0.7) */
-  semanticWeight?: number;
-  /** Poids pour la fraîcheur (0-1, par défaut: 0.15) */
-  freshnessWeight?: number;
-  /** Poids pour la taille du fichier (0-1, par défaut: 0.05) */
-  fileSizeWeight?: number;
-  /** Poids pour le type de contenu (0-1, par défaut: 0.05) */
-  contentTypeWeight?: number;
-  /** Poids pour le rôle (0-1, par défaut: 0.03) */
-  roleWeight?: number;
-  /** Poids pour le langage (0-1, par défaut: 0.02) */
-  languageWeight?: number;
-  /** Préférer les fichiers récents (true) ou anciens (false) */
-  preferRecent?: boolean;
-  /** Préférer les fichiers plus petits (true) ou plus grands (false) */
-  preferSmallerFiles?: boolean;
-  /** Types de contenu prioritaires (score bonus) */
-  priorityContentTypes?: string[];
-  /** Rôles prioritaires (score bonus) */
-  priorityRoles?: string[];
-  /** Langages prioritaires (score bonus) */
-  priorityLanguages?: string[];
-}
-
-export interface HybridSearchOptions extends SemanticSearchOptions {
-  /** Pondération pour la recherche sémantique (0-1, par défaut: 0.7) */
-  semanticWeight?: number;
-  /** Pondération pour la recherche textuelle (0-1, par défaut: 0.3) */
-  textWeight?: number;
-  /** Requête textuelle pour la recherche full-text */
-  textQuery?: string;
-  /** Opérateur pour la recherche textuelle (AND, OR, par défaut: OR) */
-  textOperator?: 'AND' | 'OR';
-  /** Champ pour la recherche textuelle (content, file_path, par défaut: content) */
-  textField?: 'content' | 'file_path' | 'both';
-  /** Activer la recherche par préfixe */
-  prefixSearch?: boolean;
-  /** Activer la recherche par suffixe */
-  suffixSearch?: boolean;
-  /** Activer la recherche par sous-chaîne */
-  substringSearch?: boolean;
-  /** Sensibilité à la casse (par défaut: false) */
-  caseSensitive?: boolean;
 }
 
 export interface SemanticSearchOptions {
@@ -799,575 +413,12 @@ export interface SemanticSearchOptions {
   dateTo?: Date;
   includeCompressed?: boolean;
   excludeCompressed?: boolean;
-  /** Activer le re-ranking basé sur les métadonnées */
   enableReranking?: boolean;
-  /** Poids pour le re-ranking */
-  rerankingWeights?: RerankingWeights;
 }
 
 /**
- * Poids par défaut pour le re-ranking
+ * Recherche sémantique
  */
-const DEFAULT_RERANKING_WEIGHTS: Required<RerankingWeights> = {
-  semanticWeight: 0.7,
-  freshnessWeight: 0.15,
-  fileSizeWeight: 0.05,
-  contentTypeWeight: 0.05,
-  roleWeight: 0.03,
-  languageWeight: 0.02,
-  preferRecent: true,
-  preferSmallerFiles: true,
-  priorityContentTypes: ['code', 'doc'],
-  priorityRoles: ['core', 'main'],
-  priorityLanguages: ['typescript', 'javascript', 'python']
-};
-
-/**
- * Re-classe les résultats de recherche basé sur les métadonnées
- * @param results - Résultats de la recherche sémantique
- * @param weights - Poids pour le re-ranking
- * @returns Résultats re-classés
- */
-function rerankResults(
-  results: SearchResult[],
-  weights: RerankingWeights = {}
-): SearchResult[] {
-  if (results.length === 0) return results;
-
-  // Fusionner avec les poids par défaut
-  const finalWeights = { ...DEFAULT_RERANKING_WEIGHTS, ...weights };
-
-  // Normaliser les poids pour qu'ils somment à 1
-  const totalWeight =
-    finalWeights.semanticWeight +
-    finalWeights.freshnessWeight +
-    finalWeights.fileSizeWeight +
-    finalWeights.contentTypeWeight +
-    finalWeights.roleWeight +
-    finalWeights.languageWeight;
-
-  const normalizedWeights = {
-    semanticWeight: finalWeights.semanticWeight / totalWeight,
-    freshnessWeight: finalWeights.freshnessWeight / totalWeight,
-    fileSizeWeight: finalWeights.fileSizeWeight / totalWeight,
-    contentTypeWeight: finalWeights.contentTypeWeight / totalWeight,
-    roleWeight: finalWeights.roleWeight / totalWeight,
-    languageWeight: finalWeights.languageWeight / totalWeight,
-    preferRecent: finalWeights.preferRecent,
-    preferSmallerFiles: finalWeights.preferSmallerFiles,
-    priorityContentTypes: finalWeights.priorityContentTypes,
-    priorityRoles: finalWeights.priorityRoles,
-    priorityLanguages: finalWeights.priorityLanguages
-  };
-
-  // Calculer les scores de re-ranking pour chaque résultat
-  const reranked = results.map(result => {
-    const metadata = result.metadata;
-    let rerankScore = 0;
-
-    // 1. Score sémantique (pondéré)
-    rerankScore += result.score * normalizedWeights.semanticWeight;
-
-    // 2. Score de fraîcheur (basé sur updatedAt)
-    if (metadata.updatedAt) {
-      const freshnessDays = (Date.now() - metadata.updatedAt.getTime()) / (1000 * 60 * 60 * 24);
-      const maxFreshnessDays = 365; // 1 an
-      const freshnessScore = Math.max(0, 1 - (freshnessDays / maxFreshnessDays));
-
-      if (normalizedWeights.preferRecent) {
-        rerankScore += freshnessScore * normalizedWeights.freshnessWeight;
-      } else {
-        // Préférer les anciens fichiers
-        rerankScore += (1 - freshnessScore) * normalizedWeights.freshnessWeight;
-      }
-    }
-
-    // 3. Score de taille de fichier
-    if (metadata.fileSize) {
-      const maxFileSize = 1024 * 1024; // 1MB
-      const sizeScore = Math.min(1, metadata.fileSize / maxFileSize);
-
-      if (normalizedWeights.preferSmallerFiles) {
-        rerankScore += (1 - sizeScore) * normalizedWeights.fileSizeWeight;
-      } else {
-        // Préférer les fichiers plus grands
-        rerankScore += sizeScore * normalizedWeights.fileSizeWeight;
-      }
-    }
-
-    // 4. Score de type de contenu
-    if (metadata.contentType) {
-      let contentTypeScore = 0.5; // Valeur par défaut
-
-      if (normalizedWeights.priorityContentTypes.includes(metadata.contentType.toLowerCase())) {
-        contentTypeScore = 1.0; // Bonus pour les types prioritaires
-      }
-
-      rerankScore += contentTypeScore * normalizedWeights.contentTypeWeight;
-    }
-
-    // 5. Score de rôle
-    if (metadata.role) {
-      let roleScore = 0.5; // Valeur par défaut
-
-      if (normalizedWeights.priorityRoles.includes(metadata.role.toLowerCase())) {
-        roleScore = 1.0; // Bonus pour les rôles prioritaires
-      }
-
-      rerankScore += roleScore * normalizedWeights.roleWeight;
-    }
-
-    // 6. Score de langage
-    if (metadata.language) {
-      let languageScore = 0.5; // Valeur par défaut
-
-      if (normalizedWeights.priorityLanguages.includes(metadata.language.toLowerCase())) {
-        languageScore = 1.0; // Bonus pour les langages prioritaires
-      }
-
-      rerankScore += languageScore * normalizedWeights.languageWeight;
-    }
-
-    return {
-      ...result,
-      rerankScore,
-      originalScore: result.score
-    };
-  });
-
-  // Trier par score de re-ranking (décroissant)
-  return reranked
-    .sort((a, b) => b.rerankScore - a.rerankScore)
-    .map(({ rerankScore, originalScore, ...rest }) => ({
-      ...rest,
-      score: rerankScore, // Remplacer le score original par le score de re-ranking
-      metadata: {
-        ...rest.metadata,
-        originalScore, // Conserver le score original dans les métadonnées
-        rerankScore
-      }
-    }));
-}
-
-/**
- * Recherche hybride combinant similarité sémantique et recherche textuelle avec filtres booléens
- * @param query - Requête pour la recherche sémantique
- * @param options - Options de recherche hybride
- * @returns Résultats combinés et classés
- */
-export async function hybridSearch(
-  query: string,
-  options: HybridSearchOptions = {}
-): Promise<SearchResult[]> {
-  const {
-    semanticWeight = 0.7,
-    textWeight = 0.3,
-    textQuery,
-    textOperator = 'OR',
-    textField = 'content',
-    prefixSearch = false,
-    suffixSearch = false,
-    substringSearch = true,
-    caseSensitive = false,
-    ...semanticOptions
-  } = options;
-
-  // Normaliser les poids pour qu'ils somment à 1
-  const totalWeight = semanticWeight + textWeight;
-  const normalizedSemanticWeight = semanticWeight / totalWeight;
-  const normalizedTextWeight = textWeight / totalWeight;
-
-  const results: SearchResult[] = [];
-  const resultMap = new Map<string, SearchResult>();
-
-  // 1. Recherche sémantique si le poids est > 0
-  if (normalizedSemanticWeight > 0) {
-    try {
-      const semanticResults = await semanticSearch(query, semanticOptions);
-
-      // Pondérer les scores sémantiques
-      semanticResults.forEach(result => {
-        const weightedResult = {
-          ...result,
-          score: result.score * normalizedSemanticWeight,
-          metadata: {
-            ...result.metadata,
-            semanticScore: result.score,
-            weightedSemanticScore: result.score * normalizedSemanticWeight
-          }
-        };
-        resultMap.set(result.id, weightedResult);
-        results.push(weightedResult);
-      });
-
-      console.error(`Semantic search returned ${semanticResults.length} results (weight: ${normalizedSemanticWeight.toFixed(2)})`);
-    } catch (error) {
-      console.error('Error in semantic search part of hybrid search:', error);
-      // Continuer avec la recherche textuelle seulement
-    }
-  }
-
-  // 2. Recherche textuelle si le poids est > 0 et si textQuery est fourni
-  if (normalizedTextWeight > 0 && textQuery && textQuery.trim()) {
-    try {
-      const textResults = await textSearch(textQuery, {
-        ...semanticOptions,
-        textOperator,
-        textField,
-        prefixSearch,
-        suffixSearch,
-        substringSearch,
-        caseSensitive
-      });
-
-      // Pondérer les scores textuels et combiner avec les résultats sémantiques
-      textResults.forEach(result => {
-        const existingResult = resultMap.get(result.id);
-
-        if (existingResult) {
-          // Combiner les scores: score sémantique + score textuel
-          existingResult.score += result.score * normalizedTextWeight;
-          existingResult.metadata = {
-            ...existingResult.metadata,
-            textScore: result.score,
-            weightedTextScore: result.score * normalizedTextWeight,
-            combinedScore: existingResult.score
-          };
-        } else {
-          // Nouveau résultat textuel seulement
-          const weightedResult = {
-            ...result,
-            score: result.score * normalizedTextWeight,
-            metadata: {
-              ...result.metadata,
-              textScore: result.score,
-              weightedTextScore: result.score * normalizedTextWeight,
-              semanticScore: 0
-            }
-          };
-          resultMap.set(result.id, weightedResult);
-          results.push(weightedResult);
-        }
-      });
-
-      console.error(`Text search returned ${textResults.length} results (weight: ${normalizedTextWeight.toFixed(2)})`);
-    } catch (error) {
-      console.error('Error in text search part of hybrid search:', error);
-      // Continuer avec les résultats sémantiques seulement
-    }
-  }
-
-  // 3. Trier par score combiné (décroissant)
-  const sortedResults = results.sort((a, b) => b.score - a.score);
-
-  // 4. Limiter les résultats si nécessaire
-  const limit = semanticOptions.limit || 10;
-  const limitedResults = sortedResults.slice(0, limit);
-
-  // 5. Appliquer le re-ranking si activé
-  if (semanticOptions.enableReranking && limitedResults.length > 0) {
-    console.error(`Applying re-ranking to ${limitedResults.length} hybrid results`);
-    const rerankedResults = rerankResults(limitedResults, semanticOptions.rerankingWeights);
-
-    // Log des scores avant/après pour débogage
-    if (rerankedResults.length > 0) {
-      const firstResult = rerankedResults[0];
-      const lastResult = rerankedResults[rerankedResults.length - 1];
-      console.error(`Hybrid re-ranking complete: ${rerankedResults.length} results, top score: ${firstResult.score.toFixed(3)}, bottom score: ${lastResult.score.toFixed(3)}`);
-    }
-
-    return rerankedResults;
-  }
-
-  return limitedResults;
-}
-
-/**
- * Recherche textuelle avec filtres booléens
- * @param query - Requête textuelle
- * @param options - Options de recherche textuelle
- * @returns Résultats de recherche textuelle
- */
-async function textSearch(
-  query: string,
-  options: {
-    projectFilter?: string;
-    limit?: number;
-    contentTypeFilter?: string | string[];
-    roleFilter?: string | string[];
-    fileExtensionFilter?: string | string[];
-    languageFilter?: string | string[];
-    minFileSizeBytes?: number;
-    maxFileSizeBytes?: number;
-    minLinesCount?: number;
-    maxLinesCount?: number;
-    dateFrom?: Date;
-    dateTo?: Date;
-    includeCompressed?: boolean;
-    excludeCompressed?: boolean;
-    textOperator?: 'AND' | 'OR';
-    textField?: 'content' | 'file_path' | 'both';
-    prefixSearch?: boolean;
-    suffixSearch?: boolean;
-    substringSearch?: boolean;
-    caseSensitive?: boolean;
-  } = {}
-): Promise<SearchResult[]> {
-  const {
-    projectFilter,
-    limit = 10,
-    contentTypeFilter,
-    roleFilter,
-    fileExtensionFilter,
-    languageFilter,
-    minFileSizeBytes,
-    maxFileSizeBytes,
-    minLinesCount,
-    maxLinesCount,
-    dateFrom,
-    dateTo,
-    includeCompressed,
-    excludeCompressed,
-    textOperator = 'OR',
-    textField = 'content',
-    prefixSearch = false,
-    suffixSearch = false,
-    substringSearch = true,
-    caseSensitive = false
-  } = options;
-
-  // Vérifier quelle table utiliser
-  const useV2 = await checkV2TableExists();
-  const tableName = useV2 ? 'rag_store_v2' : 'rag_store';
-
-  // Construire la requête textuelle
-  let sql = '';
-  const params: any[] = [];
-  let paramIndex = 1;
-
-  if (useV2) {
-    sql = `
-      SELECT id, project_path, file_path, content, content_type, role,
-             file_extension, lines_count, language, is_compressed, original_size_bytes,
-             created_at, updated_at,
-             1.0 as similarity
-      FROM rag_store_v2
-      WHERE 1=1
-    `;
-  } else {
-    sql = `
-      SELECT id, project_path, file_path, content,
-             1.0 as similarity
-      FROM rag_store
-      WHERE 1=1
-    `;
-  }
-
-  // Ajouter la condition de recherche textuelle
-  if (query && query.trim()) {
-    const searchTerms = query.trim().split(/\s+/).filter(term => term.length > 0);
-
-    if (searchTerms.length > 0) {
-      const conditions: string[] = [];
-
-      searchTerms.forEach((term, index) => {
-        const paramName = `$${paramIndex + index}`;
-        params.push(prepareTextSearchTerm(term, prefixSearch, suffixSearch, substringSearch, caseSensitive));
-
-        const fieldConditions: string[] = [];
-
-        if (textField === 'content' || textField === 'both') {
-          fieldConditions.push(`content ILIKE ${paramName}::text`);
-        }
-
-        if (textField === 'file_path' || textField === 'both') {
-          fieldConditions.push(`file_path ILIKE ${paramName}::text`);
-        }
-
-        if (fieldConditions.length > 0) {
-          conditions.push(`(${fieldConditions.join(' OR ')})`);
-        }
-      });
-
-      if (conditions.length > 0) {
-        const operator = textOperator === 'AND' ? ' AND ' : ' OR ';
-        sql += ` AND (${conditions.join(operator)})`;
-        paramIndex += searchTerms.length;
-      }
-    }
-  }
-
-  // Appliquer tous les filtres
-  paramIndex = applyFiltersToQuery(sql, params, paramIndex, {
-    projectFilter,
-    contentTypeFilter,
-    roleFilter,
-    fileExtensionFilter,
-    languageFilter,
-    minFileSizeBytes,
-    maxFileSizeBytes,
-    minLinesCount,
-    maxLinesCount,
-    dateFrom,
-    dateTo,
-    includeCompressed,
-    excludeCompressed
-  }, useV2);
-
-  // Pour la recherche textuelle, nous utilisons un score basé sur le nombre de correspondances
-  // et la pertinence (simplifié pour l'exemple)
-  sql += ` ORDER BY similarity DESC LIMIT $${paramIndex}::int`;
-  params.push(limit);
-
-  try {
-    const result = await pool.query(sql, params);
-
-    // Traiter chaque ligne pour décompresser si nécessaire
-    const processedRows = await Promise.all(
-      result.rows.map(async (row) => {
-        let content = row.content;
-        let fileSize = row.content.length;
-        let originalSize = row.content.length;
-
-        // Décompresser si nécessaire (seulement pour rag_store_v2)
-        if (useV2 && row.is_compressed) {
-          try {
-            content = await decompressIfNeeded(row.content, true);
-            fileSize = row.original_size_bytes || row.content.length;
-            originalSize = row.original_size_bytes || row.content.length;
-          } catch (error) {
-            console.error(`Failed to decompress content for ${row.id}:`, error);
-            // Garder le contenu compressé en cas d'erreur
-          }
-        }
-
-        // Calculer un score textuel basé sur le nombre de correspondances
-        const textScore = calculateTextScore(content, query, {
-          prefixSearch,
-          suffixSearch,
-          substringSearch,
-          caseSensitive
-        });
-
-        return {
-          id: row.id,
-          filePath: row.file_path,
-          content,
-          score: textScore,
-          metadata: {
-            projectPath: row.project_path,
-            fileSize,
-            originalSize: useV2 ? (row.original_size_bytes || fileSize) : fileSize,
-            lines: content.split('\n').length,
-            contentType: row.content_type || null,
-            role: row.role || null,
-            fileExtension: row.file_extension || null,
-            language: row.language || null,
-            linesCount: row.lines_count || null,
-            isCompressed: useV2 ? row.is_compressed : false,
-            compressionRatio: useV2 && row.is_compressed && row.original_size_bytes
-              ? ((row.content.length / row.original_size_bytes) * 100).toFixed(1) + '%'
-              : null,
-            createdAt: row.created_at ? new Date(row.created_at) : null,
-            updatedAt: row.updated_at ? new Date(row.updated_at) : null,
-          },
-        };
-      })
-    );
-
-    return processedRows;
-  } catch (error) {
-    console.error("Error in text search:", error);
-    throw error;
-  }
-}
-
-/**
- * Prépare un terme de recherche textuelle pour SQL LIKE
- */
-function prepareTextSearchTerm(
-  term: string,
-  prefixSearch: boolean,
-  suffixSearch: boolean,
-  substringSearch: boolean,
-  caseSensitive: boolean
-): string {
-  let searchTerm = term;
-
-  if (!caseSensitive) {
-    searchTerm = searchTerm.toLowerCase();
-  }
-
-  // Échapper les caractères spéciaux pour LIKE
-  searchTerm = searchTerm.replace(/[%_]/g, '\\$&');
-
-  // Ajouter les wildcards selon les options
-  if (prefixSearch && suffixSearch) {
-    return `%${searchTerm}%`;
-  } else if (prefixSearch) {
-    return `${searchTerm}%`;
-  } else if (suffixSearch) {
-    return `%${searchTerm}`;
-  } else if (substringSearch) {
-    return `%${searchTerm}%`;
-  } else {
-    // Recherche exacte
-    return searchTerm;
-  }
-}
-
-/**
- * Calcule un score textuel basé sur le nombre de correspondances
- */
-function calculateTextScore(
-  content: string,
-  query: string,
-  options: {
-    prefixSearch?: boolean;
-    suffixSearch?: boolean;
-    substringSearch?: boolean;
-    caseSensitive?: boolean;
-  }
-): number {
-  const searchContent = options.caseSensitive ? content : content.toLowerCase();
-  const searchQuery = options.caseSensitive ? query : query.toLowerCase();
-
-  const terms = searchQuery.split(/\s+/).filter(term => term.length > 0);
-
-  if (terms.length === 0) {
-    return 0;
-  }
-
-  let totalMatches = 0;
-  let maxPossibleMatches = terms.length;
-
-  terms.forEach(term => {
-    if (searchContent.includes(term)) {
-      totalMatches++;
-
-      // Bonus pour les correspondances multiples
-      const matchCount = (searchContent.match(new RegExp(term, 'g')) || []).length;
-      if (matchCount > 1) {
-        totalMatches += Math.min(matchCount - 1, 3) * 0.1; // Bonus limité
-      }
-    }
-  });
-
-  // Score basé sur le pourcentage de termes correspondants
-  const baseScore = totalMatches / maxPossibleMatches;
-
-  // Bonus pour la position (début du contenu)
-  const firstMatchIndex = Math.min(
-    ...terms.map(term => searchContent.indexOf(term)).filter(index => index !== -1)
-  );
-  const positionBonus = firstMatchIndex !== Infinity && firstMatchIndex < 100 ? 0.2 : 0;
-
-  // Bonus pour la densité (termes proches les uns des autres)
-  const densityBonus = totalMatches > 1 ? 0.1 : 0;
-
-  return Math.min(1.0, baseScore + positionBonus + densityBonus);
-}
-
 export async function semanticSearch(
   query: string,
   options: SemanticSearchOptions = {}
@@ -1379,381 +430,55 @@ export async function semanticSearch(
     dynamicThreshold = false,
     contentTypeFilter,
     roleFilter,
-    fileExtensionFilter,
     languageFilter,
     minFileSizeBytes,
     maxFileSizeBytes,
     minLinesCount,
     maxLinesCount,
     dateFrom,
-    dateTo,
-    includeCompressed,
-    excludeCompressed,
-    enableReranking = false,
-    rerankingWeights = {}
+    dateTo
   } = options;
 
+  // Générer l'embedding pour la requête
   const queryVector = await generateEmbedding(query);
-  const queryVectorStr = `[${queryVector.join(',')}]`;
-
-  // Vérifier quelle table utiliser
-  const useV2 = await checkV2TableExists();
-  const tableName = useV2 ? 'rag_store_v2' : 'rag_store';
-
-  // Requête initiale sans seuil pour calculer la distribution si dynamicThreshold est activé
-  let initialThreshold = threshold;
-
-  if (dynamicThreshold) {
-    try {
-      // D'abord, récupérer plus de résultats pour analyser la distribution
-      let distributionSql = `
-        SELECT (1 - (vector <=> $1::vector)) as similarity
-        FROM ${tableName}
-        WHERE 1=1
-      `;
-
-      const distributionParams: any[] = [queryVectorStr];
-      let paramIndex = 2;
-
-      // Appliquer les mêmes filtres que la requête principale pour une distribution réaliste
-      paramIndex = applyFiltersToQuery(distributionSql, distributionParams, paramIndex, {
-        projectFilter,
-        contentTypeFilter,
-        roleFilter,
-        fileExtensionFilter,
-        languageFilter,
-        minFileSizeBytes,
-        maxFileSizeBytes,
-        minLinesCount,
-        maxLinesCount,
-        dateFrom,
-        dateTo,
-        includeCompressed,
-        excludeCompressed
-      }, useV2);
-
-      distributionSql += ` ORDER BY similarity DESC LIMIT 50`;
-
-      const distributionResult = await pool.query(distributionSql, distributionParams);
-      const scores = distributionResult.rows.map(row => row.similarity);
-
-      if (scores.length > 0) {
-        initialThreshold = calculateDynamicThreshold(scores);
-        console.error(`Dynamic threshold calculated: ${initialThreshold.toFixed(3)} from ${scores.length} scores`);
-      }
-    } catch (error) {
-      console.error("Error calculating dynamic threshold, using default:", error);
-    }
-  }
-
-  // Construire la requête principale
-  let sql = '';
-  const params: any[] = [queryVectorStr, initialThreshold];
-  let paramIndex = 3;
-
-  if (useV2) {
-    sql = `
-      SELECT id, project_path, file_path, content, content_type, role,
-             file_extension, lines_count, language, is_compressed, original_size_bytes,
-             created_at, updated_at,
-             (1 - (vector <=> $1::vector)) as similarity
-      FROM rag_store_v2
-      WHERE (1 - (vector <=> $1::vector)) >= $2::float
-    `;
-  } else {
-    sql = `
-      SELECT id, project_path, file_path, content,
-             (1 - (vector <=> $1::vector)) as similarity
-      FROM rag_store
-      WHERE (1 - (vector <=> $1::vector)) >= $2::float
-    `;
-  }
-
-  // Appliquer tous les filtres
-  paramIndex = applyFiltersToQuery(sql, params, paramIndex, {
-    projectFilter,
-    contentTypeFilter,
-    roleFilter,
-    fileExtensionFilter,
-    languageFilter,
-    minFileSizeBytes,
-    maxFileSizeBytes,
-    minLinesCount,
-    maxLinesCount,
-    dateFrom,
-    dateTo,
-    includeCompressed,
-    excludeCompressed
-  }, useV2);
-
-  sql += ` ORDER BY similarity DESC LIMIT $${paramIndex}::int`;
-  params.push(limit);
 
   try {
-    const result = await pool.query(sql, params);
+    // Utiliser le vector store abstrait
+    const store = getVectorStore();
+    const results = await store.semanticSearch(queryVector, {
+      projectFilter,
+      limit,
+      threshold,
+      contentTypeFilter,
+      roleFilter,
+      languageFilter,
+      minFileSizeBytes,
+      maxFileSizeBytes,
+      minLinesCount,
+      maxLinesCount,
+      dateFrom,
+      dateTo
+    });
 
-    // Traiter chaque ligne pour décompresser si nécessaire
-    const processedRows = await Promise.all(
-      result.rows.map(async (row) => {
-        let content = row.content;
-        let fileSize = row.content.length;
-        let originalSize = row.content.length;
-
-        // Décompresser si nécessaire (seulement pour rag_store_v2)
-        if (useV2 && row.is_compressed) {
-          try {
-            content = await decompressIfNeeded(row.content, true);
-            fileSize = row.original_size_bytes || row.content.length;
-            originalSize = row.original_size_bytes || row.content.length;
-          } catch (error) {
-            console.error(`Failed to decompress content for ${row.id}:`, error);
-            // Garder le contenu compressé en cas d'erreur
-          }
-        }
-
-        return {
-          id: row.id,
-          filePath: row.file_path,
-          content,
-          score: row.similarity,
-          metadata: {
-            projectPath: row.project_path,
-            fileSize,
-            originalSize: useV2 ? (row.original_size_bytes || fileSize) : fileSize,
-            lines: content.split('\n').length,
-            contentType: row.content_type || null,
-            role: row.role || null,
-            fileExtension: row.file_extension || null,
-            language: row.language || null,
-            linesCount: row.lines_count || null,
-            isCompressed: useV2 ? row.is_compressed : false,
-            compressionRatio: useV2 && row.is_compressed && row.original_size_bytes
-              ? ((row.content.length / row.original_size_bytes) * 100).toFixed(1) + '%'
-              : null,
-            createdAt: row.created_at ? new Date(row.created_at) : null,
-            updatedAt: row.updated_at ? new Date(row.updated_at) : null,
-          },
-        };
-      })
-    );
-
-    // Appliquer le re-ranking si activé
-    if (enableReranking && processedRows.length > 0) {
-      console.error(`Applying re-ranking to ${processedRows.length} results`);
-      const rerankedResults = rerankResults(processedRows, rerankingWeights);
-
-      // Log des scores avant/après pour débogage
-      if (rerankedResults.length > 0) {
-        const firstResult = rerankedResults[0];
-        const lastResult = rerankedResults[rerankedResults.length - 1];
-        console.error(`Re-ranking complete: ${rerankedResults.length} results, top score: ${firstResult.score.toFixed(3)}, bottom score: ${lastResult.score.toFixed(3)}`);
-      }
-
-      return rerankedResults;
-    }
-
-    return processedRows;
+    // Convertir les résultats au format attendu
+    return results.map(result => ({
+      id: result.id,
+      filePath: result.filePath,
+      content: result.content,
+      score: result.score,
+      metadata: result.metadata
+    }));
   } catch (error) {
-    console.error("Error in semantic search:", error);
+    VectorStoreLogger.error('vectorstore.search.error', `Erreur lors de la recherche sémantique`, error as Error, {
+      query
+    });
     throw error;
   }
 }
 
 /**
- * Applique les filtres à une requête SQL en construction
- * @param sql - Requête SQL en construction (modifiée par référence)
- * @param params - Paramètres de la requête (modifiés par référence)
- * @param paramIndex - Index actuel des paramètres
- * @param filters - Filtres à appliquer
- * @param useV2 - Si la table v2 est utilisée
- * @returns Nouvel index des paramètres
+ * Obtient les statistiques d'un projet
  */
-function applyFiltersToQuery(
-  sql: string,
-  params: any[],
-  paramIndex: number,
-  filters: {
-    projectFilter?: string;
-    contentTypeFilter?: string | string[];
-    roleFilter?: string | string[];
-    fileExtensionFilter?: string | string[];
-    languageFilter?: string | string[];
-    minFileSizeBytes?: number;
-    maxFileSizeBytes?: number;
-    minLinesCount?: number;
-    maxLinesCount?: number;
-    dateFrom?: Date;
-    dateTo?: Date;
-    includeCompressed?: boolean;
-    excludeCompressed?: boolean;
-  },
-  useV2: boolean
-): number {
-  let currentParamIndex = paramIndex;
-
-  // Filtre par projet
-  if (filters.projectFilter) {
-    sql += ` AND project_path = $${currentParamIndex}::text`;
-    params.push(filters.projectFilter);
-    currentParamIndex++;
-  }
-
-  // Filtres spécifiques à rag_store_v2
-  if (useV2) {
-    // Filtre par type de contenu (simple ou multiple)
-    if (filters.contentTypeFilter) {
-      if (Array.isArray(filters.contentTypeFilter)) {
-        if (filters.contentTypeFilter.length > 0) {
-          const placeholders = filters.contentTypeFilter.map((_, i) => `$${currentParamIndex + i}::text`).join(', ');
-          sql += ` AND content_type IN (${placeholders})`;
-          params.push(...filters.contentTypeFilter);
-          currentParamIndex += filters.contentTypeFilter.length;
-        }
-      } else {
-        sql += ` AND content_type = $${currentParamIndex}::text`;
-        params.push(filters.contentTypeFilter);
-        currentParamIndex++;
-      }
-    }
-
-    // Filtre par rôle (simple ou multiple)
-    if (filters.roleFilter) {
-      if (Array.isArray(filters.roleFilter)) {
-        if (filters.roleFilter.length > 0) {
-          const placeholders = filters.roleFilter.map((_, i) => `$${currentParamIndex + i}::text`).join(', ');
-          sql += ` AND role IN (${placeholders})`;
-          params.push(...filters.roleFilter);
-          currentParamIndex += filters.roleFilter.length;
-        }
-      } else {
-        sql += ` AND role = $${currentParamIndex}::text`;
-        params.push(filters.roleFilter);
-        currentParamIndex++;
-      }
-    }
-
-    // Filtre par extension de fichier (simple ou multiple)
-    if (filters.fileExtensionFilter) {
-      if (Array.isArray(filters.fileExtensionFilter)) {
-        if (filters.fileExtensionFilter.length > 0) {
-          const placeholders = filters.fileExtensionFilter.map((_, i) => `$${currentParamIndex + i}::text`).join(', ');
-          sql += ` AND file_extension IN (${placeholders})`;
-          params.push(...filters.fileExtensionFilter);
-          currentParamIndex += filters.fileExtensionFilter.length;
-        }
-      } else {
-        sql += ` AND file_extension = $${currentParamIndex}::text`;
-        params.push(filters.fileExtensionFilter);
-        currentParamIndex++;
-      }
-    }
-
-    // Filtre par langage (simple ou multiple)
-    if (filters.languageFilter) {
-      if (Array.isArray(filters.languageFilter)) {
-        if (filters.languageFilter.length > 0) {
-          const placeholders = filters.languageFilter.map((_, i) => `$${currentParamIndex + i}::text`).join(', ');
-          sql += ` AND language IN (${placeholders})`;
-          params.push(...filters.languageFilter);
-          currentParamIndex += filters.languageFilter.length;
-        }
-      } else {
-        sql += ` AND language = $${currentParamIndex}::text`;
-        params.push(filters.languageFilter);
-        currentParamIndex++;
-      }
-    }
-
-    // Filtres par taille de fichier
-    if (filters.minFileSizeBytes !== undefined) {
-      sql += ` AND file_size_bytes >= $${currentParamIndex}::int`;
-      params.push(filters.minFileSizeBytes);
-      currentParamIndex++;
-    }
-
-    if (filters.maxFileSizeBytes !== undefined) {
-      sql += ` AND file_size_bytes <= $${currentParamIndex}::int`;
-      params.push(filters.maxFileSizeBytes);
-      currentParamIndex++;
-    }
-
-    // Filtres par nombre de lignes
-    if (filters.minLinesCount !== undefined) {
-      sql += ` AND lines_count >= $${currentParamIndex}::int`;
-      params.push(filters.minLinesCount);
-      currentParamIndex++;
-    }
-
-    if (filters.maxLinesCount !== undefined) {
-      sql += ` AND lines_count <= $${currentParamIndex}::int`;
-      params.push(filters.maxLinesCount);
-      currentParamIndex++;
-    }
-
-    // Filtres par date
-    if (filters.dateFrom) {
-      sql += ` AND created_at >= $${currentParamIndex}::timestamp`;
-      params.push(filters.dateFrom);
-      currentParamIndex++;
-    }
-
-    if (filters.dateTo) {
-      sql += ` AND created_at <= $${currentParamIndex}::timestamp`;
-      params.push(filters.dateTo);
-      currentParamIndex++;
-    }
-
-    // Filtres par compression
-    if (filters.includeCompressed !== undefined) {
-      sql += ` AND is_compressed = $${currentParamIndex}::boolean`;
-      params.push(filters.includeCompressed);
-      currentParamIndex++;
-    }
-
-    if (filters.excludeCompressed !== undefined && filters.excludeCompressed) {
-      sql += ` AND is_compressed = false`;
-    }
-  }
-
-  return currentParamIndex;
-}
-
-// Fonctions utilitaires pour la compression (définies avant leur utilisation)
-const COMPRESSION_THRESHOLD = 10 * 1024; // 10KB
-
-async function compressContent(content: string): Promise<{ compressed: Buffer; compressionRatio: number }> {
-  const originalSize = Buffer.byteLength(content, 'utf8');
-  const compressed = await gzipAsync(content);
-  const compressionRatio = (compressed.length / originalSize) * 100;
-
-  return { compressed, compressionRatio };
-}
-
-async function decompressContent(compressed: Buffer): Promise<string> {
-  const decompressed = await gunzipAsync(compressed);
-  return decompressed.toString('utf8');
-}
-
-function shouldCompress(content: string): boolean {
-  return Buffer.byteLength(content, 'utf8') > COMPRESSION_THRESHOLD;
-}
-
-// Fonction pour décompresser le contenu si nécessaire
-async function decompressIfNeeded(content: string, isCompressed: boolean): Promise<string> {
-  if (!isCompressed) {
-    return content;
-  }
-
-  try {
-    // Le contenu compressé est stocké en base64
-    const compressedBuffer = Buffer.from(content, 'base64');
-    return await decompressContent(compressedBuffer);
-  } catch (error) {
-    console.error('Failed to decompress content:', error);
-    return content; // Retourner le contenu tel quel en cas d'erreur
-  }
-}
-
 export async function getProjectStats(projectPath: string): Promise<{
   totalFiles: number;
   totalChunks: number;
@@ -1762,242 +487,266 @@ export async function getProjectStats(projectPath: string): Promise<{
   contentTypes: Record<string, number>;
 }> {
   try {
-    const useV2 = await checkV2TableExists();
-    const tableName = useV2 ? 'rag_store_v2' : 'rag_store';
+    const store = getVectorStore();
+    return await store.getProjectStats(projectPath);
+  } catch (error) {
+    VectorStoreLogger.error('vectorstore.stats.error', `Erreur lors de la récupération des stats`, error as Error, {
+      projectPath
+    });
+    throw error;
+  }
+}
 
-    // Statistiques de base
-    const statsResult = await pool.query(
-      `SELECT
-      COUNT(*) as total_chunks,
-        MIN(created_at) as indexed_at,
-        MAX(updated_at) as last_updated
-       FROM ${tableName}
-       WHERE project_path = $1::text`,
-      [projectPath]
-    );
+/**
+ * Liste tous les projets indexés
+ */
+export async function listProjects(): Promise<string[]> {
+  try {
+    const store = getVectorStore();
+    return await store.listProjects();
+  } catch (error) {
+    VectorStoreLogger.error('vectorstore.list.error', 'Erreur lors du listing des projets', error as Error);
+    throw error;
+  }
+}
 
-    const row = statsResult.rows[0];
-    const totalChunks = parseInt(row.total_chunks) || 0;
+/**
+ * Supprime un document par son ID
+ */
+export async function deleteDocument(id: string): Promise<boolean> {
+  try {
+    const store = getVectorStore();
+    return await store.deleteDocument(id);
+  } catch (error) {
+    VectorStoreLogger.error('vectorstore.delete.error', `Erreur lors de la suppression du document`, error as Error, {
+      id
+    });
+    throw error;
+  }
+}
 
-    // Compter les fichiers uniques (approximation basée sur file_path sans chunk index)
-    let totalFiles = 0;
-    if (useV2) {
-      const filesResult = await pool.query(
-        `SELECT COUNT(DISTINCT 
-           CASE 
-             WHEN POSITION('#chunk' IN file_path) > 0 
-             THEN SUBSTRING(file_path FROM 1 FOR POSITION('#chunk' IN file_path) - 1)
-             ELSE file_path 
-           END
-        ) as total_files
-         FROM rag_store_v2
-         WHERE project_path = $1`,
-        [projectPath]
-      );
-      totalFiles = parseInt(filesResult.rows[0].total_files) || 0;
-    } else {
-      totalFiles = totalChunks; // Approximation pour l'ancienne table
-    }
+/**
+ * Vide tous les documents (pour les tests)
+ */
+export async function clearAll(): Promise<void> {
+  try {
+    const store = getVectorStore();
+    await store.clearAll();
+    VectorStoreLogger.info('vectorstore.clear', 'Tous les documents ont été supprimés');
+  } catch (error) {
+    VectorStoreLogger.error('vectorstore.clear.error', 'Erreur lors du vidage des documents', error as Error);
+    throw error;
+  }
+}
 
-    // Distribution par type de contenu (si v2)
-    let contentTypes: Record<string, number> = {};
-    if (useV2) {
-      const typesResult = await pool.query(
-        `SELECT content_type, COUNT(*) as count
-         FROM rag_store_v2
-         WHERE project_path = $1
-         GROUP BY content_type`,
-        [projectPath]
-      );
+/**
+ * Obtient les statistiques globales du store
+ */
+export async function getStats(): Promise<{
+  totalDocuments: number;
+  totalProjects: number;
+  totalSizeBytes: number;
+  averageVectorDimension: number;
+  lastUpdated: Date | null;
+}> {
+  try {
+    const store = getVectorStore();
+    return await store.getStats();
+  } catch (error) {
+    VectorStoreLogger.error('vectorstore.stats.global.error', 'Erreur lors de la récupération des statistiques globales', error as Error);
+    throw error;
+  }
+}
 
-      typesResult.rows.forEach(typeRow => {
-        contentTypes[typeRow.content_type] = parseInt(typeRow.count);
+/**
+ * Teste la connectivité au vector store
+ */
+export async function testConnection(): Promise<boolean> {
+  try {
+    const store = getVectorStore();
+    return await store.testConnection();
+  } catch (error) {
+    VectorStoreLogger.error('vectorstore.test.error', 'Erreur lors du test de connexion', error as Error);
+    return false;
+  }
+}
+
+/**
+ * Met à jour un document existant
+ */
+export async function updateDocument(
+  id: string,
+  updates: Partial<{
+    content: string;
+    embedding: number[];
+    metadata: Partial<EmbedAndStoreOptions>;
+  }>
+): Promise<boolean> {
+  try {
+    const store = getVectorStore();
+    return await store.updateDocument(id, updates);
+  } catch (error) {
+    VectorStoreLogger.error('vectorstore.update.error', `Erreur lors de la mise à jour du document`, error as Error, {
+      id
+    });
+    throw error;
+  }
+}
+
+/**
+ * Recherche hybride (sémantique + textuelle)
+ */
+export async function hybridSearch(
+  query: string,
+  options: SemanticSearchOptions & {
+    semanticWeight?: number;
+    textWeight?: number;
+    textQuery?: string;
+  } = {}
+): Promise<SearchResult[]> {
+  const {
+    semanticWeight = 0.7,
+    textWeight = 0.3,
+    textQuery,
+    ...semanticOptions
+  } = options;
+
+  try {
+    const store = getVectorStore();
+
+    // Si le store supporte la recherche hybride, l'utiliser
+    if (store.hybridSearch) {
+      const queryVector = await generateEmbedding(query);
+      return await store.hybridSearch(queryVector, textQuery || query, {
+        ...semanticOptions,
+        semanticWeight,
+        textWeight
       });
     }
 
-    return {
-      totalFiles,
-      totalChunks,
-      indexedAt: row.indexed_at ? new Date(row.indexed_at) : null,
-      lastUpdated: row.last_updated ? new Date(row.last_updated) : null,
-      contentTypes,
+    // Sinon, fallback sur la recherche sémantique
+    VectorStoreLogger.warn('vectorstore.hybrid.fallback', 'Recherche hybride non supportée, fallback sur recherche sémantique');
+    return await semanticSearch(query, semanticOptions);
+  } catch (error) {
+    VectorStoreLogger.error('vectorstore.hybrid.error', `Erreur lors de la recherche hybride`, error as Error, {
+      query
+    });
+    throw error;
+  }
+}
+
+/**
+ * Recherche par métadonnées
+ */
+export async function searchByMetadata(
+  filters: Partial<EmbedAndStoreOptions> & {
+    projectPath?: string;
+    dateRange?: { from?: Date; to?: Date };
+  }
+): Promise<SearchResult[]> {
+  try {
+    const store = getVectorStore();
+
+    // Si le store supporte la recherche par métadonnées, l'utiliser
+    if (store.searchByMetadata) {
+      return await store.searchByMetadata(filters);
+    }
+
+    // Sinon, fallback sur la recherche sémantique avec filtres
+    VectorStoreLogger.warn('vectorstore.metadata.fallback', 'Recherche par métadonnées non supportée, fallback sur recherche sémantique');
+
+    // Convertir les filtres en options de recherche sémantique
+    const semanticOptions: SemanticSearchOptions = {
+      projectFilter: filters.projectPath,
+      contentTypeFilter: filters.contentType ? [filters.contentType] : undefined,
+      roleFilter: filters.role ? [filters.role] : undefined,
+      languageFilter: filters.language ? [filters.language] : undefined,
+      dateFrom: filters.dateRange?.from,
+      dateTo: filters.dateRange?.to
     };
+
+    // Recherche sémantique avec une requête vide (tous les résultats)
+    return await semanticSearch('', semanticOptions);
   } catch (error) {
-    console.error(`Error getting stats for project ${projectPath}: `, error);
+    VectorStoreLogger.error('vectorstore.metadata.error', `Erreur lors de la recherche par métadonnées`, error as Error, {
+      filters
+    });
     throw error;
   }
 }
 
-export async function listProjects(): Promise<string[]> {
+/**
+ * Supprime les documents correspondant à un pattern
+ */
+export async function deleteDocumentsByPattern(pattern: string): Promise<number> {
   try {
-    const useV2 = await checkV2TableExists();
-    const tableName = useV2 ? 'rag_store_v2' : 'rag_store';
-
-    const result = await pool.query(
-      `SELECT DISTINCT project_path FROM ${tableName} ORDER BY project_path`
-    );
-
-    return result.rows.map(row => row.project_path);
+    const store = getVectorStore();
+    return await store.deleteDocumentsByPattern(pattern);
   } catch (error) {
-    console.error("Error listing projects:", error);
+    VectorStoreLogger.error('vectorstore.delete.pattern.error', `Erreur lors de la suppression avec pattern`, error as Error, {
+      pattern
+    });
     throw error;
   }
 }
 
-// Fonctions pour le versionnement des chunks
-
-export interface ChunkHistoryEntry {
-  historyId: number;
-  version: number;
-  content: string;
-  changedAt: Date;
-  changeType: 'created' | 'updated' | 'deleted';
-  changeReason: string;
-  metadata: Record<string, any>;
-}
-
-export async function getChunkHistory(
-  chunkId: string,
-  limit: number = 10
-): Promise<ChunkHistoryEntry[]> {
+/**
+ * Initialise le vector store
+ */
+export async function initialize(): Promise<void> {
   try {
-    const useV2 = await checkV2TableExists();
-    if (!useV2) {
-      throw new Error('Version history requires rag_store_v2 table');
-    }
-
-    const result = await pool.query(
-      `SELECT * FROM get_chunk_history($1, $2)`,
-      [chunkId, limit]
-    );
-
-    return result.rows.map(row => ({
-      historyId: row.history_id,
-      version: row.version,
-      content: row.content,
-      changedAt: new Date(row.changed_at),
-      changeType: row.change_type,
-      changeReason: row.change_reason,
-      metadata: row.metadata || {}
-    }));
+    const store = getVectorStore();
+    await store.initialize();
+    VectorStoreLogger.info('vectorstore.initialize', 'Vector store initialisé');
   } catch (error) {
-    console.error(`Error getting history for chunk ${chunkId}: `, error);
+    VectorStoreLogger.error('vectorstore.initialize.error', 'Erreur lors de l\'initialisation du vector store', error as Error);
     throw error;
   }
 }
 
-export interface VersionComparison {
-  fieldName: string;
-  version1Value: string;
-  version2Value: string;
-  hasChanged: boolean;
+/**
+ * Vide le cache des embeddings
+ */
+export function clearEmbeddingCache(): void {
+  embeddingCache.clear();
+  VectorStoreLogger.info('embedding.cache.cleared', 'Cache des embeddings vidé');
 }
 
-export async function compareChunkVersions(
-  chunkId: string,
-  version1: number,
-  version2: number
-): Promise<VersionComparison[]> {
-  try {
-    const useV2 = await checkV2TableExists();
-    if (!useV2) {
-      throw new Error('Version comparison requires rag_store_v2 table');
-    }
-
-    const result = await pool.query(
-      `SELECT * FROM compare_chunk_versions($1, $2, $3)`,
-      [chunkId, version1, version2]
-    );
-
-    return result.rows.map(row => ({
-      fieldName: row.field_name,
-      version1Value: row.version1_value,
-      version2Value: row.version2_value,
-      hasChanged: row.has_changed
-    }));
-  } catch (error) {
-    console.error(`Error comparing versions ${version1} and ${version2} for chunk ${chunkId}: `, error);
-    throw error;
-  }
-}
-
-export interface VersionStats {
-  chunkId: string;
-  totalVersions: number;
-  firstVersion: Date;
-  lastVersion: Date;
-  createdCount: number;
-  updatedCount: number;
-  deletedCount: number;
-  avgChangePercentage: number;
-}
-
-export async function getVersionStats(
-  chunkId?: string
-): Promise<VersionStats[]> {
-  try {
-    const useV2 = await checkV2TableExists();
-    if (!useV2) {
-      throw new Error('Version stats require rag_store_v2 table');
-    }
-
-    let sql = 'SELECT * FROM rag_store_v2_version_stats';
-    const params: any[] = [];
-
-    if (chunkId) {
-      sql += ' WHERE chunk_id = $1::text';
-      params.push(chunkId);
-    }
-
-    sql += ' ORDER BY total_versions DESC';
-
-    const result = await pool.query(sql, params);
-
-    return result.rows.map(row => ({
-      chunkId: row.chunk_id,
-      totalVersions: parseInt(row.total_versions),
-      firstVersion: new Date(row.first_version),
-      lastVersion: new Date(row.last_version),
-      createdCount: parseInt(row.created_count),
-      updatedCount: parseInt(row.updated_count),
-      deletedCount: parseInt(row.deleted_count),
-      avgChangePercentage: parseFloat(row.avg_change_percentage) || 0
-    }));
-  } catch (error) {
-    console.error('Error getting version stats:', error);
-    throw error;
-  }
-}
-
-// Fonction pour détecter les changements significatifs
-export function detectSignificantChange(
-  oldContent: string,
-  newContent: string,
-  thresholdPercentage: number = 10
-): { hasSignificantChange: boolean; changePercentage: number; details: Record<string, any> } {
-  const oldLength = oldContent.length;
-  const newLength = newContent.length;
-
-  const lengthChange = Math.abs(newLength - oldLength);
-  const changePercentage = oldLength > 0 ? (lengthChange / oldLength) * 100 : 100;
-
-  const hasSignificantChange = changePercentage >= thresholdPercentage;
-
-  const details = {
-    oldLength,
-    newLength,
-    lengthChange,
-    changePercentage,
-    oldLines: oldContent.split('\n').length,
-    newLines: newContent.split('\n').length,
-    linesChange: Math.abs(newContent.split('\n').length - oldContent.split('\n').length)
+/**
+ * Obtient les statistiques du cache des embeddings
+ */
+export function getEmbeddingCacheStats(): {
+  totalEntries: number;
+  hitRate: number;
+  hits: number;
+  misses: number;
+} {
+  // Note: Cette implémentation simplifiée ne suit pas les hits/misses
+  // Une implémentation complète nécessiterait un compteur
+  return {
+    totalEntries: embeddingCache.size,
+    hitRate: 0,
+    hits: 0,
+    misses: 0
   };
-
-  return { hasSignificantChange, changePercentage, details };
 }
 
-// Fermer le pool à la fin
-process.on('SIGINT', async () => {
-  await pool.end();
-  process.exit(0);
-});
+/**
+ * Ferme proprement le vector store
+ */
+export async function close(): Promise<void> {
+  try {
+    // Nettoyer la file d'attente Ollama
+    if (batchTimeout) {
+      clearTimeout(batchTimeout);
+      batchTimeout = null;
+    }
+
+    // Vider le cache
+    clearEmbeddingCache();
+
+    VectorStoreLogger.info('vectorstore.close', 'Vector store fermé');
+  } catch (error) {
+    VectorStoreLogger.error('vectorstore.close.error', 'Erreur lors de la fermeture du vector store', error as Error);
+  }
+}

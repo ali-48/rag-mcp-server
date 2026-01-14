@@ -17,15 +17,20 @@ const DEFAULT_CONFIG_V2 = {
     verbose: true,
     legacyMode: true, // Par défaut, activer le mode rétrocompatible
     exposedTools: [
+        'init_rag',
+        'scan_rag',
+        'index_rag',
+        'query_rag',
+        'pipeline_validator',
         'activated_rag',
-        'recherche_rag'
+        'recherche_rag',
+        'manage_projects'
     ],
     hiddenTools: [
         'injection_rag',
         'index_project',
         'update_project',
-        'search_code',
-        'manage_projects'
+        'search_code'
     ]
 };
 /**
@@ -49,7 +54,7 @@ export class AutoRegistryV2 {
             const fullPath = join(projectRoot, dir);
             if (!existsSync(fullPath)) {
                 if (this.config.verbose) {
-                    console.warn(`⚠️ Répertoire non trouvé: ${fullPath}`);
+                    // Pas de logs sur stderr pour compatibilité MCP
                 }
                 continue;
             }
@@ -65,7 +70,7 @@ export class AutoRegistryV2 {
                     }
                     catch (error) {
                         if (this.config.verbose) {
-                            console.error(`❌ Erreur lors du chargement du module ${file}:`, error);
+                            // Pas de logs sur stderr pour compatibilité MCP
                         }
                     }
                 }
@@ -93,7 +98,7 @@ export class AutoRegistryV2 {
         }
         catch (error) {
             if (this.config.verbose) {
-                console.error(`❌ Erreur lors du scan de ${dir}:`, error);
+                // Pas de logs sur stderr pour compatibilité MCP
             }
         }
         return files;
@@ -126,10 +131,7 @@ export class AutoRegistryV2 {
                 tools.push({ tool: group.tool, handler: group.handler });
             }
             else if (this.config.verbose) {
-                console.warn(`⚠️ Paire incomplète pour ${baseName}:`, {
-                    hasTool: !!group.tool,
-                    hasHandler: !!group.handler
-                });
+                // Pas de logs sur stderr pour compatibilité MCP
             }
         }
         return tools;
@@ -160,10 +162,7 @@ export class AutoRegistryV2 {
      */
     async autoRegister() {
         if (this.config.verbose) {
-            console.log('🔍 Découverte automatique des outils v2.0...');
-            console.log(`📋 Mode: ${this.config.legacyMode ? 'Rétrocompatible' : 'Nouveau seulement'}`);
-            console.log(`📊 Outils exposés: ${this.config.exposedTools?.join(', ') || 'tous'}`);
-            console.log(`👁️  Outils masqués: ${this.config.hiddenTools?.join(', ') || 'aucun'}`);
+            // Pas de logs sur stderr pour compatibilité MCP
         }
         const modules = await this.discoverToolModules();
         let registeredCount = 0;
@@ -172,7 +171,7 @@ export class AutoRegistryV2 {
             for (const { tool, handler } of tools) {
                 if (this.registeredTools.has(tool.name)) {
                     if (this.config.verbose) {
-                        console.log(`⏭️ Outil déjà enregistré: ${tool.name}`);
+                        // Pas de logs sur stderr pour compatibilité MCP
                     }
                     continue;
                 }
@@ -184,26 +183,18 @@ export class AutoRegistryV2 {
                     this.registeredTools.add(tool.name);
                     registeredCount++;
                     if (this.config.verbose) {
-                        const visibility = visibleTool.hidden ? '👁️  (masqué)' : '👁️  (visible)';
-                        console.log(`✅ Outil enregistré: ${tool.name} ${visibility} (${path})`);
+                        // Pas de logs sur stderr pour compatibilité MCP
                     }
                 }
                 catch (error) {
                     if (this.config.verbose) {
-                        console.error(`❌ Erreur lors de l'enregistrement de ${tool.name}:`, error);
+                        // Pas de logs sur stderr pour compatibilité MCP
                     }
                 }
             }
         }
         if (this.config.verbose) {
-            console.log(`🎉 Enregistrement v2.0 terminé: ${registeredCount} outils enregistrés`);
-            console.log(`📊 Total d'outils dans le registre: ${toolRegistry.size()}`);
-            // Afficher la répartition
-            const allTools = toolRegistry.getTools();
-            const visibleTools = allTools.filter(t => !t.hidden);
-            const hiddenTools = allTools.filter(t => t.hidden);
-            console.log(`👁️  Outils visibles: ${visibleTools.length}`);
-            console.log(`👁️  Outils masqués: ${hiddenTools.length}`);
+            // Pas de logs sur stderr pour compatibilité MCP
         }
         return registeredCount;
     }
@@ -218,10 +209,10 @@ export class AutoRegistryV2 {
             }
         }
         if (missingTools.length > 0) {
-            console.error(`❌ Outils manquants: ${missingTools.join(', ')}`);
+            // Pas de logs sur stderr pour compatibilité MCP
             return false;
         }
-        console.log(`✅ Tous les outils attendus sont enregistrés (${expectedTools.length} outils)`);
+        // Pas de logs sur stderr pour compatibilité MCP
         return true;
     }
     /**
@@ -256,10 +247,7 @@ export class AutoRegistryV2 {
             this.updateConfig(newConfig);
         }
         if (this.config.verbose) {
-            console.log('⚙️  Configuration chargée depuis fichier');
-            console.log(`   Mode legacy: ${this.config.legacyMode}`);
-            console.log(`   Outils exposés: ${this.config.exposedTools?.join(', ')}`);
-            console.log(`   Outils masqués: ${this.config.hiddenTools?.join(', ')}`);
+            // Pas de logs sur stderr pour compatibilité MCP
         }
     }
     /**
@@ -292,21 +280,26 @@ export async function initializeAutoRegistryV2(config) {
 export function getExpectedToolsV2() {
     return [
         // Nouveaux outils principaux
+        'init_rag',
+        'scan_rag',
+        'index_rag',
+        'query_rag',
+        'pipeline_validator',
         'activated_rag',
         'recherche_rag',
+        'manage_projects',
         // Outils legacy (masqués par défaut)
         'injection_rag',
         'index_project',
         'update_project',
-        'search_code',
-        'manage_projects'
+        'search_code'
     ];
 }
 /**
  * Fonction utilitaire pour migrer depuis l'ancien registre
  */
 export async function migrateFromV1() {
-    console.log('🔄 Migration du registre v1.0 vers v2.0...');
+    // Pas de logs sur stderr pour compatibilité MCP
     // Créer une nouvelle instance pour éviter les problèmes d'accès
     const registry = new AutoRegistryV2();
     // Désactiver temporairement le mode verbose
@@ -323,35 +316,29 @@ export async function migrateFromV1() {
     registry.reset();
     // Réenregistrer avec la nouvelle configuration
     await registry.autoRegister();
-    console.log('✅ Migration terminée');
+    // Pas de logs sur stderr pour compatibilité MCP
 }
 // Exécution automatique si ce fichier est exécuté directement
 if (import.meta.url === `file://${process.argv[1]}`) {
-    console.log('🚀 Initialisation du registre automatique v2.0...');
-    initializeAutoRegistryV2({ verbose: true }).then(async (count) => {
-        console.log(`\n📊 Résumé v2.0:`);
-        console.log(`- Outils enregistrés: ${count}`);
-        console.log(`- Total dans ToolRegistry: ${toolRegistry.size()}`);
+    // Pas de logs sur stderr pour compatibilité MCP
+    initializeAutoRegistryV2({ verbose: false }).then(async (count) => {
+        // Pas de logs sur stderr pour compatibilité MCP
         // Vérifier les outils attendus
         const expectedTools = getExpectedToolsV2();
         const registry = new AutoRegistryV2();
         const allRegistered = registry.verifyRegistration(expectedTools);
         // Lister les outils avec leur visibilité
         const toolsList = registry.listRegisteredTools();
-        console.log('\n📋 Liste des outils enregistrés:');
-        toolsList.forEach(tool => {
-            console.log(`  ${tool.hidden ? '👁️  [masqué]' : '👁️  [visible]'} ${tool.name}`);
-        });
         if (allRegistered) {
-            console.log('\n🎉 Tous les outils sont correctement enregistrés !');
+            // Pas de logs sur stderr pour compatibilité MCP
             process.exit(0);
         }
         else {
-            console.error('\n❌ Certains outils sont manquants');
+            // Pas de logs sur stderr pour compatibilité MCP
             process.exit(1);
         }
     }).catch(error => {
-        console.error('❌ Erreur lors de l\'initialisation v2.0:', error);
+        // Pas de logs sur stderr pour compatibilité MCP
         process.exit(1);
     });
 }

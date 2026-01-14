@@ -5,7 +5,7 @@ import fs from 'fs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { isRagInitialized } from '../../src/rag/phase0/rag-state.js';
 import { activatedRagHandler } from '../../src/tools/rag/activated-rag.js';
-import { initRagTool } from '../../src/tools/rag/init-rag.js';
+import { initRagToolLegacy } from '../../src/tools/rag/init-rag.js';
 
 // Mock des dépendances
 vi.mock('fs', () => ({
@@ -93,7 +93,7 @@ describe('Workflow d\'intégration RAG', () => {
     describe('Workflow complet init_rag → activated_rag', () => {
         it('devrait initialiser un projet puis exécuter activated_rag avec succès', async () => {
             // Étape 1: Initialisation avec init_rag
-            const initResult = await initRagTool({
+            const initResult = await initRagToolLegacy({
                 project_path: mockProjectPath,
                 mode: 'default'
             });
@@ -139,7 +139,7 @@ describe('Workflow d\'intégration RAG', () => {
             // Simuler une erreur lors de l'initialisation
             mockFs.promises.mkdir.mockRejectedValue(new Error('Permission denied'));
 
-            const initResult = await initRagTool({
+            const initResult = await initRagToolLegacy({
                 project_path: mockProjectPath,
                 mode: 'default'
             });
@@ -161,7 +161,7 @@ describe('Workflow d\'intégration RAG', () => {
                 mockFs.promises.writeFile.mockResolvedValue(undefined);
                 mockFs.promises.readFile.mockResolvedValue(JSON.stringify({ success: true }));
 
-                const initResult = await initRagTool({
+                const initResult = await initRagToolLegacy({
                     project_path: mockProjectPath,
                     mode
                 });
@@ -185,7 +185,7 @@ describe('Workflow d\'intégration RAG', () => {
             ];
 
             for (const invalidPath of invalidPaths) {
-                const result = await initRagTool({
+                const result = await initRagToolLegacy({
                     project_path: invalidPath as any,
                     mode: 'default'
                 });
@@ -199,7 +199,7 @@ describe('Workflow d\'intégration RAG', () => {
 
     describe('Intégration avec le système de fichiers', () => {
         it('devrait créer la structure de dossiers nécessaire', async () => {
-            await initRagTool({
+            await initRagToolLegacy({
                 project_path: mockProjectPath,
                 mode: 'default'
             });
@@ -216,7 +216,7 @@ describe('Workflow d\'intégration RAG', () => {
         });
 
         it('devrait créer les fichiers de configuration', async () => {
-            await initRagTool({
+            await initRagToolLegacy({
                 project_path: mockProjectPath,
                 mode: 'default'
             });
@@ -242,7 +242,7 @@ describe('Workflow d\'intégration RAG', () => {
         });
 
         it('devrait créer la base de données SQLite', async () => {
-            await initRagTool({
+            await initRagToolLegacy({
                 project_path: mockProjectPath,
                 mode: 'default'
             });
@@ -258,7 +258,7 @@ describe('Workflow d\'intégration RAG', () => {
     describe('Validation des arguments', () => {
         it('devrait valider les arguments requis pour init_rag', async () => {
             // Test sans project_path
-            const result1 = await initRagTool({
+            const result1 = await initRagToolLegacy({
                 mode: 'default'
             } as any);
 
@@ -266,7 +266,7 @@ describe('Workflow d\'intégration RAG', () => {
             expect(result1.message).toContain('project_path');
 
             // Test avec project_path invalide
-            const result2 = await initRagTool({
+            const result2 = await initRagToolLegacy({
                 project_path: '',
                 mode: 'default'
             });
@@ -286,7 +286,7 @@ describe('Workflow d\'intégration RAG', () => {
 
         it('devrait accepter des arguments optionnels', async () => {
             // Initialiser d'abord
-            await initRagTool({
+            await initRagToolLegacy({
                 project_path: mockProjectPath,
                 mode: 'default'
             });
@@ -313,7 +313,7 @@ describe('Workflow d\'intégration RAG', () => {
                 .mockResolvedValueOnce(undefined) // .ragignore
                 .mockRejectedValueOnce(new Error('Disk full')); // rag.config.json
 
-            const result = await initRagTool({
+            const result = await initRagToolLegacy({
                 project_path: mockProjectPath,
                 mode: 'default'
             });
@@ -324,7 +324,7 @@ describe('Workflow d\'intégration RAG', () => {
 
         it('devrait maintenir un état cohérent après une erreur', async () => {
             // Initialiser avec succès
-            await initRagTool({
+            await initRagToolLegacy({
                 project_path: mockProjectPath,
                 mode: 'default'
             });
@@ -351,7 +351,7 @@ describe('Workflow d\'intégration RAG', () => {
         it('devrait gérer les chemins de projet longs', async () => {
             const longPath = '/very/long/path/with/many/subdirectories/and/a/very/long/project/name/that/exceeds/typical/path/length/limits';
 
-            const result = await initRagTool({
+            const result = await initRagToolLegacy({
                 project_path: longPath,
                 mode: 'default'
             });
@@ -369,7 +369,7 @@ describe('Workflow d\'intégration RAG', () => {
             ];
 
             for (const specialPath of specialPaths) {
-                const result = await initRagTool({
+                const result = await initRagToolLegacy({
                     project_path: specialPath,
                     mode: 'default'
                 });

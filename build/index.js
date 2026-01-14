@@ -2,6 +2,7 @@
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
+import { initializeLogRedirection } from "./core/log-redirect.js";
 import { initializeAutoRegistryV2 } from "./core/registry-v2.js";
 import { toolRegistry } from "./core/tool-registry.js";
 // Le serveur MCP
@@ -47,6 +48,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 });
 // Fonction principale
 async function main() {
+    // Initialiser la redirection des logs console.* vers logger.ts
+    initializeLogRedirection();
     // Initialiser le registre automatique v2 (logs réduits pour MCP)
     const registeredCount = await initializeAutoRegistryV2({ verbose: false });
     // Récupérer la liste des outils

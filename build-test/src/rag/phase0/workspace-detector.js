@@ -244,19 +244,15 @@ export function normalizeWorkspacePath(path) {
 }
 // Test unitaire si exécuté directement
 if (import.meta.url === `file://${process.argv[1]}`) {
-    console.log('🧪 Test du workspace detector...');
+    // Log silencieux pour MCP
     detectWorkspace({
         manualPath: process.cwd(),
         useVscodeDetection: true,
         useEnvDetection: true
     }).then(context => {
-        console.log('✅ Workspace détecté:');
-        console.log(`  Chemin: ${context.path}`);
-        console.log(`  VS Code: ${context.vscodeWorkspace}`);
-        console.log(`  Langage: ${context.language || 'inconnu'}`);
-        console.log(`  Métadonnées:`, context.metadata);
+        // Log silencieux pour MCP
     }).catch(error => {
-        console.error('❌ Erreur:', error.message);
+        // Log silencieux pour MCP
         process.exit(1);
     });
 }

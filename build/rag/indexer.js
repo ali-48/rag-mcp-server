@@ -451,7 +451,7 @@ export async function updateProject(projectPath, options = {}) {
         // Vérifier si c'est un dépôt Git
         const isGitRepo = await isGitRepository(projectPath);
         if (!isGitRepo) {
-            console.error(`Project ${projectPath} is not a Git repository, performing full reindex`);
+            logger.warn('rag.indexer.git.not_repo', `Project ${projectPath} is not a Git repository, performing full reindex`);
             const fullStats = await indexProject(projectPath, options);
             return {
                 ...fullStats,
@@ -478,10 +478,10 @@ export async function updateProject(projectPath, options = {}) {
             try {
                 await deleteFileFromIndex(projectPath, filePath);
                 stats.deletedFiles++;
-                console.error(`Deleted from index: ${filePath}`);
+                logger.info('rag.indexer.file.deleted', `Deleted from index: ${filePath}`);
             }
             catch (error) {
-                console.error(`Error deleting file ${filePath} from index:`, error);
+                logger.error('rag.indexer.file.delete.error', `Error deleting file ${filePath} from index: ${error instanceof Error ? error.message : String(error)}`);
                 stats.errors++;
             }
         }
@@ -541,12 +541,12 @@ export async function updateProject(projectPath, options = {}) {
                 let enrichedResults = null;
                 if (llmEnricher.isEnrichmentEnabled() && enrichedChunks.length > 0) {
                     try {
-                        console.log(`🧠 Phase 0.3 - Enrichissement de ${enrichedChunks.length} chunks...`);
+                        logger.info('rag.indexer.phase03.enrich.start', `Phase 0.3 - Enrichissement de ${enrichedChunks.length} chunks...`);
                         enrichedResults = await llmEnricher.enrichBatch(enrichedChunks);
-                        console.log(`🧠 Phase 0.3 - Enrichissement terminé: ${enrichedResults.filter(r => r !== null).length}/${enrichedChunks.length} succès`);
+                        logger.info('rag.indexer.phase03.enrich.done', `Phase 0.3 - Enrichissement terminé: ${enrichedResults.filter(r => r !== null).length}/${enrichedChunks.length} succès`);
                     }
                     catch (enrichmentError) {
-                        console.error(`❌ Erreur Phase 0.3: ${enrichmentError instanceof Error ? enrichmentError.message : String(enrichmentError)}`);
+                        logger.error('rag.indexer.phase03.enrich.error', `Erreur Phase 0.3: ${enrichmentError instanceof Error ? enrichmentError.message : String(enrichmentError)}`);
                         enrichedResults = null;
                     }
                 }
@@ -594,11 +594,11 @@ export async function updateProject(projectPath, options = {}) {
                 stats.modifiedFiles++;
                 // Log progress
                 if (stats.indexedFiles % 10 === 0) {
-                    console.error(`Indexed ${stats.indexedFiles}/${filesToProcess.length} changed files, ${stats.chunksCreated} chunks...`);
+                    logger.info('rag.indexer.progress', `Indexed ${stats.indexedFiles}/${filesToProcess.length} changed files, ${stats.chunksCreated} chunks...`);
                 }
             }
             catch (error) {
-                console.error(`Error processing file ${filePath}:`, error);
+                logger.error('rag.indexer.file.error', `Error processing file ${filePath}: ${error instanceof Error ? error.message : String(error)}`);
                 stats.errors++;
             }
         }
@@ -607,28 +607,24 @@ export async function updateProject(projectPath, options = {}) {
         // Récupérer les métriques Phase 0.3
         const phase03Metrics = llmEnricher.getStats();
         if (llmEnricher.isEnrichmentEnabled()) {
-            console.error(`🧠 Phase 0.3 Métriques:`);
-            console.error(`  Chunks traités: ${phase03Metrics.totalProcessed}`);
-            console.error(`  Chunks enrichis: ${phase03Metrics.totalEnriched}`);
-            console.error(`  Taux succès: ${(phase03Metrics.successRate * 100).toFixed(1)}%`);
-            console.error(`  Temps moyen: ${phase03Metrics.averageTimeMs.toFixed(0)}ms`);
-            console.error(`  Erreurs: ${phase03Metrics.errors}`);
+            logger.info('rag.indexer.phase03.stats', `Phase 0.3 Métriques: chunks traités=${phase03Metrics.totalProcessed}, enrichis=${phase03Metrics.totalEnriched}, succès=${(phase03Metrics.successRate * 100).toFixed(1)}%, temps moyen=${phase03Metrics.averageTimeMs.toFixed(0)}ms, erreurs=${phase03Metrics.errors}`);
         }
-        console.error(`Incremental reindex completed for ${projectPath}`);
-        console.error(`  Total files: ${stats.totalFiles}`);
-        console.error(`  Modified/added: ${stats.modifiedFiles}`);
-        console.error(`  Deleted: ${stats.deletedFiles}`);
-        console.error(`  Unchanged: ${stats.unchangedFiles}`);
-        console.error(`  Chunks created: ${stats.chunksCreated}`);
-        console.error(`  Ignored: ${stats.ignoredFiles}`);
-        console.error(`  Errors: ${stats.errors}`);
+        logger.info('rag.indexer.complete', `Incremental reindex completed for ${projectPath}`, {
+            totalFiles: stats.totalFiles,
+            modifiedFiles: stats.modifiedFiles,
+            deletedFiles: stats.deletedFiles,
+            unchangedFiles: stats.unchangedFiles,
+            chunksCreated: stats.chunksCreated,
+            ignoredFiles: stats.ignoredFiles,
+            errors: stats.errors
+        });
         return {
             ...stats,
             phase03Metrics: llmEnricher.isEnrichmentEnabled() ? phase03Metrics : undefined
         };
     }
     catch (error) {
-        console.error(`Error updating project ${projectPath}:`, error);
+        logger.error('rag.indexer.project.update.error', `Error updating project ${projectPath}: ${error instanceof Error ? error.message : String(error)}`);
         throw error;
     }
 }
@@ -701,12 +697,12 @@ async function getChangedFiles(projectPath) {
         }
         catch (diffError) {
             // Ignorer si pas de commit précédent
-            console.error(`Could not get diff from previous commit: ${diffError}`);
+            logger.warn('rag.indexer.git.diff.error', `Could not get diff from previous commit: ${diffError instanceof Error ? diffError.message : String(diffError)}`);
         }
-        console.error(`Git changes detected: ${result.added.length} added, ${result.modified.length} modified, ${result.deleted.length} deleted`);
+        logger.info('rag.indexer.git.changes', `Git changes detected: ${result.added.length} added, ${result.modified.length} modified, ${result.deleted.length} deleted`);
     }
     catch (error) {
-        console.error(`Error getting changed files from Git: ${error}`);
+        logger.error('rag.indexer.git.status.error', `Error getting changed files from Git: ${error instanceof Error ? error.message : String(error)}`);
         // En cas d'erreur, retourner des listes vides
     }
     return result;
@@ -723,7 +719,7 @@ async function deleteFileFromIndex(projectPath, filePath) {
         await store.deleteDocumentsByPattern(filePattern);
     }
     catch (error) {
-        console.error(`Error deleting file ${filePath} from index:`, error);
+        logger.error('rag.indexer.file.delete.error', `Error deleting file ${filePath} from index: ${error instanceof Error ? error.message : String(error)}`);
         throw error;
     }
 }
