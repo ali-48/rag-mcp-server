@@ -454,5 +454,11 @@
   "cache": {
     "enabled": true,
     "ttl_seconds": 3600
+  },
+  "phase0_3": {
+    "enabled": true,
+    "provider": "fake",
+    "model": "test-model",
+    "batch_size": 10
   }
 }

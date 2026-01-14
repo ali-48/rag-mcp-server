@@ -11,10 +11,66 @@ Le système v2.0 introduit une **architecture modulaire** avec trois outils prin
 | Outil | Description | Remplace |
 |-------|-------------|----------|
 | **`init_rag`** | Initialisation de l'infrastructure RAG (8 étapes atomiques) | - |
-| **`activated_rag`** | Outil maître pour l'indexation automatique | `injection_rag`, `index_project`, `update_project`, `analyse_code` |
+| **`index_rag`** | Indexation asynchrone avec task_id | `activated_rag`, `injection_rag`, `index_project`, `update_project`, `analyse_code` |
 | **`recherche_rag`** | Outil de recherche avancée | `search_code` |
 
+**Outils de gestion asynchrone :**
+
+| Outil | Description | Type |
+|-------|-------------|------|
+| **`get_task_status`** | Consultation de progression d'une tâche | Synchrone |
+| **`cancel_task`** | Annulation d'une tâche en cours | Synchrone |
+| **`list_tasks`** | Liste des tâches par projet | Synchrone |
+
+### Désactivation de activated_rag (v2.1)
+
+**À partir de la version v2.1, `activated_rag` est désactivé par défaut** et retourne une erreur `RAG_PIPELINE_REQUIRED` avec un message guidé vers le nouveau pipeline asynchrone.
+
+**Nouveau workflow recommandé :**
+
+```typescript
+// ❌ ANCIEN (désactivé)
+const result = await toolRegistry.execute('activated_rag', { ... });
+
+// ✅ NOUVEAU (recommandé)
+const task = await toolRegistry.execute('index_rag', { ... });
+const taskId = task.task_id;
+const status = await toolRegistry.execute('get_task_status', { task_id: taskId });
+```
+
+**Raison de la désactivation :**
+
+- `activated_rag` était synchrone et bloquait le client MCP
+- Pas de suivi de progression ni d'annulation possible
+- Architecture non scalable pour les gros projets
+
+**Migration automatique :**
+Le système inclut un **guard `requirePipeline`** qui intercepte les appels à `activated_rag` et retourne une erreur guidée avec :
+
+- Code d'erreur : `RAG_PIPELINE_REQUIRED`
+- Action requise : Utiliser `index_rag` + `get_task_status`
+- Lien vers la documentation : Ce guide
+
+### Architecture Asynchrone (v2.1)
+
+Le système v2.1 introduit une **architecture asynchrone complète** avec les nouveaux outils :
+
+| Outil | Description | Type |
+|-------|-------------|------|
+| **`index_rag`** | Indexation asynchrone avec task_id | Asynchrone |
+| **`get_task_status`** | Consultation de progression | Synchrone |
+| **`cancel_task`** | Annulation de tâche | Synchrone |
+| **`list_tasks`** | Liste des tâches (bonus) | Synchrone |
+
+**Nouveaux composants :**
+
+- **`ProgressTracker`** : Suivi de progression en mémoire
+- **`TaskQueue`** : File d'attente par projet (max 3 tâches/projet)
+- **`TaskRegistry`** : Orchestration asynchrone légère
+
 ### Workflow RAG Complet
+
+#### Workflow Synchrone (v2.0)
 
 ```
 init_rag (Module A) → activated_rag (Module D) → recherche_rag
@@ -27,6 +83,25 @@ init_rag (Module A) → activated_rag (Module D) → recherche_rag
     ├── A7: Test vector DB
     └── A8: Enregistrement MCP
 ```
+
+#### Workflow Asynchrone (v2.1)
+
+```
+init_rag → index_rag (task_id) → get_task_status → recherche_rag
+    ├── Génération task_id immédiate
+    ├── Ajout à TaskQueue
+    ├── Exécution en arrière-plan
+    ├── Suivi de progression
+    └── Consultation asynchrone
+```
+
+**Avantages de l'asynchrone :**
+
+- Retour immédiat avec `task_id`
+- Pas de blocage du client MCP
+- Gestion de file d'attente par projet
+- Suivi de progression en temps réel
+- Annulation propre des tâches
 
 ### Vérification d'État (Module B)
 
@@ -41,6 +116,14 @@ Le système inclut un module de vérification d'état :
 2. **Automatisation** : Détection VS Code + file watcher intégrés
 3. **Intelligence** : Chunking intelligent par type de contenu
 4. **Rétrocompatibilité** : Les anciens outils fonctionnent toujours (masqués)
+
+### Avantages de v2.1 (Asynchrone)
+
+1. **Non-blocant** : Retour immédiat avec `task_id`
+2. **Scalabilité** : File d'attente par projet (max 3 tâches)
+3. **Suivi** : Progression en temps réel via `ProgressTracker`
+4. **Contrôle** : Annulation propre avec `cancel_task`
+5. **Monitoring** : Liste des tâches avec `list_tasks`
 
 ## 📋 Migration depuis v1.0
 
@@ -146,71 +229,102 @@ if (result.status === 'success') {
 7. **A7** : Test de la base vectorielle
 8. **A8** : Enregistrement dans le registry MCP
 
-### 2. activated_rag - Indexation Automatique
+### 2. index_rag - Indexation Asynchrone
 
-**Description** : Outil maître qui orchestre tout le pipeline RAG automatiquement. **Nécessite que le projet soit initialisé avec `init_rag`**.
+**Description** : Outil d'indexation asynchrone qui retourne immédiatement un `task_id` et exécute le pipeline RAG en arrière-plan. **Nécessite que le projet soit initialisé avec `init_rag`**.
 
 **Schéma d'entrée** :
 
 ```typescript
 {
   project_path: string;           // Chemin du projet à indexer
+  mode?: 'full' | 'incremental';  // Mode d'indexation (défaut: 'full')
   file_patterns?: string[];       // Patterns de fichiers (défaut: **/*.{js,ts,py,md,txt,json,yaml,yml,html,css,scss})
-  recursive?: boolean;            // Parcours récursif (défaut: true)
-  enable_phase0?: boolean;        // Activer Phase 0 (détection VS Code + file watcher)
-  enable_watcher?: boolean;       // Activer le file watcher en temps réel
-  embedding_provider?: string;    // Fournisseur d'embeddings (fake, ollama, sentence-transformers)
-  embedding_model?: string;       // Modèle d'embeddings
-  chunk_size?: number;            // Taille des chunks (tokens)
+  chunking_strategy?: 'logical' | 'fixed' | 'ai_enhanced'; // Stratégie de chunking
+  max_chunk_size?: number;        // Taille maximale des chunks (tokens)
   chunk_overlap?: number;         // Chevauchement entre chunks
+  embedding_model?: string;       // Modèle d'embeddings
+  enable_llm_enrichment?: boolean; // Activer l'enrichissement LLM optionnel
 }
 ```
 
 **Exemple d'utilisation** :
 
 ```typescript
-// Vérifier d'abord si le projet est initialisé
-const isInitialized = await isRagInitialized('/chemin/vers/mon/projet');
-
-if (!isInitialized) {
-  console.log('❌ Projet non initialisé. Utilisez init_rag d\'abord.');
-  return;
-}
-
-// Indexation automatique d'un projet
-const result = await toolRegistry.execute('activated_rag', {
+// Indexation asynchrone d'un projet
+const result = await toolRegistry.execute('index_rag', {
   project_path: '/chemin/vers/mon/projet',
+  mode: 'full',
   file_patterns: ['**/*.ts', '**/*.js', '**/*.md'],
-  recursive: true,
-  enable_phase0: true,
-  enable_watcher: false,
-  embedding_provider: 'ollama',
+  chunking_strategy: 'logical',
+  max_chunk_size: 1000,
+  chunk_overlap: 200,
   embedding_model: 'nomic-embed-text',
-  chunk_size: 1000,
-  chunk_overlap: 200
+  enable_llm_enrichment: false
 });
+
+// Récupérer le task_id immédiatement
+const taskId = result.task_id;
+console.log(`✅ Tâche créée: ${taskId}`);
+
+// Consulter la progression plus tard
+const status = await toolRegistry.execute('get_task_status', {
+  task_id: taskId
+});
+
+console.log(`📊 Progression: ${status.progress}%`);
+console.log(`📝 État: ${status.state}`);
 ```
 
-**Vérification automatique** :
+**Retour immédiat** :
 
-L'outil `activated_rag` inclut un **check bloquant** (Module D) qui vérifie automatiquement si le projet est initialisé. Si ce n'est pas le cas, il retourne une erreur propre avec des instructions pour utiliser `init_rag`.
+L'outil `index_rag` retourne **immédiatement** un objet avec `task_id` :
+
+```json
+{
+  "success": true,
+  "task_id": "rag-1736845200-x91",
+  "status": {
+    "state": "queued",
+    "step": "initialization",
+    "progress": 0
+  }
+}
+```
+
+**Gestion asynchrone** :
+
+- La tâche est ajoutée à la `TaskQueue` (file d'attente par projet)
+- Maximum 3 tâches par projet, 1 tâche active à la fois
+- Suivi de progression via `ProgressTracker`
+- Annulation possible avec `cancel_task`
 
 **Pipeline interne** :
 
 ```
-activated_rag
-    ├── Phase 0 : Détection projet VS Code
-    ├── Scan fichiers & changements
-    ├── Analyse statique multi-langage
-    ├── Chunking intelligent
-    │   ├── Code : 1 fonction = 1 chunk
-    │   ├── Classes : N chunks
-    │   └── Documentation : par paragraphes
-    ├── Calcul embeddings
-    │   ├── Code : nomic-embed-code
-    │   └── Texte : nomic-embed-text
-    └── Injection RAG
+index_rag (task_id)
+    ├── Vérification guards (requireInit, requireScan, etc.)
+    ├── Ajout à TaskQueue
+    ├── Exécution en arrière-plan :
+    │   ├── Phase 0 : Détection projet VS Code
+    │   ├── Scan fichiers & changements
+    │   ├── Analyse statique multi-langage
+    │   ├── Chunking intelligent
+    │   │   ├── Code : 1 fonction = 1 chunk
+    │   │   ├── Classes : N chunks
+    │   │   └── Documentation : par paragraphes
+    │   ├── Calcul embeddings
+    │   │   ├── Code : nomic-embed-code
+    │   │   └── Texte : nomic-embed-text
+    │   └── Injection RAG
+    └── Mise à jour progression en temps réel
 ```
+
+**Outils de gestion associés** :
+
+- `get_task_status` : Consulter la progression d'une tâche
+- `cancel_task` : Annuler une tâche en cours
+- `list_tasks` : Lister les tâches d'un projet
 
 ### 3. recherche_rag - Recherche Avancée
 
@@ -333,7 +447,7 @@ const results = await toolRegistry.execute('recherche_rag', {
 
 ## 📊 Exemples Complets
 
-### Exemple 1 : Initialisation et Indexation Complète
+### Exemple 1 : Initialisation et Indexation Asynchrone
 
 ```typescript
 // Étape 1 : Initialisation du projet
@@ -354,19 +468,45 @@ console.log('✅ Projet initialisé:', initResult.data.project_id);
 const ragState = await getRagState('/mon/projet');
 console.log('📊 État RAG:', ragState);
 
-// Étape 3 : Indexation complète
-const indexResult = await toolRegistry.execute('activated_rag', {
+// Étape 3 : Indexation asynchrone
+const indexResult = await toolRegistry.execute('index_rag', {
   project_path: '/mon/projet',
+  mode: 'full',
   file_patterns: ['**/*.ts', '**/*.js', '**/*.md'],
-  recursive: true,
-  enable_phase0: true,
-  mode: 'full'
+  chunking_strategy: 'logical',
+  max_chunk_size: 1000,
+  chunk_overlap: 200
 });
 
-console.log('📦 Indexation terminée:', indexResult.stats);
+// Récupérer le task_id immédiatement
+const taskId = indexResult.task_id;
+console.log(`✅ Tâche créée: ${taskId}`);
+
+// Étape 4 : Suivi de progression
+let isCompleted = false;
+while (!isCompleted) {
+  await new Promise(resolve => setTimeout(resolve, 2000)); // Attendre 2 secondes
+  
+  const status = await toolRegistry.execute('get_task_status', {
+    task_id: taskId
+  });
+  
+  console.log(`📊 Progression: ${status.progress}% - État: ${status.state} - Étape: ${status.step}`);
+  
+  if (status.state === 'completed' || status.state === 'failed' || status.state === 'cancelled') {
+    isCompleted = true;
+    console.log(`📦 Indexation terminée avec état: ${status.state}`);
+    
+    if (status.state === 'completed') {
+      console.log('📊 Statistiques:', status.stats);
+    } else if (status.error) {
+      console.error('❌ Erreur:', status.error);
+    }
+  }
+}
 ```
 
-### Exemple 2 : Workflow avec Gestion des Erreurs
+### Exemple 2 : Workflow Asynchrone avec Gestion des Erreurs
 
 ```typescript
 try {
@@ -386,14 +526,55 @@ try {
     }
   }
 
-  // Indexation incrémentale
-  const indexResult = await toolRegistry.execute('activated_rag', {
+  // Indexation asynchrone incrémentale
+  const indexResult = await toolRegistry.execute('index_rag', {
     project_path: '/mon/projet',
     mode: 'incremental',
-    enable_phase0: true
+    file_patterns: ['**/*.ts', '**/*.js'],
+    chunking_strategy: 'logical'
   });
 
-  // Recherche
+  // Récupérer le task_id
+  const taskId = indexResult.task_id;
+  console.log(`✅ Tâche d'indexation créée: ${taskId}`);
+
+  // Attendre la complétion avec timeout
+  const timeoutMs = 300000; // 5 minutes
+  const startTime = Date.now();
+  let isCompleted = false;
+  let lastStatus = null;
+
+  while (!isCompleted && (Date.now() - startTime) < timeoutMs) {
+    await new Promise(resolve => setTimeout(resolve, 3000)); // Attendre 3 secondes
+    
+    const status = await toolRegistry.execute('get_task_status', {
+      task_id: taskId
+    });
+    
+    lastStatus = status;
+    
+    if (status.state === 'completed') {
+      isCompleted = true;
+      console.log('✅ Indexation terminée avec succès');
+      console.log('📊 Statistiques:', status.stats);
+    } else if (status.state === 'failed') {
+      isCompleted = true;
+      throw new Error(`Échec de l'indexation: ${status.error?.message || 'Erreur inconnue'}`);
+    } else if (status.state === 'cancelled') {
+      isCompleted = true;
+      console.log('⚠️ Indexation annulée');
+    } else {
+      console.log(`📊 Progression: ${status.progress}% - Étape: ${status.step}`);
+    }
+  }
+
+  if (!isCompleted) {
+    // Annuler la tâche en timeout
+    await toolRegistry.execute('cancel_task', { task_id: taskId });
+    throw new Error('Timeout: l\'indexation a pris trop de temps');
+  }
+
+  // Recherche une fois l'indexation terminée
   const searchResult = await toolRegistry.execute('recherche_rag', {
     query: 'comment implémenter l\'authentification',
     scope: 'project',
@@ -401,7 +582,8 @@ try {
     content_types: ['code', 'doc']
   });
 
-  console.log('✅ Workflow terminé avec succès');
+  console.log('✅ Workflow asynchrone terminé avec succès');
+  console.log(`🔍 ${searchResult.results?.length || 0} résultats trouvés`);
 
 } catch (error) {
   console.error('❌ Erreur dans le workflow:', error);

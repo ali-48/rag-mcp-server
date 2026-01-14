@@ -2,7 +2,7 @@
   "rag_initialized": true,
   "initialized_by": "init_rag",
   "rag_version": "1.0",
-  "mode": "default",
+  "mode": "memory-only",
   "infrastructure": {
     "memory_db": "sqlite://rag/db/memory/rag_memory.sqlite",
     "vector_db": null,
@@ -13,5 +13,5 @@
     "config_version": "1.0"
   },
   "project_id": "7c0c6481",
-  "initialized_at": "2026-01-14T05:50:16.919Z"
+  "initialized_at": "2026-01-14T09:26:00.464Z"
 }

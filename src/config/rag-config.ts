@@ -6,12 +6,106 @@ import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 
 /**
- * Interface pour la configuration RAG
+ * Interface pour la configuration RAG v3.0
  */
 export interface RagConfig {
   version: string;
   description: string;
   last_updated: string;
+
+  system?: {
+    mode: string;
+    exposed_tools: string[];
+    legacy_tools: string[];
+    legacy_mode: boolean;
+    auto_detect_vscode: boolean;
+    auto_watch_files: boolean;
+    auto_index_changes: boolean;
+    vector_store: {
+      backend: string;
+      path: string;
+    };
+  };
+
+  ui?: {
+    human_progress: {
+      enabled: boolean;
+      type: string;
+      width: number;
+      realtime: boolean;
+      update_interval: number;
+      show_eta: boolean;
+      show_stats: boolean;
+      show_phases: boolean;
+      show_memory: boolean;
+      show_cpu: boolean;
+      colors: {
+        bar: string;
+        percentage: string;
+        eta: string;
+        stats: string;
+        phase: string;
+        memory: string;
+        cpu: string;
+      };
+      output_format: string;
+      output_target: string;
+    };
+    verbose_logging: boolean;
+    format_output: boolean;
+    interactive_mode: boolean;
+  };
+
+  legacy?: {
+    activated_rag: {
+      enabled: boolean;
+      redirect_to_pipeline: boolean;
+      error_message: string;
+      migration_guide: string;
+    };
+    compatibility_mode: boolean;
+    preserve_old_data: boolean;
+    migration_script: string;
+  };
+
+  checkpoints?: {
+    enabled: boolean;
+    auto_save: boolean;
+    save_interval: number;
+    max_checkpoints: number;
+    retention_days: number;
+    compression: boolean;
+    encryption: boolean;
+    locations: {
+      memory: string;
+      vector: string;
+      metadata: string;
+    };
+    recovery: {
+      auto_recover: boolean;
+      max_attempts: number;
+      validation_strictness: string;
+    };
+  };
+
+  queue?: {
+    max_size_per_project: number;
+    fifo_order: boolean;
+    mutator_exclusivity: boolean;
+    readonly_concurrent: number;
+    timeout: number | null;
+    retry: {
+      enabled: boolean;
+      max_attempts: number;
+      backoff_factor: number;
+      initial_delay: number;
+    };
+    stats: {
+      enabled: boolean;
+      retention_days: number;
+      aggregation_interval: number;
+    };
+  };
 
   defaults: {
     embedding_provider: string;
@@ -25,7 +119,45 @@ export interface RagConfig {
     format_output: boolean;
   };
 
-  providers: {
+  embedding_models?: {
+    by_content_type: {
+      code: {
+        provider: string;
+        model: string;
+        dimension: number;
+        description: string;
+      };
+      text: {
+        provider: string;
+        model: string;
+        dimension: number;
+        description: string;
+      };
+      config: {
+        provider: string;
+        model: string;
+        dimension: number;
+        description: string;
+      };
+      fallback: {
+        provider: string;
+        model: string;
+        dimension: number;
+        description: string;
+      };
+    };
+    providers: {
+      [key: string]: {
+        description: string;
+        models: string[];
+        requires_ollama?: boolean;
+        endpoint?: string;
+        default_model?: string;
+      };
+    };
+  };
+
+  providers?: {
     [key: string]: {
       description: string;
       models: string[];
@@ -59,11 +191,106 @@ export interface RagConfig {
     max_content_length: number;
   };
 
+  phase0?: {
+    enabled: boolean;
+    description: string;
+    components: {
+      workspace_detector: {
+        enabled: boolean;
+        detect_vscode: boolean;
+        detect_git: boolean;
+        auto_select_project: boolean;
+      };
+      file_watcher: {
+        enabled: boolean;
+        library: string;
+        watch_options: {
+          ignored: string[];
+          persistent: boolean;
+          ignoreInitial: boolean;
+          interval: number;
+          binaryInterval: number;
+        };
+        debounce_ms: number;
+        max_file_size_mb: number;
+      };
+      tree_sitter: {
+        enabled: boolean;
+        languages: string[];
+        max_file_size_mb: number;
+        timeout_ms: number;
+        fallback_to_regex: boolean;
+      };
+      chunking: {
+        strategy: string;
+        max_chunk_size: number;
+        chunk_overlap: number;
+        rules: {
+          function_as_chunk: boolean;
+          class_as_chunk: boolean;
+          max_function_lines: number;
+          max_class_methods: number;
+          preserve_imports: boolean;
+          include_comments: boolean;
+          doc_by_paragraph: boolean;
+          config_by_object: boolean;
+        };
+      };
+      llm_enrichment: {
+        enabled: boolean;
+        provider: string;
+        model: string;
+        temperature: number;
+        max_tokens: number;
+        timeout_ms: number;
+        batch_size: number;
+        features: string[];
+        cache_enabled: boolean;
+        cache_ttl_seconds: number;
+      };
+    };
+    pipeline: {
+      auto_start: boolean;
+      concurrent_workers: number;
+      max_queue_size: number;
+      retry_attempts: number;
+      retry_delay_ms: number;
+    };
+  };
+
+  pipeline?: {
+    description: string;
+    phases: Array<{
+      name: string;
+      tool: string;
+      description: string;
+      required: boolean;
+      depends_on: string[];
+    }>;
+    validation: {
+      enabled: boolean;
+      strict: boolean;
+      schema_path: string;
+    };
+    orchestration: {
+      auto_progress: boolean;
+      parallel_phases: boolean;
+      error_handling: string;
+      timeout: number | null;
+    };
+  };
+
   limits: {
     chunk_size: { min: number; max: number; default: number };
     chunk_overlap: { min: number; max: number; default: number };
     search_limit: { min: number; max: number; default: number };
     search_threshold: { min: number; max: number; default: number };
+    file_size?: { max_mb: number; warning_mb: number };
+    concurrent?: {
+      max_files: number;
+      max_chunks: number;
+      max_embeddings: number;
+    };
     preparation_batch_size?: { min: number; max: number; default: number };
     preparation_timeout?: { min: number; max: number; default: number };
   };
@@ -72,11 +299,18 @@ export interface RagConfig {
     default_patterns: string[];
     ignore_patterns: string[];
     recursive_default: boolean;
+    follow_symlinks?: boolean;
   };
 
   indexing: {
     max_file_size_mb: number;
     supported_extensions: string[];
+    content_type_mapping?: {
+      code: string[];
+      doc: string[];
+      config: string[];
+      web: string[];
+    };
     text_extensions: string[];
     code_extensions: string[];
   };
@@ -85,21 +319,60 @@ export interface RagConfig {
     default_limit: number;
     max_limit: number;
     similarity_threshold: number;
+    dynamic_threshold?: boolean;
     format_results: boolean;
     include_context_lines: number;
+    hybrid_search?: {
+      enabled: boolean;
+      semantic_weight: number;
+      text_weight: number;
+    };
   };
 
   environments: {
     development: {
       embedding_provider: string;
+      embedding_model?: string;
       verbose_logging: boolean;
       cache_enabled: boolean;
+      batch_size?: number;
+      ui_human_progress?: boolean;
     };
     production: {
       embedding_provider: string;
+      embedding_model?: string;
       verbose_logging: boolean;
       cache_enabled: boolean;
+      batch_size?: number;
+      ui_human_progress?: boolean;
     };
+  };
+
+  error_handling?: {
+    mcp_formatting: boolean;
+    human_formatting: boolean;
+    structured_logging: boolean;
+    error_recovery: boolean;
+    statistics: boolean;
+    alert_thresholds: {
+      error_rate: number;
+      consecutive_errors: number;
+      memory_usage: number;
+    };
+  };
+
+  cache?: {
+    enabled: boolean;
+    ttl_seconds: number;
+  };
+
+  migration?: {
+    from_version: string;
+    auto_migrate: boolean;
+    backup_old_config: boolean;
+    preserve_legacy_tools: boolean;
+    migration_script: string;
+    breaking_changes?: string[];
   };
 
   phase0_3?: {
@@ -190,21 +463,26 @@ export class RagConfigManager {
       // Pas de logs sur stderr pour compatibilité MCP
       return true; // Pas de validation si pas de limites
     }
-    return value >= limits.min && value <= limits.max;
+    // Vérifier si l'objet limites a les propriétés min et max
+    if (typeof limits === 'object' && 'min' in limits && 'max' in limits) {
+      return value >= (limits as any).min && value <= (limits as any).max;
+    }
+    // Pour les limites sans min/max (comme file_size), on retourne true
+    return true;
   }
 
   /**
    * Récupère les modèles disponibles pour un fournisseur
    */
   getProviderModels(provider: string): string[] {
-    return this.config.providers[provider]?.models || [];
+    return this.config.providers?.[provider]?.models || [];
   }
 
   /**
    * Vérifie si un fournisseur nécessite Ollama
    */
   requiresOllama(provider: string): boolean {
-    return this.config.providers[provider]?.requires_ollama || false;
+    return this.config.providers?.[provider]?.requires_ollama || false;
   }
 
   /**
@@ -297,7 +575,7 @@ export class RagConfigManager {
   applyLimits(param: keyof RagConfig['limits'], value: number): number {
     const limits = this.getLimits(param);
 
-    if (!limits) {
+    if (!limits || typeof limits !== 'object' || !('min' in limits) || !('max' in limits)) {
       // Pas de logs sur stderr pour compatibilité MCP
       return value;
     }
@@ -355,6 +633,216 @@ export class RagConfigManager {
         return {};
     }
   }
+
+  /**
+   * Récupère la configuration UI (interface utilisateur)
+   */
+  getUIConfig() {
+    return this.config.ui || {
+      human_progress: {
+        enabled: true,
+        type: 'bar',
+        width: 40,
+        realtime: true,
+        update_interval: 100,
+        show_eta: true,
+        show_stats: true,
+        show_phases: true,
+        show_memory: false,
+        show_cpu: false,
+        colors: {
+          bar: '\x1b[32m',
+          percentage: '\x1b[36m',
+          eta: '\x1b[33m',
+          stats: '\x1b[35m',
+          phase: '\x1b[34m',
+          memory: '\x1b[31m',
+          cpu: '\x1b[31m'
+        },
+        output_format: 'text',
+        output_target: 'stdout'
+      },
+      verbose_logging: false,
+      format_output: true,
+      interactive_mode: false
+    };
+  }
+
+  /**
+   * Récupère la configuration legacy (rétrocompatibilité)
+   */
+  getLegacyConfig() {
+    return this.config.legacy || {
+      activated_rag: {
+        enabled: false,
+        redirect_to_pipeline: true,
+        error_message: 'activated_rag est désactivé. Utilisez le pipeline RAG explicite: init_rag → scan_rag → index_rag → query_rag',
+        migration_guide: 'docs/MIGRATION_V2_V3.md'
+      },
+      compatibility_mode: false,
+      preserve_old_data: true,
+      migration_script: 'scripts/migrate-v1-to-v2.js'
+    };
+  }
+
+  /**
+   * Récupère la configuration des checkpoints
+   */
+  getCheckpointsConfig() {
+    return this.config.checkpoints || {
+      enabled: true,
+      auto_save: true,
+      save_interval: 30000,
+      max_checkpoints: 10,
+      retention_days: 7,
+      compression: true,
+      encryption: false,
+      locations: {
+        memory: './rag/db/checkpoints/memory',
+        vector: './rag/db/checkpoints/vector',
+        metadata: './rag/db/checkpoints/metadata'
+      },
+      recovery: {
+        auto_recover: true,
+        max_attempts: 3,
+        validation_strictness: 'medium'
+      }
+    };
+  }
+
+  /**
+   * Récupère la configuration de la file d'attente
+   */
+  getQueueConfig() {
+    return this.config.queue || {
+      max_size_per_project: 3,
+      fifo_order: true,
+      mutator_exclusivity: true,
+      readonly_concurrent: 5,
+      timeout: null,
+      retry: {
+        enabled: true,
+        max_attempts: 3,
+        backoff_factor: 2,
+        initial_delay: 1000
+      },
+      stats: {
+        enabled: true,
+        retention_days: 30,
+        aggregation_interval: 3600000
+      }
+    };
+  }
+
+  /**
+   * Récupère la configuration du pipeline
+   */
+  getPipelineConfig() {
+    return this.config.pipeline || {
+      description: "Nouveau pipeline RAG avec file d'attente et checkpoints",
+      phases: [
+        {
+          name: 'init',
+          tool: 'init_rag',
+          description: 'Initialisation du projet RAG',
+          required: true,
+          depends_on: []
+        },
+        {
+          name: 'scan',
+          tool: 'scan_rag',
+          description: 'Scan des fichiers et analyse structurelle',
+          required: true,
+          depends_on: ['init']
+        },
+        {
+          name: 'prepare',
+          tool: 'index_rag',
+          description: 'Préparation et chunking des fichiers',
+          required: true,
+          depends_on: ['scan']
+        },
+        {
+          name: 'embed',
+          tool: 'index_rag',
+          description: 'Génération des embeddings',
+          required: true,
+          depends_on: ['prepare']
+        },
+        {
+          name: 'index',
+          tool: 'index_rag',
+          description: 'Indexation dans la base vectorielle',
+          required: true,
+          depends_on: ['embed']
+        },
+        {
+          name: 'query',
+          tool: 'query_rag',
+          description: 'Recherche sémantique',
+          required: false,
+          depends_on: ['index']
+        }
+      ],
+      validation: {
+        enabled: true,
+        strict: false,
+        schema_path: 'config/pipeline-schema.json'
+      },
+      orchestration: {
+        auto_progress: true,
+        parallel_phases: false,
+        error_handling: 'continue',
+        timeout: null
+      }
+    };
+  }
+
+  /**
+   * Récupère la configuration de gestion d'erreurs
+   */
+  getErrorHandlingConfig() {
+    return this.config.error_handling || {
+      mcp_formatting: true,
+      human_formatting: true,
+      structured_logging: true,
+      error_recovery: false,
+      statistics: true,
+      alert_thresholds: {
+        error_rate: 0.1,
+        consecutive_errors: 5,
+        memory_usage: 90
+      }
+    };
+  }
+
+  /**
+   * Vérifie si activated_rag est activé
+   */
+  isActivatedRagEnabled(): boolean {
+    return this.config.legacy?.activated_rag?.enabled || false;
+  }
+
+  /**
+   * Vérifie si la barre de progression humaine est activée
+   */
+  isHumanProgressEnabled(): boolean {
+    return this.config.ui?.human_progress?.enabled || false;
+  }
+
+  /**
+   * Vérifie si les checkpoints sont activés
+   */
+  areCheckpointsEnabled(): boolean {
+    return this.config.checkpoints?.enabled || false;
+  }
+
+  /**
+   * Vérifie si la file d'attente est activée
+   */
+  isQueueEnabled(): boolean {
+    return this.config.queue !== undefined;
+  }
 }
 
 /**
@@ -404,13 +892,17 @@ export async function testRagConfig(): Promise<boolean> {
 
     // Vérifier les limites
     const chunkSizeLimits = configManager.getLimits('chunk_size');
-    if (!chunkSizeLimits || chunkSizeLimits.min >= chunkSizeLimits.max) {
+    if (!chunkSizeLimits || typeof chunkSizeLimits !== 'object' || !('min' in chunkSizeLimits) || !('max' in chunkSizeLimits)) {
+      // Pas de logs sur stderr pour compatibilité MCP
+      return false;
+    }
+    if (chunkSizeLimits.min >= chunkSizeLimits.max) {
       // Pas de logs sur stderr pour compatibilité MCP
       return false;
     }
 
     // Vérifier les fournisseurs
-    const providers = Object.keys(config.providers);
+    const providers = config.providers ? Object.keys(config.providers) : [];
     if (providers.length === 0) {
       // Pas de logs sur stderr pour compatibilité MCP
       return false;

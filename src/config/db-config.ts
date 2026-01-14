@@ -3,7 +3,7 @@
 
 import { readFileSync } from 'fs';
 import { dirname } from 'path';
-import sqlite3 from 'sqlite3';
+import * as sqlite3 from 'sqlite3';
 import { logger } from '../core/logger.js';
 
 /**
@@ -136,7 +136,7 @@ export class DbConfigManager {
         }
 
         // Créer la connexion SQLite
-        const db = new sqlite3.Database(path, (err) => {
+        const db = new sqlite3.Database(path, (err: Error | null) => {
             if (err) {
                 logger.error(`rag.db.connection.failed`, `Erreur lors de l'ouverture de la base ${type}`, {
                     type,

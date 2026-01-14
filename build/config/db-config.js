@@ -2,7 +2,7 @@
 // Gestionnaire de configuration de base de données pour RAG
 import { readFileSync } from 'fs';
 import { dirname } from 'path';
-import sqlite3 from 'sqlite3';
+import * as sqlite3 from 'sqlite3';
 import { logger } from '../core/logger.js';
 /**
  * Classe pour charger et gérer la configuration des bases de données

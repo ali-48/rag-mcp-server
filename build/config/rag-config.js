@@ -55,19 +55,24 @@ export class RagConfigManager {
             // Pas de logs sur stderr pour compatibilité MCP
             return true; // Pas de validation si pas de limites
         }
-        return value >= limits.min && value <= limits.max;
+        // Vérifier si l'objet limites a les propriétés min et max
+        if (typeof limits === 'object' && 'min' in limits && 'max' in limits) {
+            return value >= limits.min && value <= limits.max;
+        }
+        // Pour les limites sans min/max (comme file_size), on retourne true
+        return true;
     }
     /**
      * Récupère les modèles disponibles pour un fournisseur
      */
     getProviderModels(provider) {
-        return this.config.providers[provider]?.models || [];
+        return this.config.providers?.[provider]?.models || [];
     }
     /**
      * Vérifie si un fournisseur nécessite Ollama
      */
     requiresOllama(provider) {
-        return this.config.providers[provider]?.requires_ollama || false;
+        return this.config.providers?.[provider]?.requires_ollama || false;
     }
     /**
      * Récupère la configuration d'un fournisseur LLM
@@ -148,7 +153,7 @@ export class RagConfigManager {
      */
     applyLimits(param, value) {
         const limits = this.getLimits(param);
-        if (!limits) {
+        if (!limits || typeof limits !== 'object' || !('min' in limits) || !('max' in limits)) {
             // Pas de logs sur stderr pour compatibilité MCP
             return value;
         }
@@ -198,6 +203,206 @@ export class RagConfigManager {
                 return {};
         }
     }
+    /**
+     * Récupère la configuration UI (interface utilisateur)
+     */
+    getUIConfig() {
+        return this.config.ui || {
+            human_progress: {
+                enabled: true,
+                type: 'bar',
+                width: 40,
+                realtime: true,
+                update_interval: 100,
+                show_eta: true,
+                show_stats: true,
+                show_phases: true,
+                show_memory: false,
+                show_cpu: false,
+                colors: {
+                    bar: '\x1b[32m',
+                    percentage: '\x1b[36m',
+                    eta: '\x1b[33m',
+                    stats: '\x1b[35m',
+                    phase: '\x1b[34m',
+                    memory: '\x1b[31m',
+                    cpu: '\x1b[31m'
+                },
+                output_format: 'text',
+                output_target: 'stdout'
+            },
+            verbose_logging: false,
+            format_output: true,
+            interactive_mode: false
+        };
+    }
+    /**
+     * Récupère la configuration legacy (rétrocompatibilité)
+     */
+    getLegacyConfig() {
+        return this.config.legacy || {
+            activated_rag: {
+                enabled: false,
+                redirect_to_pipeline: true,
+                error_message: 'activated_rag est désactivé. Utilisez le pipeline RAG explicite: init_rag → scan_rag → index_rag → query_rag',
+                migration_guide: 'docs/MIGRATION_V2_V3.md'
+            },
+            compatibility_mode: false,
+            preserve_old_data: true,
+            migration_script: 'scripts/migrate-v1-to-v2.js'
+        };
+    }
+    /**
+     * Récupère la configuration des checkpoints
+     */
+    getCheckpointsConfig() {
+        return this.config.checkpoints || {
+            enabled: true,
+            auto_save: true,
+            save_interval: 30000,
+            max_checkpoints: 10,
+            retention_days: 7,
+            compression: true,
+            encryption: false,
+            locations: {
+                memory: './rag/db/checkpoints/memory',
+                vector: './rag/db/checkpoints/vector',
+                metadata: './rag/db/checkpoints/metadata'
+            },
+            recovery: {
+                auto_recover: true,
+                max_attempts: 3,
+                validation_strictness: 'medium'
+            }
+        };
+    }
+    /**
+     * Récupère la configuration de la file d'attente
+     */
+    getQueueConfig() {
+        return this.config.queue || {
+            max_size_per_project: 3,
+            fifo_order: true,
+            mutator_exclusivity: true,
+            readonly_concurrent: 5,
+            timeout: null,
+            retry: {
+                enabled: true,
+                max_attempts: 3,
+                backoff_factor: 2,
+                initial_delay: 1000
+            },
+            stats: {
+                enabled: true,
+                retention_days: 30,
+                aggregation_interval: 3600000
+            }
+        };
+    }
+    /**
+     * Récupère la configuration du pipeline
+     */
+    getPipelineConfig() {
+        return this.config.pipeline || {
+            description: "Nouveau pipeline RAG avec file d'attente et checkpoints",
+            phases: [
+                {
+                    name: 'init',
+                    tool: 'init_rag',
+                    description: 'Initialisation du projet RAG',
+                    required: true,
+                    depends_on: []
+                },
+                {
+                    name: 'scan',
+                    tool: 'scan_rag',
+                    description: 'Scan des fichiers et analyse structurelle',
+                    required: true,
+                    depends_on: ['init']
+                },
+                {
+                    name: 'prepare',
+                    tool: 'index_rag',
+                    description: 'Préparation et chunking des fichiers',
+                    required: true,
+                    depends_on: ['scan']
+                },
+                {
+                    name: 'embed',
+                    tool: 'index_rag',
+                    description: 'Génération des embeddings',
+                    required: true,
+                    depends_on: ['prepare']
+                },
+                {
+                    name: 'index',
+                    tool: 'index_rag',
+                    description: 'Indexation dans la base vectorielle',
+                    required: true,
+                    depends_on: ['embed']
+                },
+                {
+                    name: 'query',
+                    tool: 'query_rag',
+                    description: 'Recherche sémantique',
+                    required: false,
+                    depends_on: ['index']
+                }
+            ],
+            validation: {
+                enabled: true,
+                strict: false,
+                schema_path: 'config/pipeline-schema.json'
+            },
+            orchestration: {
+                auto_progress: true,
+                parallel_phases: false,
+                error_handling: 'continue',
+                timeout: null
+            }
+        };
+    }
+    /**
+     * Récupère la configuration de gestion d'erreurs
+     */
+    getErrorHandlingConfig() {
+        return this.config.error_handling || {
+            mcp_formatting: true,
+            human_formatting: true,
+            structured_logging: true,
+            error_recovery: false,
+            statistics: true,
+            alert_thresholds: {
+                error_rate: 0.1,
+                consecutive_errors: 5,
+                memory_usage: 90
+            }
+        };
+    }
+    /**
+     * Vérifie si activated_rag est activé
+     */
+    isActivatedRagEnabled() {
+        return this.config.legacy?.activated_rag?.enabled || false;
+    }
+    /**
+     * Vérifie si la barre de progression humaine est activée
+     */
+    isHumanProgressEnabled() {
+        return this.config.ui?.human_progress?.enabled || false;
+    }
+    /**
+     * Vérifie si les checkpoints sont activés
+     */
+    areCheckpointsEnabled() {
+        return this.config.checkpoints?.enabled || false;
+    }
+    /**
+     * Vérifie si la file d'attente est activée
+     */
+    isQueueEnabled() {
+        return this.config.queue !== undefined;
+    }
 }
 /**
  * Instance singleton du gestionnaire de configuration
@@ -239,12 +444,16 @@ export async function testRagConfig() {
         }
         // Vérifier les limites
         const chunkSizeLimits = configManager.getLimits('chunk_size');
-        if (!chunkSizeLimits || chunkSizeLimits.min >= chunkSizeLimits.max) {
+        if (!chunkSizeLimits || typeof chunkSizeLimits !== 'object' || !('min' in chunkSizeLimits) || !('max' in chunkSizeLimits)) {
+            // Pas de logs sur stderr pour compatibilité MCP
+            return false;
+        }
+        if (chunkSizeLimits.min >= chunkSizeLimits.max) {
             // Pas de logs sur stderr pour compatibilité MCP
             return false;
         }
         // Vérifier les fournisseurs
-        const providers = Object.keys(config.providers);
+        const providers = config.providers ? Object.keys(config.providers) : [];
         if (providers.length === 0) {
             // Pas de logs sur stderr pour compatibilité MCP
             return false;
