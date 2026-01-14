@@ -59,3 +59,90 @@ export interface ProjectStats {
   indexedAt: Date;
   lastUpdated: Date;
 }
+
+// ==================== STATUS INTERFACES ====================
+
+export type StatusScope = 'global' | 'project' | 'task';
+
+export interface GlobalStatus {
+  status: 'ok' | 'error';
+  scope: 'global';
+  rag_state: {
+    initialized: boolean;
+    active_jobs: number;
+    queued_jobs: number;
+    total_projects: number;
+  };
+  projects: Array<{
+    project_id: string;
+    current_phase: string;
+    locked: boolean;
+    last_updated: Date;
+  }>;
+  notes_for_ai: string[];
+  allowed_actions?: string[];
+  required_action?: string;
+}
+
+export interface ProjectStatus {
+  status: 'ok' | 'error';
+  scope: 'project';
+  project_id: string;
+  pipeline: {
+    init_rag: 'done' | 'running' | 'pending' | 'error';
+    scan_rag: 'done' | 'running' | 'pending' | 'error';
+    prepare_rag: 'done' | 'running' | 'pending' | 'error';
+    embed_rag: 'done' | 'running' | 'pending' | 'error';
+    index_rag: 'done' | 'running' | 'pending' | 'error';
+  };
+  current_task?: {
+    task_id: string;
+    action: string;
+    progress: {
+      percent: number;
+      files_processed: number;
+      files_total: number;
+      eta_seconds: number;
+    };
+  };
+  notes_for_ai: string[];
+  allowed_actions: string[];
+  required_action?: string;
+}
+
+export interface TaskStatus {
+  status: 'ok' | 'error';
+  scope: 'task';
+  task_id: string;
+  action: string;
+  state: 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
+  progress: {
+    phase: string;
+    percent: number;
+    eta_seconds: number;
+    details?: Record<string, any>;
+  };
+  project_locked: boolean;
+  notes_for_ai: string[];
+  allowed_actions: string[];
+  required_action?: string;
+}
+
+export interface GetStatusResponse {
+  status: 'ok' | 'error';
+  scope: StatusScope;
+  data: GlobalStatus | ProjectStatus | TaskStatus;
+  notes_for_ai: string[];
+  allowed_actions?: string[];
+  required_action?: string;
+}
+
+export interface AsyncRagResponse {
+  status: 'accepted' | 'rejected';
+  action: string;
+  task_id: string;
+  execution: 'background' | 'immediate';
+  message: string;
+  next_action: 'get_status';
+  notes_for_ai: string[];
+}

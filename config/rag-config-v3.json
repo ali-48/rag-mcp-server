@@ -10,7 +10,8 @@
             "index_rag",
             "query_rag",
             "manage_projects",
-            "pipeline_validator"
+            "pipeline_validator",
+            "get_status"
         ],
         "legacy_tools": [
             "activated_rag",
@@ -221,7 +222,6 @@
                     "markdown"
                 ],
                 "max_file_size_mb": 10,
-                "timeout_ms": 5000,
                 "fallback_to_regex": true
             },
             "chunking": {
@@ -245,7 +245,6 @@
                 "model": "test-model",
                 "temperature": 0.1,
                 "max_tokens": 500,
-                "timeout_ms": 10000,
                 "batch_size": 5,
                 "features": [
                     "summary",

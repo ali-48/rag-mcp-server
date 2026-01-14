@@ -176,7 +176,7 @@ export interface RagConfig {
       default_model?: string;
       max_tokens?: number;
       temperature?: number;
-      timeout_ms?: number;
+      timeout_ms?: number | null;
     };
   };
 
@@ -218,7 +218,7 @@ export interface RagConfig {
         enabled: boolean;
         languages: string[];
         max_file_size_mb: number;
-        timeout_ms: number;
+        timeout_ms?: number | null;
         fallback_to_regex: boolean;
       };
       chunking: {
@@ -242,7 +242,7 @@ export interface RagConfig {
         model: string;
         temperature: number;
         max_tokens: number;
-        timeout_ms: number;
+        timeout_ms?: number | null;
         batch_size: number;
         features: string[];
         cache_enabled: boolean;

@@ -6,6 +6,7 @@
 import { existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from 'fs';
 import { dirname, join } from 'path';
 import { logger } from "../core/logger.js";
+import { ProjectStatus } from "./types.js";
 
 /**
  * Interface pour l'état d'un projet RAG
@@ -437,6 +438,58 @@ export class StateManager {
             total_files: state.total_files || 0,
             total_chunks: state.total_chunks || 0,
             last_indexed_at: state.last_indexed_at
+        };
+    }
+
+    /**
+     * Récupère le statut d'un projet
+     */
+    async getProjectStatus(projectPath: string): Promise<ProjectStatus> {
+        const state = await this.loadState(projectPath);
+        const isLocked = this.isLocked(projectPath, 'state');
+        const isInitialized = state?.initialized === true;
+
+        // Déterminer l'état du pipeline
+        const pipeline: ProjectStatus['pipeline'] = {
+            init_rag: isInitialized ? 'done' : 'pending',
+            scan_rag: 'pending',
+            prepare_rag: 'pending',
+            embed_rag: 'pending',
+            index_rag: 'pending',
+        };
+
+        // Si le projet est initialisé, on peut avoir plus d'informations
+        if (isInitialized && state) {
+            if (state.last_indexed_at) {
+                pipeline.index_rag = 'done';
+                pipeline.embed_rag = 'done';
+                pipeline.prepare_rag = 'done';
+                pipeline.scan_rag = 'done';
+            }
+        }
+
+        const notes_for_ai = [
+            isInitialized ? 'Le projet est initialisé' : 'Le projet n\'est pas encore initialisé',
+            isLocked ? 'Le projet est verrouillé (opération en cours)' : 'Le projet est disponible',
+            state?.last_indexed_at ? `Dernière indexation: ${state.last_indexed_at}` : 'Pas encore indexé',
+        ];
+
+        const allowed_actions = isLocked ? [] : [
+            isInitialized ? 'scan_rag' : 'init_rag',
+            'prepare_rag',
+            'embed_rag',
+            'index_rag',
+            'query_rag',
+        ];
+
+        return {
+            status: 'ok',
+            scope: 'project',
+            project_id: projectPath,
+            pipeline,
+            notes_for_ai,
+            allowed_actions,
+            required_action: isInitialized ? undefined : 'init_rag',
         };
     }
 

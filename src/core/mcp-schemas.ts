@@ -487,6 +487,82 @@ export const manageProjectsOutputSchema: JSONSchema = {
 };
 
 /**
+ * Schémas pour l'outil get_status
+ */
+export const getStatusInputSchema: JSONSchema = {
+    type: 'object',
+    properties: {
+        scope: {
+            type: 'string',
+            enum: ["global", "project", "task"],
+            description: "Scope du statut à récupérer",
+            default: "global"
+        },
+        project_id: {
+            type: 'string',
+            description: "ID du projet (requis si scope=project)"
+        },
+        task_id: {
+            type: 'string',
+            description: "ID de la tâche (requis si scope=task)"
+        },
+        include_notes_for_ai: {
+            type: 'boolean',
+            description: "Inclure les notes pour l'IA",
+            default: true
+        },
+        include_allowed_actions: {
+            type: 'boolean',
+            description: "Inclure les actions autorisées",
+            default: true
+        }
+    },
+    additionalProperties: false
+};
+
+export const getStatusOutputSchema: JSONSchema = {
+    type: 'object',
+    properties: {
+        status: {
+            type: 'string',
+            enum: ['ok', 'error'],
+            description: 'Statut de la requête'
+        },
+        scope: {
+            type: 'string',
+            enum: ["global", "project", "task"],
+            description: "Scope du statut récupéré"
+        },
+        data: {
+            type: 'object',
+            description: 'Données de statut',
+            additionalProperties: true
+        },
+        notes_for_ai: {
+            type: 'array',
+            items: { type: 'string' },
+            description: 'Notes pour l\'IA'
+        },
+        allowed_actions: {
+            type: 'array',
+            items: { type: 'string' },
+            description: 'Actions autorisées'
+        },
+        required_action: {
+            type: 'string',
+            description: 'Action requise pour continuer'
+        },
+        timestamp: {
+            type: 'string',
+            format: 'date-time',
+            description: 'Horodatage de la requête'
+        }
+    },
+    required: ['status', 'scope', 'timestamp'],
+    additionalProperties: false
+};
+
+/**
  * Schéma d'erreur standard pour tous les outils
  */
 export const errorOutputSchema: JSONSchema = {
@@ -539,6 +615,10 @@ export const toolSchemas = {
     manage_projects: {
         input: manageProjectsInputSchema,
         output: manageProjectsOutputSchema
+    },
+    get_status: {
+        input: getStatusInputSchema,
+        output: getStatusOutputSchema
     }
 };
 

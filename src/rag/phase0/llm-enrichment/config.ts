@@ -20,8 +20,8 @@ export interface LLMEnricherConfig {
     /** Nombre maximum de tokens en sortie */
     maxTokens: number;
 
-    /** Timeout en millisecondes */
-    timeoutMs: number;
+    /** Timeout en millisecondes (null pour désactiver) */
+    timeoutMs: number | null;
 
     /** Taille des batches pour traitement parallèle */
     batchSize: number;
@@ -57,7 +57,7 @@ export const DEFAULT_LLM_ENRICHER_CONFIG: LLMEnricherConfig = {
     model: 'llama3.1:latest',
     temperature: 0.1,
     maxTokens: 1000,
-    timeoutMs: 30000,
+    timeoutMs: null,
     batchSize: 5,
     features: ['summary', 'keywords', 'entities'],
     cacheEnabled: true,
@@ -108,7 +108,7 @@ export function validateLLMEnricherConfig(config: Partial<LLMEnricherConfig>): {
         errors.push(`maxTokens must be between 1 and 10000, got ${mergedConfig.maxTokens}`);
     }
 
-    if (mergedConfig.timeoutMs < 1000 || mergedConfig.timeoutMs > 120000) {
+    if (mergedConfig.timeoutMs !== null && (mergedConfig.timeoutMs < 1000 || mergedConfig.timeoutMs > 120000)) {
         errors.push(`timeoutMs must be between 1000 and 120000, got ${mergedConfig.timeoutMs}`);
     }
 
