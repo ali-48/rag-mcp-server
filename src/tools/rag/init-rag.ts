@@ -265,62 +265,76 @@ export const initRagTool: ToolDefinition = {
 };
 
 /**
- * Handler pour l'outil init_rag
+ * Handler pour l'outil init_rag avec wrapper MCP robuste
  */
 export const initRagHandler: ToolHandler = async (args: any): Promise<any> => {
-    console.log('[init_rag] Début de l\'initialisation RAG');
+    const startTime = Date.now();
 
-    // Validation des arguments
-    const validation = validateInitRagInput(args);
+    try {
+        // Validation des arguments
+        const validation = validateInitRagInput(args);
 
-    if (!validation.valid) {
+        if (!validation.valid) {
+            return {
+                content: [{
+                    type: "text",
+                    text: JSON.stringify({
+                        status: 'error',
+                        tool: 'init_rag',
+                        step: 'validation',
+                        error: {
+                            code: 'INVALID_ARGUMENTS',
+                            message: `Arguments invalides: ${validation.errors.join(', ')}`
+                        },
+                        metadata: {
+                            tool_version: '1.0',
+                            timestamp: new Date().toISOString(),
+                            execution_time_ms: Date.now() - startTime
+                        }
+                    }, null, 2)
+                }]
+            };
+        }
+
+        // Exécution
+        const result = await executeInitRag(validation.normalizedInput);
+
+        // Retourner le résultat au format MCP
+        return {
+            content: [{
+                type: "text",
+                text: JSON.stringify(result, null, 2)
+            }]
+        };
+
+    } catch (error: any) {
+        // Erreur inattendue - wrapper global
         return {
             content: [{
                 type: "text",
                 text: JSON.stringify({
                     status: 'error',
-                    message: `Arguments invalides: ${validation.errors.join(', ')}`,
+                    tool: 'init_rag',
+                    step: 'unexpected_error',
+                    error: {
+                        code: 'UNEXPECTED_ERROR',
+                        message: error.message || String(error)
+                    },
                     metadata: {
                         tool_version: '1.0',
                         timestamp: new Date().toISOString(),
-                        execution_time_ms: 0
+                        execution_time_ms: Date.now() - startTime
                     }
                 }, null, 2)
             }]
         };
     }
-
-    console.log(`[init_rag] Validation OK: ${JSON.stringify(validation.normalizedInput)}`);
-
-    // Exécution
-    const result = await executeInitRag(validation.normalizedInput);
-
-    // Log du résultat
-    console.log(`[init_rag] Résultat: ${result.status} - ${result.message}`);
-
-    if (result.status === 'error' && result.data?.errors) {
-        console.error(`[init_rag] Erreurs: ${result.data.errors.join(', ')}`);
-    }
-
-    if (result.data?.warnings && result.data.warnings.length > 0) {
-        console.warn(`[init_rag] Avertissements: ${result.data.warnings.join(', ')}`);
-    }
-
-    // Retourner le résultat au format MCP
-    return {
-        content: [{
-            type: "text",
-            text: JSON.stringify(result, null, 2)
-        }]
-    };
 };
 
 /**
  * Fonction originale pour la rétrocompatibilité
  */
 export async function initRagToolLegacy(args: any): Promise<InitRagOutput> {
-    console.log('[init_rag] Début de l\'initialisation RAG (mode legacy)');
-
     // Validation des arguments
     const validation = validateInitRagInput(args);
 
@@ -336,21 +350,8 @@ export async function initRagToolLegacy(args: any): Promise<InitRagOutput> {
         };
     }
 
-    console.log(`[init_rag] Validation OK: ${JSON.stringify(validation.normalizedInput)}`);
-
     // Exécution
     const result = await executeInitRag(validation.normalizedInput);
-
-    // Log du résultat
-    console.log(`[init_rag] Résultat: ${result.status} - ${result.message}`);
-
-    if (result.status === 'error' && result.data?.errors) {
-        console.error(`[init_rag] Erreurs: ${result.data.errors.join(', ')}`);
-    }
-
-    if (result.data?.warnings && result.data.warnings.length > 0) {
-        console.warn(`[init_rag] Avertissements: ${result.data.warnings.join(', ')}`);
-    }
 
     return result;
 }
@@ -390,52 +391,4 @@ export function registerInitRagTool(registry: any): void {
         },
         execute: initRagToolLegacy
     });
-
-    console.log('[init_rag] Outil enregistré dans le registry MCP (mode legacy)');
-}
-
-// Test si exécuté directement
-if (import.meta.url === `file://${process.argv[1]}`) {
-    console.log('🧪 Test de init-rag.ts...');
-
-    async function runTest() {
-        try {
-            // Test de validation
-            console.log('Test de validation:');
-
-            const testInput = {
-                project_path: process.cwd(),
-                mode: 'default',
-                force: false,
-                verbose: true
-            };
-
-            const validation = validateInitRagInput(testInput);
-            console.log(`Validation: ${validation.valid ? 'OK' : 'Échec'}`);
-            if (!validation.valid) {
-                console.log(`Erreurs: ${validation.errors.join(', ')}`);
-            }
-
-            // Test d'exécution (simulé)
-            console.log('\nTest d\'exécution simulé: ');
-
-            const result = await initRagToolLegacy(testInput);
-            console.log(`Résultat: ${result.status}`);
-            console.log(`Message: ${result.message}`);
-
-            if (result.data) {
-                console.log(`Projet: ${result.data.project_path}`);
-                console.log(`Mode: ${result.data.mode}`);
-                console.log(`ID: ${result.data.project_id}`);
-            }
-
-            console.log('✅ Tests init-rag.ts terminés');
-
-        } catch (error) {
-            console.error('❌ Erreur lors des tests:', error);
-            process.exit(1);
-        }
-    }
-
-    runTest().catch(console.error);
 }

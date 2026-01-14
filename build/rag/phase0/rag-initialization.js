@@ -240,7 +240,8 @@ async function ensureDbConfig(rootPath, mode) {
  * @param sqlitePath Chemin vers le fichier SQLite
  */
 async function initMemoryDatabase(sqlitePath) {
-    const sqlite3 = await import('sqlite3');
+    const sqlite3Module = await import('sqlite3');
+    const sqlite3 = sqlite3Module.default;
     const { open } = await import('sqlite');
     // Créer le dossier parent si nécessaire
     const dir = path.dirname(sqlitePath);

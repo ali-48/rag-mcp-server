@@ -1,0 +1,9 @@
+{
+  "memory": {
+    "type": "sqlite",
+    "path": "./rag/db/memory/rag_memory.sqlite"
+  },
+  "vectors": {
+    "type": "none"
+  }
+}
