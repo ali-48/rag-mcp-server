@@ -8,7 +8,7 @@ import { detectContentType } from "./content-detector.js";
 import { shouldIgnoreFile } from "./ignore-filter.js";
 import { getLlmCache } from "./llm-cache.js";
 import { initLLMEnricher } from "./phase0/llm-enrichment/index.js";
-import { embedAndStore } from "./vector-store.js";
+import { embedAndStore } from "./vector-store-refactored.js";
 // Fonction pour découper le texte en chunks de manière intelligente
 async function chunkIntelligently(text, filePath, contentType, language, chunkSize = 1000, overlap = 200) {
     const chunks = [];
@@ -711,50 +711,24 @@ async function getChangedFiles(projectPath) {
     }
     return result;
 }
-// Fonction pour supprimer un fichier de l'index
+// Fonction pour supprimer un fichier de l'index (SQLite)
 async function deleteFileFromIndex(projectPath, filePath) {
     try {
-        const { Pool } = await import('pg');
-        const pool = new Pool({
-            host: "localhost",
-            port: 16432,
-            database: "rag_mcp_dedicated",
-            user: "rag_user",
-            password: "secure_rag_password",
-        });
-        // Vérifier quelle table utiliser
-        const useV2 = await checkV2TableExists();
-        const tableName = useV2 ? 'rag_store_v2' : 'rag_store';
+        // Utiliser le backend SQLite
+        const { VectorStoreSQLite } = await import('./vector-store-sqlite.js');
+        const store = new VectorStoreSQLite();
         // Construire le pattern pour le fichier (avec ou sans chunks)
         const filePattern = `${projectPath}:${filePath}%`;
-        await pool.query(`DELETE FROM ${tableName} WHERE id LIKE $1`, [filePattern]);
-        await pool.end();
+        // Supprimer les documents correspondant au pattern
+        await store.deleteDocumentsByPattern(filePattern);
     }
     catch (error) {
         console.error(`Error deleting file ${filePath} from index:`, error);
         throw error;
     }
 }
-// Fonction pour vérifier si la table v2 existe
+// Fonction pour vérifier si la table v2 existe (SQLite - toujours false car nous n'utilisons pas PostgreSQL)
 async function checkV2TableExists() {
-    try {
-        const { Pool } = await import('pg');
-        const pool = new Pool({
-            host: "localhost",
-            port: 16432,
-            database: "rag_mcp_dedicated",
-            user: "rag_user",
-            password: "secure_rag_password",
-        });
-        const result = await pool.query(`SELECT EXISTS (
-        SELECT FROM information_schema.tables 
-        WHERE table_name = 'rag_store_v2'
-      )`);
-        await pool.end();
-        return result.rows[0].exists;
-    }
-    catch (error) {
-        console.error('Error checking for rag_store_v2 table:', error);
-        return false;
-    }
+    // Avec SQLite, nous n'avons pas de table v2, retourner false
+    return false;
 }

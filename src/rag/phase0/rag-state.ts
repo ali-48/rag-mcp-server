@@ -3,7 +3,7 @@
 // Responsabilités : B1 - Vérification minimale, B2 - État détaillé
 
 import { promises as fs } from 'fs';
-import path from 'path';
+import * as path from 'path';
 
 /**
  * État du RAG pour un projet
@@ -246,40 +246,40 @@ export function computeProjectId(projectPath: string): string {
 // Export pour les tests
 export { RagConfig };
 
-// Test si exécuté directement
-if (import.meta.url === `file://${process.argv[1]}`) {
-    console.log('🧪 Test de rag-state.ts...');
-
-    async function runTest() {
-        try {
-            // Test avec le répertoire courant
-            const testPath = process.cwd();
-
-            console.log(`Test avec: ${testPath}`);
-
-            // Test isValidProjectPath
-            const isValid = await isValidProjectPath(testPath);
-            console.log(`isValidProjectPath: ${isValid}`);
-
-            // Test computeProjectId
-            const projectId = computeProjectId(testPath);
-            console.log(`Project ID: ${projectId}`);
-
-            // Test isRagInitialized (devrait être false pour un projet non initialisé)
-            const initialized = await isRagInitialized(testPath);
-            console.log(`isRagInitialized: ${initialized}`);
-
-            // Test getRagState
-            const state = await getRagState(testPath);
-            console.log('État RAG:', JSON.stringify(state, null, 2));
-
-            console.log('✅ Tests rag-state.ts terminés');
-
-        } catch (error) {
-            console.error('❌ Erreur lors des tests:', error);
-            process.exit(1);
-        }
-    }
-
-    runTest().catch(console.error);
-}
+// Test si exécuté directement (commenté pour éviter les erreurs de compilation)
+// if (import.meta.url === `file://${process.argv[1]}`) {
+//     console.log('🧪 Test de rag-state.ts...');
+// 
+//     async function runTest() {
+//         try {
+//             // Test avec le répertoire courant
+//             const testPath = process.cwd();
+// 
+//             console.log(`Test avec: ${testPath}`);
+// 
+//             // Test isValidProjectPath
+//             const isValid = await isValidProjectPath(testPath);
+//             console.log(`isValidProjectPath: ${isValid}`);
+// 
+//             // Test computeProjectId
+//             const projectId = computeProjectId(testPath);
+//             console.log(`Project ID: ${projectId}`);
+// 
+//             // Test isRagInitialized (devrait être false pour un projet non initialisé)
+//             const initialized = await isRagInitialized(testPath);
+//             console.log(`isRagInitialized: ${initialized}`);
+// 
+//             // Test getRagState
+//             const state = await getRagState(testPath);
+//             console.log('État RAG:', JSON.stringify(state, null, 2));
+// 
+//             console.log('✅ Tests rag-state.ts terminés');
+// 
+//         } catch (error) {
+//             console.error('❌ Erreur lors des tests:', error);
+//             process.exit(1);
+//         }
+//     }
+// 
+//     runTest().catch(console.error);
+// }

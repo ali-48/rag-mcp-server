@@ -232,6 +232,6 @@ export function testLogger(): void {
 }
 
 // Initialisation automatique si exécuté directement
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (typeof require !== 'undefined' && require.main === module) {
     testLogger();
 }

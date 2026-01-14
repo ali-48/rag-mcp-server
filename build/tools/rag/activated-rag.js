@@ -9,7 +9,7 @@ import { logger } from "../../core/logger.js";
 import { indexProject, updateProject } from "../../rag/indexer.js";
 import { createPhase0IntegrationWithIndexing } from "../../rag/phase0/phase0-integration.js";
 import { getRagState, isRagInitialized } from "../../rag/phase0/rag-state.js";
-import { setEmbeddingProvider } from "../../rag/vector-store.js";
+import { setEmbeddingProvider } from "../../rag/vector-store-refactored.js";
 /**
  * Définition de l'outil activated_rag
  */

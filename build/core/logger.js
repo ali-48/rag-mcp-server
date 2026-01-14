@@ -195,6 +195,6 @@ export function testLogger() {
     // Note: Même hors MCP, on évite console.log pour rester cohérent
 }
 // Initialisation automatique si exécuté directement
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (typeof require !== 'undefined' && require.main === module) {
     testLogger();
 }
