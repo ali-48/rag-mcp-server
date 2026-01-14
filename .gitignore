@@ -1,4 +1,62 @@
+# ==================== Règles existantes ====================
 /.clinrules
 /build
 /rag
 /node_modules
+
+# ==================== Build et artefacts ====================
+build-test/          # Dossier de build des tests
+*.log               # Tous les fichiers log
+logs/               # Dossier de logs
+*.tmp               # Fichiers temporaires
+*.bak               # Fichiers backup
+*.pid               # Fichiers PID
+*.seed              # Fichiers seed
+
+# ==================== Fichiers spécifiques au projet ====================
+memory.json          # Fichier de mémoire (peut être régénéré)
+rag-dashboard.js     # Dashboard généré
+
+# ==================== Fichiers de test temporaires ====================
+# Ignorer les fichiers de test générés (préfixe test-*) mais pas le dossier test/
+test-*.js
+test-*.mjs
+test-*.ts
+test-*.json
+test-*.md
+
+# ==================== Système et IDE ====================
+.DS_Store           # Fichiers macOS
+Thumbs.db           # Fichiers Windows
+*.swp               # Fichiers swap Vim
+*.swo
+*.idea/             # Configuration IntelliJ
+.vscode/            # Configuration VS Code (sauf .vscode/settings.json ?)
+*.suo               # Fichiers utilisateur Visual Studio
+*.user
+*.userosscache
+
+# ==================== Environnement et configuration locale ====================
+.env                # Variables d'environnement
+.env.local
+.env.development
+.env.test
+.env.production
+.env.*.local
+
+# ==================== Coverage et métriques ====================
+coverage/           # Rapports de couverture de test
+.nyc_output/        # Sortie de nyc (coverage)
+
+# ==================== Packages et dépendances ====================
+jspm_packages/      # JSPM
+web_modules/        # Web modules
+*.tgz               # Archives npm
+.yarn/              # Cache Yarn
+.yarnrc.yml         # Configuration Yarn (local)
+.pnp.*              # Plug'n'Play Yarn
+
+# ==================== Autres ====================
+dist/               # Dossier de distribution (si utilisé)
+out/                # Dossier de sortie
+*.tsbuildinfo       # Fichier d'info de build TypeScript
