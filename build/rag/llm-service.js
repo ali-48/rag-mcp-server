@@ -7,25 +7,25 @@ export class LlmService {
         this.preparationConfig = this.configManager.getPreparationConfig();
         this.llmProviderConfig = this.configManager.getLlmProviderConfig(this.preparationConfig.llm_provider);
         if (!this.llmProviderConfig) {
-            console.warn(`⚠️ Aucune configuration trouvée pour le fournisseur LLM: ${this.preparationConfig.llm_provider}`);
+            // Pas de logs sur stderr pour compatibilité MCP
         }
     }
     async analyzeContent(content, filePath, contentType, task) {
         if (!this.preparationConfig.enable_llm_analysis) {
-            console.warn('⚠️ Analyse LLM désactivée dans la configuration');
+            // Pas de logs sur stderr pour compatibilité MCP
             throw new Error('LLM analysis is disabled in configuration');
         }
         if (!this.llmProviderConfig) {
-            console.warn('⚠️ Aucun fournisseur LLM configuré');
+            // Pas de logs sur stderr pour compatibilité MCP
             throw new Error('No LLM provider configured');
         }
         // Vérifier la longueur du contenu
         if (content.length > this.preparationConfig.max_content_length) {
-            console.warn(`⚠️ Contenu trop long (${content.length} > ${this.preparationConfig.max_content_length}), troncation`);
+            // Pas de logs sur stderr pour compatibilité MCP
             content = content.substring(0, this.preparationConfig.max_content_length) + '... [TRONQUÉ]';
         }
         const prompt = this.buildPrompt(content, filePath, contentType, task);
-        console.log(`🧠 Analyse LLM: ${task} pour ${filePath} (${contentType})`);
+        // Pas de logs sur stderr pour compatibilité MCP
         return await this.callOllama({
             model: this.preparationConfig.llm_model,
             prompt: prompt,
@@ -52,7 +52,7 @@ export class LlmService {
         const timeout = this.llmProviderConfig.timeout_ms || 30000;
         // S'assurer que stream est false pour éviter les réponses streaming
         const requestWithStream = { ...request, stream: false };
-        console.log(`🔗 Appel Ollama: ${endpoint}/api/generate, modèle: ${requestWithStream.model}`);
+        // Pas de logs sur stderr pour compatibilité MCP
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), timeout);
         try {
@@ -72,17 +72,17 @@ export class LlmService {
             const contentType = response.headers.get('content-type');
             if (!contentType || !contentType.includes('application/json')) {
                 const text = await response.text();
-                console.warn(`⚠️ Réponse non-JSON reçue: ${text.substring(0, 200)}...`);
+                // Pas de logs sur stderr pour compatibilité MCP
                 throw new Error(`Réponse non-JSON reçue: ${contentType}`);
             }
             const data = await response.json();
             const duration = Date.now() - startTime;
-            console.log(`✅ Réponse Ollama reçue en ${duration}ms, modèle: ${data.model}`);
+            // Pas de logs sur stderr pour compatibilité MCP
             return data.response;
         }
         catch (error) {
             clearTimeout(timeoutId);
-            console.error(`❌ Échec de l'analyse LLM: ${error}`);
+            // Pas de logs sur stderr pour compatibilité MCP
             throw error;
         }
     }
@@ -121,7 +121,7 @@ export class LlmService {
             return response.ok;
         }
         catch (error) {
-            console.log(`❌ Ollama non disponible: ${error}`);
+            // Pas de logs sur stderr pour compatibilité MCP
             return false;
         }
     }
@@ -148,7 +148,7 @@ export class LlmService {
             return models.map((model) => model.name);
         }
         catch (error) {
-            console.error(`❌ Erreur récupération modèles: ${error}`);
+            // Pas de logs sur stderr pour compatibilité MCP
             return [];
         }
     }
@@ -160,7 +160,7 @@ export class LlmService {
         if (!this.llmProviderConfig) {
             throw new Error('No LLM provider configured');
         }
-        console.log(`🧠 Génération LLM: ${context}, prompt: "${prompt.substring(0, 50)}..."`);
+        // Pas de logs sur stderr pour compatibilité MCP
         return await this.callOllama({
             model: this.preparationConfig.llm_model,
             prompt: prompt,

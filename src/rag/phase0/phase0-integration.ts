@@ -101,7 +101,7 @@ export class Phase0Integration {
      */
     async initialize(projectPath?: string): Promise<Phase0IntegrationState> {
         try {
-            console.log('🚀 Initialisation Phase 0.1...');
+            // Log silencieux pour MCP
 
             // 1. Détection du workspace
             if (this.options.enableWorkspaceDetection) {
@@ -119,13 +119,7 @@ export class Phase0Integration {
             }
 
             this.state.status = 'ready';
-            console.log('✅ Phase 0.1 initialisée avec succès');
-
-            if (this.state.workspace) {
-                console.log(`   Workspace: ${this.state.workspace.path}`);
-                console.log(`   VS Code: ${this.state.workspace.vscodeWorkspace}`);
-                console.log(`   Langage: ${this.state.workspace.language || 'inconnu'}`);
-            }
+            // Log silencieux pour MCP
 
             return this.state;
 
@@ -133,7 +127,7 @@ export class Phase0Integration {
             this.state.status = 'error';
             this.state.error = error as Error;
 
-            console.error('❌ Erreur lors de l\'initialisation Phase 0.1:', error);
+            // Log silencieux pour MCP
             throw error;
         }
     }
@@ -144,7 +138,7 @@ export class Phase0Integration {
     private async initializeWorkspaceDetection(projectPath?: string): Promise<void> {
         const startTime = Date.now();
 
-        console.log('🔍 Détection du workspace...');
+        // Log silencieux pour MCP
 
         const workspace = await detectWorkspace({
             manualPath: projectPath,
@@ -156,14 +150,14 @@ export class Phase0Integration {
         this.state.workspace = workspace;
         this.state.stats.workspaceDetectionTime = Date.now() - startTime;
 
-        console.log(`✅ Workspace détecté en ${this.state.stats.workspaceDetectionTime}ms`);
+        // Log silencieux pour MCP
     }
 
     /**
      * Initialise le logger
      */
     private async initializeLogger(): Promise<void> {
-        console.log('📝 Initialisation du logger...');
+        // Log silencieux pour MCP
 
         this.state.logger = createPhase0Logger(this.state.workspace);
 
@@ -174,7 +168,7 @@ export class Phase0Integration {
         this.state.logger.info('Logger Phase 0.1 initialisé', 'phase0-integration');
         this.state.stats.logsCount++;
 
-        console.log('✅ Logger initialisé');
+        // Log silencieux pour MCP
     }
 
     /**
@@ -185,7 +179,7 @@ export class Phase0Integration {
             throw new Error('Workspace non détecté, impossible d\'initialiser le file watcher');
         }
 
-        console.log('👁️  Initialisation du file watcher...');
+        // Log silencieux pour MCP
 
         // Créer le handler d'indexation si un callback est défini
         let eventHandler;
@@ -209,7 +203,7 @@ export class Phase0Integration {
             });
         }
 
-        console.log('✅ File watcher initialisé');
+        // Log silencieux pour MCP
         this.state.logger?.info('File watcher initialisé', 'phase0-integration', {
             workspacePath: this.state.workspace.path,
             options: this.options.fileWatcherOptions,
@@ -242,12 +236,12 @@ export class Phase0Integration {
      * Arrête l'intégration Phase 0.1
      */
     async stop(): Promise<void> {
-        console.log('🛑 Arrêt de Phase 0.1...');
+        // Log silencieux pour MCP
 
         // Arrêter le file watcher
         if (this.state.fileWatcher && this.state.fileWatcher.isActive()) {
             await this.state.fileWatcher.stop();
-            console.log('✅ File watcher arrêté');
+            // Log silencieux pour MCP
         }
 
         // Logger l'arrêt
@@ -260,7 +254,7 @@ export class Phase0Integration {
         }
 
         this.state.status = 'stopped';
-        console.log('✅ Phase 0.1 arrêtée avec succès');
+        // Log silencieux pour MCP
     }
 
     /**
@@ -356,7 +350,7 @@ export async function createPhase0IntegrationWithIndexing(
 
 // Test unitaire si exécuté directement
 if (import.meta.url === `file://${process.argv[1]}`) {
-    console.log('🧪 Test de l\'intégration Phase 0.1...');
+    // Log silencieux pour MCP
 
     async function runTest() {
         try {
@@ -383,17 +377,14 @@ if (import.meta.url === `file://${process.argv[1]}`) {
                 },
             }, testDir);
 
-            console.log('✅ Intégration Phase 0.1 créée');
+            // Log silencieux pour MCP
 
             // Afficher l'état
             const state = integration.getState();
-            console.log('📊 État de l\'intégration:');
-            console.log(`  Status: ${state.status}`);
-            console.log(`  Workspace: ${state.workspace?.path}`);
-            console.log(`  VS Code: ${state.workspace?.vscodeWorkspace}`);
+            // Log silencieux pour MCP
 
             // Créer un fichier pour tester le watcher
-            console.log('📝 Création d\'un fichier de test...');
+            // Log silencieux pour MCP
             fs.writeFileSync(path.join(testDir, 'test-file.txt'), 'Hello Phase 0.1!');
 
             // Attendre un peu pour que le watcher détecte le fichier
@@ -403,24 +394,22 @@ if (import.meta.url === `file://${process.argv[1]}`) {
             const watcherStats = integration.getFileWatcherStats();
             const loggerStats = integration.getLoggerStats();
 
-            console.log('📊 Statistiques:');
-            console.log(`  File events: ${watcherStats?.totalEvents || 0}`);
-            console.log(`  Logs: ${loggerStats?.totalLogs || 0}`);
+            // Log silencieux pour MCP
 
             // Arrêter l'intégration
             await integration.stop();
 
             // Nettoyer
             fs.rmSync(testDir, { recursive: true, force: true });
-            console.log('🧹 Répertoire de test nettoyé');
+            // Log silencieux pour MCP
 
-            console.log('✅ Test de l\'intégration Phase 0.1 réussi !');
+            // Log silencieux pour MCP
 
         } catch (error) {
-            console.error('❌ Test de l\'intégration Phase 0.1 échoué:', error);
+            // Log silencieux pour MCP
             process.exit(1);
         }
     }
 
-    runTest().catch(console.error);
+    runTest().catch(() => { });
 }

@@ -87,7 +87,7 @@ export class ToolRegistry {
     try {
       return await handler(args);
     } catch (error) {
-      console.error(`Error executing tool '${name}':`, error);
+      // Pas de logs sur stderr pour compatibilité MCP
       throw error;
     }
   }

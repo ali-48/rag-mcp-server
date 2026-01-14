@@ -41,7 +41,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         return await toolRegistry.execute(name, args);
     }
     catch (error) {
-        console.error(`Error executing tool ${name}:`, error);
+        // Pas de logs sur stderr pour compatibilité MCP
         throw error;
     }
 });
@@ -65,15 +65,11 @@ async function main() {
     // Démarrer le serveur
     const transport = new StdioServerTransport();
     await server.connect(transport);
-    // Log minimal pour MCP
-    console.error("RAG MCP Server v2.0 running on stdio");
-    console.error(`📊 Outils enregistrés: ${registeredCount}`);
-    console.error(`👁️  Outils visibles: ${visibleTools.length}`);
-    console.error(`🧠 Outils RAG: ${ragTools.length}`);
-    console.error(`📈 Outils Graph: ${graphTools.length}`);
+    // Pas de logs sur stdout/stderr pour compatibilité MCP
+    // Les statistiques sont disponibles via les outils MCP
 }
 // Gestion des erreurs
 main().catch((error) => {
-    console.error("Fatal error in main():", error);
+    // Pas de logs sur stderr pour compatibilité MCP
     process.exit(1);
 });

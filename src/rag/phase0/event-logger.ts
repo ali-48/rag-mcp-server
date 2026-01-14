@@ -545,7 +545,7 @@ export function createPhase0Logger(workspaceContext?: WorkspaceContext): Phase0L
 
 // Test unitaire si exécuté directement
 if (import.meta.url === `file://${process.argv[1]}`) {
-    console.log('🧪 Test du event logger...');
+    // Log silencieux pour MCP
 
     const logger = createPhase0Logger();
 
@@ -572,17 +572,11 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 
     // Afficher les statistiques
     const stats = logger.getStats();
-    console.log('📊 Statistiques du logger:');
-    console.log(`  Total logs: ${stats.totalLogs}`);
-    console.log(`  Par niveau:`, stats.logsByLevel);
-    console.log(`  Taille mémoire: ${stats.memorySize}`);
+    // Log silencieux pour MCP
 
     // Exporter les logs
     const logs = logger.getLogs({ limit: 3 });
-    console.log('📝 Derniers logs:');
-    logs.forEach(log => {
-        console.log(`  [${log.level}] ${log.message}`);
-    });
+    // Log silencieux pour MCP
 
-    console.log('✅ Test du event logger réussi !');
+    // Log silencieux pour MCP
 }

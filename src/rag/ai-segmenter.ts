@@ -47,7 +47,7 @@ export async function analyzeSegmentation(
   // Vérifier si l'analyse LLM est activée
   if (configManager.isLlmAnalysisEnabled()) {
     try {
-      console.log(`🧠 Analyse LLM activée pour ${filePath} (${contentType})`);
+      // Pas de logs sur stderr pour compatibilité MCP
 
       // Vérifier le cache d'abord
       const cache = getLlmCache();
@@ -55,7 +55,7 @@ export async function analyzeSegmentation(
       const cachedAnalysis = cache.get(content, filePath, 'suggest_structure', contentType);
 
       if (cachedAnalysis) {
-        console.log(`✅ Utilisation du cache pour ${filePath}`);
+        // Pas de logs sur stderr pour compatibilité MCP
         return parseLlmAnalysis(cachedAnalysis, content, contentType, language);
       }
 
@@ -70,13 +70,13 @@ export async function analyzeSegmentation(
 
       // Stocker dans le cache
       cache.set(content, filePath, 'suggest_structure', llmAnalysis, contentType);
-      console.log(`💾 Analyse LLM mise en cache pour ${filePath}`);
+      // Pas de logs sur stderr pour compatibilité MCP
 
       // Parser la réponse LLM en suggestions
       return parseLlmAnalysis(llmAnalysis, content, contentType, language);
 
     } catch (error) {
-      console.error(`❌ Analyse LLM échouée, fallback aux règles: ${error}`);
+      // Pas de logs sur stderr pour compatibilité MCP
       // Fallback aux règles heuristiques
     }
   }
@@ -151,7 +151,7 @@ async function analyzeCodeSegmentation(
       };
     }
   } catch (error) {
-    console.error(`Erreur lors de l'analyse de segmentation du code: ${(error as Error).message}`);
+    // Pas de logs sur stderr pour compatibilité MCP
   }
 
   // Fallback: analyse générique
@@ -468,7 +468,7 @@ function parseLlmAnalysis(
       }
     }
   } catch (error) {
-    console.error(`❌ Erreur parsing réponse LLM: ${error}`);
+    // Pas de logs sur stderr pour compatibilité MCP
   }
 
   // Si aucune suggestion LLM, créer une suggestion générique
@@ -511,7 +511,7 @@ export async function getClineSegmentationSuggestions(
   contentType: ContentType
 ): Promise<SegmentationSuggestion[]> {
   // Pour l'instant, utiliser le service LLM
-  console.log(`🧠 Utilisation du service LLM pour ${filePath}`);
+  // Pas de logs sur stderr pour compatibilité MCP
 
   const analysis = await analyzeSegmentation(content, filePath, contentType);
   return analysis.suggestions;

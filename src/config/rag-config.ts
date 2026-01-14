@@ -155,7 +155,7 @@ export class RagConfigManager {
       const configData = readFileSync(this.configPath, 'utf-8');
       return JSON.parse(configData) as RagConfig;
     } catch (error) {
-      console.error(`❌ Erreur lors du chargement de la configuration RAG: ${error}`);
+      // Pas de logs sur stderr pour compatibilité MCP
       throw new Error(`Impossible de charger la configuration RAG depuis ${this.configPath}`);
     }
   }
@@ -187,7 +187,7 @@ export class RagConfigManager {
   validateValue(param: keyof RagConfig['limits'], value: number): boolean {
     const limits = this.getLimits(param);
     if (!limits) {
-      console.warn(`⚠️ Aucune limite définie pour ${param}`);
+      // Pas de logs sur stderr pour compatibilité MCP
       return true; // Pas de validation si pas de limites
     }
     return value >= limits.min && value <= limits.max;
@@ -298,17 +298,17 @@ export class RagConfigManager {
     const limits = this.getLimits(param);
 
     if (!limits) {
-      console.warn(`⚠️ Aucune limite définie pour ${param}, utilisation de la valeur originale`);
+      // Pas de logs sur stderr pour compatibilité MCP
       return value;
     }
 
     if (value < limits.min) {
-      console.warn(`⚠️ Valeur ${param} (${value}) inférieure au minimum (${limits.min}), utilisation du minimum`);
+      // Pas de logs sur stderr pour compatibilité MCP
       return limits.min;
     }
 
     if (value > limits.max) {
-      console.warn(`⚠️ Valeur ${param} (${value}) supérieure au maximum (${limits.max}), utilisation du maximum`);
+      // Pas de logs sur stderr pour compatibilité MCP
       return limits.max;
     }
 
@@ -387,68 +387,64 @@ export async function testRagConfig(): Promise<boolean> {
     const configManager = getRagConfigManager();
     const config = configManager.getConfig();
 
-    console.log('🧪 Test de la configuration RAG...');
+    // Pas de logs sur stderr pour compatibilité MCP
 
     // Vérifier la version
     if (!config.version) {
-      console.error('❌ Version manquante dans la configuration');
+      // Pas de logs sur stderr pour compatibilité MCP
       return false;
     }
 
     // Vérifier les valeurs par défaut
     const defaults = configManager.getDefaults();
     if (!defaults.embedding_provider) {
-      console.error('❌ embedding_provider manquant dans les valeurs par défaut');
+      // Pas de logs sur stderr pour compatibilité MCP
       return false;
     }
 
     // Vérifier les limites
     const chunkSizeLimits = configManager.getLimits('chunk_size');
     if (!chunkSizeLimits || chunkSizeLimits.min >= chunkSizeLimits.max) {
-      console.error('❌ Limites chunk_size invalides ou manquantes');
+      // Pas de logs sur stderr pour compatibilité MCP
       return false;
     }
 
     // Vérifier les fournisseurs
     const providers = Object.keys(config.providers);
     if (providers.length === 0) {
-      console.error('❌ Aucun fournisseur configuré');
+      // Pas de logs sur stderr pour compatibilité MCP
       return false;
     }
 
     // Vérifier la configuration LLM si présente
     if (config.llm_providers) {
       const llmProviders = Object.keys(config.llm_providers);
-      console.log(`📊 Fournisseurs LLM disponibles: ${llmProviders.join(', ')}`);
+      // Pas de logs sur stderr pour compatibilité MCP
 
       if (config.preparation) {
-        console.log(`📊 Préparation LLM: ${config.preparation.enable_llm_analysis ? 'activée' : 'désactivée'}`);
-        console.log(`📊 Modèle LLM: ${config.preparation.llm_model}`);
+        // Pas de logs sur stderr pour compatibilité MCP
       }
     }
 
-    console.log('✅ Configuration RAG valide');
-    console.log(`📊 Version: ${config.version}`);
-    console.log(`📊 Fournisseurs disponibles: ${providers.join(', ')}`);
-    console.log(`📊 Valeurs par défaut: embedding_provider=${defaults.embedding_provider}, chunk_size=${defaults.chunk_size}`);
+    // Pas de logs sur stderr pour compatibilité MCP
 
     return true;
   } catch (error) {
-    console.error('❌ Erreur lors du test de la configuration RAG:', error);
+    // Pas de logs sur stderr pour compatibilité MCP
     return false;
   }
 }
 
 // Exécution automatique si ce fichier est exécuté directement
 if (import.meta.url === `file://${process.argv[1]}`) {
-  console.log('🚀 Test de la configuration RAG...');
+  // Pas de logs sur stderr pour compatibilité MCP
 
   testRagConfig().then(success => {
     if (success) {
-      console.log('🎉 Test de configuration réussi !');
+      // Pas de logs sur stderr pour compatibilité MCP
       process.exit(0);
     } else {
-      console.error('❌ Test de configuration échoué');
+      // Pas de logs sur stderr pour compatibilité MCP
       process.exit(1);
     }
   });

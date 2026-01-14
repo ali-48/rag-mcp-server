@@ -60,7 +60,7 @@ export class AutoRegistry {
 
       if (!existsSync(fullPath)) {
         if (this.config.verbose) {
-          console.warn(`⚠️ Répertoire non trouvé: ${fullPath}`);
+          // Pas de logs sur stderr pour compatibilité MCP
         }
         continue;
       }
@@ -77,7 +77,7 @@ export class AutoRegistry {
             modules.push({ path: relativePath, module });
           } catch (error) {
             if (this.config.verbose) {
-              console.error(`❌ Erreur lors du chargement du module ${file}:`, error);
+              // Pas de logs sur stderr pour compatibilité MCP
             }
           }
         }
@@ -108,7 +108,7 @@ export class AutoRegistry {
       }
     } catch (error) {
       if (this.config.verbose) {
-        console.error(`❌ Erreur lors du scan de ${dir}:`, error);
+        // Pas de logs sur stderr pour compatibilité MCP
       }
     }
 
@@ -150,10 +150,7 @@ export class AutoRegistry {
       if (group.tool && group.handler) {
         tools.push({ tool: group.tool, handler: group.handler });
       } else if (this.config.verbose) {
-        console.warn(`⚠️ Paire incomplète pour ${baseName}:`, {
-          hasTool: !!group.tool,
-          hasHandler: !!group.handler
-        });
+        // Pas de logs sur stderr pour compatibilité MCP
       }
     }
 
@@ -165,7 +162,7 @@ export class AutoRegistry {
    */
   async autoRegister(): Promise<number> {
     if (this.config.verbose) {
-      console.log('🔍 Découverte automatique des outils...');
+      // Pas de logs sur stderr pour compatibilité MCP
     }
 
     const modules = await this.discoverToolModules();
@@ -177,7 +174,7 @@ export class AutoRegistry {
       for (const { tool, handler } of tools) {
         if (this.registeredTools.has(tool.name)) {
           if (this.config.verbose) {
-            console.log(`⏭️ Outil déjà enregistré: ${tool.name}`);
+            // Pas de logs sur stderr pour compatibilité MCP
           }
           continue;
         }
@@ -188,19 +185,18 @@ export class AutoRegistry {
           registeredCount++;
 
           if (this.config.verbose) {
-            console.log(`✅ Outil enregistré automatiquement: ${tool.name} (${path})`);
+            // Pas de logs sur stderr pour compatibilité MCP
           }
         } catch (error) {
           if (this.config.verbose) {
-            console.error(`❌ Erreur lors de l'enregistrement de ${tool.name}:`, error);
+            // Pas de logs sur stderr pour compatibilité MCP
           }
         }
       }
     }
 
     if (this.config.verbose) {
-      console.log(`🎉 Enregistrement automatique terminé: ${registeredCount} outils enregistrés`);
-      console.log(`📊 Total d'outils dans le registre: ${toolRegistry.size()}`);
+      // Pas de logs sur stderr pour compatibilité MCP
     }
 
     return registeredCount;
@@ -219,11 +215,11 @@ export class AutoRegistry {
     }
 
     if (missingTools.length > 0) {
-      console.error(`❌ Outils manquants: ${missingTools.join(', ')}`);
+      // Pas de logs sur stderr pour compatibilité MCP
       return false;
     }
 
-    console.log(`✅ Tous les outils attendus sont enregistrés (${expectedTools.length} outils)`);
+    // Pas de logs sur stderr pour compatibilité MCP
     return true;
   }
 
@@ -271,12 +267,10 @@ export function getExpectedTools(): string[] {
 
 // Exécution automatique si ce fichier est exécuté directement
 if (import.meta.url === `file://${process.argv[1]}`) {
-  console.log('🚀 Initialisation du registre automatique...');
+  // Pas de logs sur stderr pour compatibilité MCP
 
-  initializeAutoRegistry({ verbose: true }).then(async (count) => {
-    console.log(`\n📊 Résumé:`);
-    console.log(`- Outils enregistrés: ${count}`);
-    console.log(`- Total dans ToolRegistry: ${toolRegistry.size()}`);
+  initializeAutoRegistry({ verbose: false }).then(async (count) => {
+    // Pas de logs sur stderr pour compatibilité MCP
 
     // Vérifier les outils attendus
     const expectedTools = getExpectedTools();
@@ -284,14 +278,14 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     const allRegistered = registry.verifyRegistration(expectedTools);
 
     if (allRegistered) {
-      console.log('🎉 Tous les outils sont correctement enregistrés !');
+      // Pas de logs sur stderr pour compatibilité MCP
       process.exit(0);
     } else {
-      console.error('❌ Certains outils sont manquants');
+      // Pas de logs sur stderr pour compatibilité MCP
       process.exit(1);
     }
   }).catch(error => {
-    console.error('❌ Erreur lors de l\'initialisation:', error);
+    // Pas de logs sur stderr pour compatibilité MCP
     process.exit(1);
   });
 }

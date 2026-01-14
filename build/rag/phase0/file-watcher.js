@@ -71,12 +71,8 @@ export class FileWatcher {
         });
         // Configurer les écouteurs d'événements
         this.setupEventListeners();
-        console.log(`👁️  File watcher démarré pour: ${this.workspacePath}`);
-        console.log(`   Options:`, {
-            recursive: this.options.recursive,
-            debounceDelay: this.options.debounceDelay,
-            maxPendingEvents: this.options.maxPendingEvents,
-        });
+        // Log silencieux pour MCP
+        // Log silencieux pour MCP
     }
     /**
      * Construit les patterns ignorés
@@ -140,13 +136,13 @@ export class FileWatcher {
         if (shouldIgnore) {
             this.stats.ignoredEvents++;
             if (this.options.logEvents) {
-                console.log(`👁️  [IGNORED] ${type}: ${relativePath}`);
+                // Log silencieux pour MCP
             }
             return;
         }
         // Journaliser l'événement
         if (this.options.logEvents) {
-            console.log(`👁️  [${type.toUpperCase()}] ${relativePath}`);
+            // Log silencieux pour MCP
         }
         // Gérer le debouncing
         const eventKey = `${type}:${filePath}`;
@@ -242,11 +238,11 @@ export class FileWatcher {
             }
             this.stats.processedEvents += events.length;
             if (this.options.logEvents && events.length > 0) {
-                console.log(`👁️  Processed ${events.length} events`);
+                // Log silencieux pour MCP
             }
         }
         catch (error) {
-            console.error('❌ Error processing events:', error);
+            // Log silencieux pour MCP
         }
         finally {
             this.isProcessing = false;
@@ -264,7 +260,7 @@ export class FileWatcher {
             this.stats.lastEvent = event;
         }
         catch (error) {
-            console.error(`❌ Error in event handler for ${event.path}:`, error);
+            // Log silencieux pour MCP
         }
     }
     /**
@@ -272,17 +268,17 @@ export class FileWatcher {
      */
     handleError(error) {
         if (error instanceof Error) {
-            console.error('❌ File watcher error:', error);
+            // Log silencieux pour MCP
         }
         else {
-            console.error('❌ File watcher error:', String(error));
+            // Log silencieux pour MCP
         }
     }
     /**
      * Gère l'événement ready
      */
     handleReady() {
-        console.log('✅ File watcher ready');
+        // Log silencieux pour MCP
     }
     /**
      * Arrête la surveillance
@@ -298,7 +294,7 @@ export class FileWatcher {
         }
         this.pendingEvents.clear();
         this.stats.pendingEvents = 0;
-        console.log('👁️  File watcher stopped');
+        // Log silencieux pour MCP
     }
     /**
      * Ajoute un handler d'événements
@@ -385,19 +381,19 @@ export function createIndexingEventHandler(onIndexNeeded) {
         if (event.metadata.ignored) {
             return;
         }
-        console.log(`🔍 Indexation nécessaire: ${event.type} ${event.relativePath}`);
+        // Log silencieux pour MCP
         try {
             await onIndexNeeded(event.path, event.type);
-            console.log(`✅ Indexation déclenchée pour: ${event.relativePath}`);
+            // Log silencieux pour MCP
         }
         catch (error) {
-            console.error(`❌ Erreur d'indexation pour ${event.relativePath}:`, error);
+            // Log silencieux pour MCP
         }
     };
 }
 // Test unitaire si exécuté directement
 if (import.meta.url === `file://${process.argv[1]}`) {
-    console.log('🧪 Test du file watcher...');
+    // Log silencieux pour MCP
     // Créer un répertoire de test
     const testDir = '/tmp/test-file-watcher-' + Date.now();
     const fs = require('fs');
@@ -409,8 +405,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
                 logEvents: true,
                 debounceDelay: 500,
             }, createLoggingEventHandler('TEST'));
-            console.log(`✅ Watcher démarré pour: ${testDir}`);
-            console.log('   Création de fichiers de test...');
+            // Log silencieux pour MCP
+            // Log silencieux pour MCP
             // Créer quelques fichiers
             fs.writeFileSync(path.join(testDir, 'test1.txt'), 'Hello');
             fs.writeFileSync(path.join(testDir, 'test2.js'), 'console.log("test")');
@@ -418,20 +414,16 @@ if (import.meta.url === `file://${process.argv[1]}`) {
             await new Promise(resolve => setTimeout(resolve, 2000));
             // Afficher les statistiques
             const stats = watcher.getStats();
-            console.log('📊 Statistiques du watcher:');
-            console.log(`  Total events: ${stats.totalEvents}`);
-            console.log(`  Processed: ${stats.processedEvents}`);
-            console.log(`  Ignored: ${stats.ignoredEvents}`);
-            console.log(`  Pending: ${stats.pendingEvents}`);
+            // Log silencieux pour MCP
             // Arrêter le watcher
             await watcher.stop();
             // Nettoyer
             fs.rmSync(testDir, { recursive: true, force: true });
-            console.log('🧹 Répertoire de test nettoyé');
-            console.log('✅ Test du file watcher réussi !');
+            // Log silencieux pour MCP
+            // Log silencieux pour MCP
         }
         catch (error) {
-            console.error('❌ Test du file watcher échoué:', error);
+            // Log silencieux pour MCP
             // Nettoyer en cas d'erreur
             try {
                 fs.rmSync(testDir, { recursive: true, force: true });
@@ -442,5 +434,5 @@ if (import.meta.url === `file://${process.argv[1]}`) {
             process.exit(1);
         }
     }
-    runTest().catch(console.error);
+    runTest().catch(() => { });
 }

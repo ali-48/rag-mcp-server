@@ -3,7 +3,7 @@
   "description": "Configuration RAG v2.0 - Support des nouveaux outils activated_rag et recherche_rag",
   "last_updated": "13/01/2026",
   "system": {
-    "mode": "autonomous",
+    "mode": "memory-only",
     "exposed_tools": [
       "activated_rag"
     ],
@@ -18,7 +18,11 @@
     "legacy_mode": false,
     "auto_detect_vscode": true,
     "auto_watch_files": true,
-    "auto_index_changes": true
+    "auto_index_changes": true,
+    "vector_store": {
+      "backend": "sqlite",
+      "path": "./rag/db/vector/rag_vectors.sqlite"
+    }
   },
   "defaults": {
     "embedding_provider": "fake",

@@ -1,6 +1,7 @@
 import fg from "fast-glob";
 import fs from "fs";
 import { getRagConfigManager } from "../config/rag-config.js";
+import { logger } from "../core/logger.js";
 import { analyzeSegmentation, optimizeChunksWithSuggestions } from "./ai-segmenter.js";
 import { preprocessCode } from "./code-preprocessor.js";
 import { ContentType, ProgrammingLanguage, detectContentType } from "./content-detector.js";
@@ -96,13 +97,13 @@ async function chunkCodeIntelligently(
           return optimizeChunksWithSuggestions(chunks, analysis.suggestions, text);
         } catch (aiError) {
           // Si l'analyse IA échoue, retourner les chunks originaux
-          console.error(`Erreur lors de l'analyse IA: ${(aiError as Error).message}`);
+          logger.error('rag.indexer.chunk.ai.error', `Erreur lors de l'analyse IA: ${(aiError as Error).message}`);
           return chunks;
         }
       }
     }
   } catch (error) {
-    console.error(`Erreur lors du pré-traitement du code: ${(error as Error).message}`);
+    logger.error('rag.indexer.chunk.preprocess.error', `Erreur lors du pré-traitement du code: ${(error as Error).message}`);
     // Fallback au chunking par mots
   }
 
@@ -319,7 +320,7 @@ export async function indexProject(
 
   // Initialiser le cache LLM
   const llmCache = getLlmCache();
-  console.log(`🧠 Cache LLM initialisé: TTL=${llmCache.getStats().maxSize} entrées max`);
+  logger.info('rag.indexer.cache.init', `Cache LLM initialisé: TTL=${llmCache.getStats().maxSize} entrées max`);
 
   // Initialiser le service LLM Enricher (Phase 0.3)
   const configManager = getRagConfigManager();
@@ -340,9 +341,9 @@ export async function indexProject(
   });
 
   if (llmEnricher.isEnrichmentEnabled()) {
-    console.log(`🧠 Phase 0.3 - LLM Enrichment ACTIVÉ: ${phase03Config.provider}/${phase03Config.model}`);
+    logger.info('rag.indexer.phase03.enabled', `Phase 0.3 - LLM Enrichment ACTIVÉ: ${phase03Config.provider}/${phase03Config.model}`);
   } else {
-    console.log(`🧠 Phase 0.3 - LLM Enrichment DÉSACTIVÉ (feature flag)`);
+    logger.info('rag.indexer.phase03.disabled', `Phase 0.3 - LLM Enrichment DÉSACTIVÉ (feature flag)`);
   }
 
   const stats = {
@@ -428,11 +429,11 @@ export async function indexProject(
         let enrichedResults = null;
         if (llmEnricher.isEnrichmentEnabled() && enrichedChunks.length > 0) {
           try {
-            console.log(`🧠 Phase 0.3 - Enrichissement de ${enrichedChunks.length} chunks...`);
+            logger.info('rag.indexer.phase03.enrich.start', `Phase 0.3 - Enrichissement de ${enrichedChunks.length} chunks...`);
             enrichedResults = await llmEnricher.enrichBatch(enrichedChunks);
-            console.log(`🧠 Phase 0.3 - Enrichissement terminé: ${enrichedResults.filter(r => r !== null).length}/${enrichedChunks.length} succès`);
+            logger.info('rag.indexer.phase03.enrich.done', `Phase 0.3 - Enrichissement terminé: ${enrichedResults.filter(r => r !== null).length}/${enrichedChunks.length} succès`);
           } catch (enrichmentError) {
-            console.error(`❌ Erreur Phase 0.3: ${enrichmentError instanceof Error ? enrichmentError.message : String(enrichmentError)}`);
+            logger.error('rag.indexer.phase03.enrich.error', `Erreur Phase 0.3: ${enrichmentError instanceof Error ? enrichmentError.message : String(enrichmentError)}`);
             enrichedResults = null;
           }
         }
@@ -484,42 +485,38 @@ export async function indexProject(
 
         // Log progress
         if (stats.indexedFiles % 10 === 0) {
-          console.error(`Indexed ${stats.indexedFiles}/${files.length} files, ${stats.chunksCreated} chunks...`);
+          logger.info('rag.indexer.progress', `Indexed ${stats.indexedFiles}/${files.length} files, ${stats.chunksCreated} chunks...`);
         }
       } catch (error) {
-        console.error(`Error processing file ${filePath}:`, error);
+        logger.error('rag.indexer.file.error', `Error processing file ${filePath}: ${error instanceof Error ? error.message : String(error)}`);
         stats.errors++;
       }
     }
 
     // Afficher les statistiques du cache
     const cacheStats = llmCache.getStats();
-    console.error(`📊 Statistiques cache LLM: ${cacheStats.hits} hits, ${cacheStats.misses} misses, ratio: ${(cacheStats.hitRatio * 100).toFixed(1)}%`);
+    logger.info('rag.indexer.cache.stats', `Statistiques cache LLM: ${cacheStats.hits} hits, ${cacheStats.misses} misses, ratio: ${(cacheStats.hitRatio * 100).toFixed(1)}%`);
 
     // Récupérer les métriques Phase 0.3
     const phase03Metrics = llmEnricher.getStats();
     if (llmEnricher.isEnrichmentEnabled()) {
-      console.error(`🧠 Phase 0.3 Métriques:`);
-      console.error(`  Chunks traités: ${phase03Metrics.totalProcessed}`);
-      console.error(`  Chunks enrichis: ${phase03Metrics.totalEnriched}`);
-      console.error(`  Taux succès: ${(phase03Metrics.successRate * 100).toFixed(1)}%`);
-      console.error(`  Temps moyen: ${phase03Metrics.averageTimeMs.toFixed(0)}ms`);
-      console.error(`  Erreurs: ${phase03Metrics.errors}`);
+      logger.info('rag.indexer.phase03.stats', `Phase 0.3 Métriques: chunks traités=${phase03Metrics.totalProcessed}, enrichis=${phase03Metrics.totalEnriched}, succès=${(phase03Metrics.successRate * 100).toFixed(1)}%, temps moyen=${phase03Metrics.averageTimeMs.toFixed(0)}ms, erreurs=${phase03Metrics.errors}`);
     }
 
-    console.error(`Indexation terminée pour ${projectPath}`);
-    console.error(`  Total fichiers: ${stats.totalFiles}`);
-    console.error(`  Indexés: ${stats.indexedFiles}`);
-    console.error(`  Chunks créés: ${stats.chunksCreated}`);
-    console.error(`  Ignorés: ${stats.ignoredFiles}`);
-    console.error(`  Erreurs: ${stats.errors}`);
+    logger.info('rag.indexer.complete', `Indexation terminée pour ${projectPath}`, {
+      totalFiles: stats.totalFiles,
+      indexedFiles: stats.indexedFiles,
+      chunksCreated: stats.chunksCreated,
+      ignoredFiles: stats.ignoredFiles,
+      errors: stats.errors
+    });
 
     return {
       ...stats,
       phase03Metrics: llmEnricher.isEnrichmentEnabled() ? phase03Metrics : undefined
     };
   } catch (error) {
-    console.error(`Error indexing project ${projectPath}:`, error);
+    logger.error('rag.indexer.project.error', `Error indexing project ${projectPath}: ${error instanceof Error ? error.message : String(error)}`);
     throw error;
   }
 }

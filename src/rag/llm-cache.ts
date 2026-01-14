@@ -41,7 +41,7 @@ export class LlmCache {
 
         if (!entry) {
             this.stats.misses++;
-            console.log(`❌ Cache miss: ${filePath} (${task})`);
+            // Pas de logs sur stderr pour compatibilité MCP
             return null;
         }
 
@@ -49,12 +49,12 @@ export class LlmCache {
         if (Date.now() - entry.timestamp > this.ttlSeconds * 1000) {
             this.cache.delete(key);
             this.stats.misses++;
-            console.log(`⏰ Cache expired: ${filePath} (${task})`);
+            // Pas de logs sur stderr pour compatibilité MCP
             return null;
         }
 
         this.stats.hits++;
-        console.log(`✅ Cache hit: ${filePath} (${task})`);
+        // Pas de logs sur stderr pour compatibilité MCP
         return entry.analysis;
     }
 
@@ -73,7 +73,7 @@ export class LlmCache {
             contentType
         });
 
-        console.log(`💾 Cache set: ${filePath} (${task}), taille: ${this.cache.size}/${this.maxSize}`);
+        // Pas de logs sur stderr pour compatibilité MCP
     }
 
     has(content: string, filePath: string, task: string): boolean {
@@ -96,7 +96,7 @@ export class LlmCache {
         this.cache.clear();
         this.stats.hits = 0;
         this.stats.misses = 0;
-        console.log(`🧹 Cache cleared (${size} entrées supprimées)`);
+        // Pas de logs sur stderr pour compatibilité MCP
     }
 
     getStats(): CacheStats {
@@ -139,7 +139,7 @@ export class LlmCache {
 
         if (oldestKey) {
             this.cache.delete(oldestKey);
-            console.log(`🗑️ Éviction cache: ${oldestKey}`);
+            // Pas de logs sur stderr pour compatibilité MCP
         }
     }
 
@@ -156,7 +156,7 @@ export class LlmCache {
             }
 
             if (expiredCount > 0) {
-                console.log(`🧹 Nettoyage cache: ${expiredCount} entrées expirées supprimées`);
+                // Pas de logs sur stderr pour compatibilité MCP
             }
         }, 60000); // Nettoyage toutes les minutes
     }

@@ -42,7 +42,7 @@ class RechercheRagLogger {
             const logMessage = `[${timestamp}] [${level}] ${message}`;
 
             if (level === LogLevel.ERROR) {
-                console.error(logMessage);
+                // Pas de logs sur stderr pour compatibilité MCP
             }
         }
     }

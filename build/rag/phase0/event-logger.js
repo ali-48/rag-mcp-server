@@ -367,7 +367,7 @@ export function createPhase0Logger(workspaceContext) {
 }
 // Test unitaire si exécuté directement
 if (import.meta.url === `file://${process.argv[1]}`) {
-    console.log('🧪 Test du event logger...');
+    // Log silencieux pour MCP
     const logger = createPhase0Logger();
     // Tester différents niveaux de log
     logger.debug('Message debug', 'test');
@@ -389,15 +389,9 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     logger.logFileEvent(mockFileEvent);
     // Afficher les statistiques
     const stats = logger.getStats();
-    console.log('📊 Statistiques du logger:');
-    console.log(`  Total logs: ${stats.totalLogs}`);
-    console.log(`  Par niveau:`, stats.logsByLevel);
-    console.log(`  Taille mémoire: ${stats.memorySize}`);
+    // Log silencieux pour MCP
     // Exporter les logs
     const logs = logger.getLogs({ limit: 3 });
-    console.log('📝 Derniers logs:');
-    logs.forEach(log => {
-        console.log(`  [${log.level}] ${log.message}`);
-    });
-    console.log('✅ Test du event logger réussi !');
+    // Log silencieux pour MCP
+    // Log silencieux pour MCP
 }

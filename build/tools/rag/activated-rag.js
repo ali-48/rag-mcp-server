@@ -5,60 +5,11 @@
 // Module D : Vérification RAG-initialized + exécution contrôlée
 // Responsabilités : D1 - Check bloquant, D2 - Échec propre si non initialisé
 import { getRagConfigManager } from "../../config/rag-config.js";
+import { logger } from "../../core/logger.js";
 import { indexProject, updateProject } from "../../rag/indexer.js";
 import { createPhase0IntegrationWithIndexing } from "../../rag/phase0/phase0-integration.js";
 import { getRagState, isRagInitialized } from "../../rag/phase0/rag-state.js";
 import { setEmbeddingProvider } from "../../rag/vector-store.js";
-// Système de logs simplifié (sans émojis pour compatibilité MCP)
-var LogLevel;
-(function (LogLevel) {
-    LogLevel["INFO"] = "INFO";
-    LogLevel["DEBUG"] = "DEBUG";
-    LogLevel["ERROR"] = "ERROR";
-})(LogLevel || (LogLevel = {}));
-class ActivatedRagLogger {
-    static instance;
-    logLevel = LogLevel.ERROR; // Par défaut ERROR seulement pour MCP
-    useEmojis = false;
-    constructor() { }
-    static getInstance() {
-        if (!ActivatedRagLogger.instance) {
-            ActivatedRagLogger.instance = new ActivatedRagLogger();
-        }
-        return ActivatedRagLogger.instance;
-    }
-    setLogLevel(level) {
-        this.logLevel = level;
-    }
-    disableEmojis() {
-        this.useEmojis = false;
-    }
-    shouldLog(level) {
-        const levels = [LogLevel.ERROR, LogLevel.INFO, LogLevel.DEBUG];
-        return levels.indexOf(level) <= levels.indexOf(this.logLevel);
-    }
-    log(level, message, data) {
-        if (this.shouldLog(level)) {
-            const timestamp = new Date().toISOString();
-            const logMessage = `[${timestamp}] [${level}] ${message}`;
-            if (level === LogLevel.ERROR) {
-                console.error(logMessage);
-            }
-        }
-    }
-    info(message, data) {
-        this.log(LogLevel.INFO, message, data);
-    }
-    debug(message, data) {
-        this.log(LogLevel.DEBUG, message, data);
-    }
-    error(message, error) {
-        this.log(LogLevel.ERROR, message, error);
-    }
-    warn(message, data) {
-        this.log(LogLevel.INFO, `WARN: ${message}`, data);
-    }
-}
 /**
  * Définition de l'outil activated_rag
  */
@@ -150,17 +101,12 @@ export const activatedRagTool = {
  * Handler pour l'outil activated_rag
  */
 export const activatedRagHandler = async (args) => {
-    const logger = ActivatedRagLogger.getInstance();
-    logger.disableEmojis();
-    // Configuration du niveau de logs
-    const logLevel = LogLevel.ERROR; // Pour MCP, ERROR par défaut
-    logger.setLogLevel(logLevel);
     const startTime = Date.now();
     let phase0Integration = null;
     let projectMetadata = null;
     try {
         // ========== D1 - CHECK BLOQUANT : Vérification RAG initialisé ==========
-        logger.info("🔍 Vérification de l'initialisation RAG...");
+        logger.info("rag.activated.check.start", "Vérification de l'initialisation RAG");
         // Détection automatique du projet si non spécifié
         let projectPath = args.project_path;
         if (!projectPath) {
@@ -174,24 +120,23 @@ export const activatedRagHandler = async (args) => {
                 const hasProjectFile = projectFiles.some(file => fs.existsSync(path.join(cwd, file)));
                 if (hasProjectFile) {
                     projectPath = cwd;
-                    logger.info(`📁 Projet auto-détecté: ${projectPath}`);
+                    logger.info("rag.activated.project.auto_detected", `Projet auto-détecté: ${projectPath}`, { path: projectPath });
                 }
                 else {
                     throw new Error("Impossible de détecter automatiquement le projet. Spécifiez 'project_path'.");
                 }
             }
             catch (error) {
-                logger.error("Erreur de détection automatique", error);
+                const errorMessage = error instanceof Error ? error.message : String(error);
+                logger.error("rag.activated.project.detection_error", "Erreur de détection automatique", { error: errorMessage });
                 throw error;
             }
         }
         // Vérifier si le RAG est initialisé pour ce projet
         const isInitialized = await isRagInitialized(projectPath);
         if (!isInitialized) {
-            const errorMessage = `❌ RAG non initialisé pour le projet: ${projectPath}\n` +
-                `Utilisez d'abord l'outil init_rag pour initialiser l'infrastructure RAG:\n` +
-                `- init_rag({ project_path: "${projectPath}", mode: "default" })`;
-            logger.error(errorMessage);
+            const errorMessage = `RAG non initialisé pour le projet: ${projectPath}. Utilisez d'abord l'outil init_rag pour initialiser l'infrastructure RAG.`;
+            logger.error("rag.activated.not_initialized", errorMessage, { project_path: projectPath });
             // D2 - ÉCHEC PROPRE : Retour structuré pour MCP
             return {
                 content: [{
@@ -210,9 +155,9 @@ export const activatedRagHandler = async (args) => {
                     }]
             };
         }
-        logger.info("✅ RAG initialisé, continuation du pipeline...");
+        logger.info("rag.activated.initialized", "RAG initialisé, continuation du pipeline", { project_path: projectPath });
         // ========== PHASE 0: Workspace Detection & File Watcher ==========
-        logger.info("🔍 Phase 0 - Détection Workspace & Surveillance");
+        logger.info("rag.activated.phase0.start", "Phase 0 - Détection Workspace & Surveillance");
         // Vérification des permissions
         try {
             const fs = await import('fs');
@@ -225,21 +170,23 @@ export const activatedRagHandler = async (args) => {
             try {
                 fs.writeFileSync(testWritePath, "test");
                 fs.unlinkSync(testWritePath);
-                logger.debug("✅ Permissions d'écriture vérifiées");
+                logger.debug("rag.activated.permissions.verified", "Permissions d'écriture vérifiées");
             }
             catch (error) {
-                logger.warn("⚠️ Permissions d'écriture limitées, continuation en mode lecture seule");
+                const errorMessage = error instanceof Error ? error.message : String(error);
+                logger.warn("rag.activated.permissions.limited", "Permissions d'écriture limitées, continuation en mode lecture seule", { error: errorMessage });
             }
         }
         catch (error) {
-            logger.error("Erreur lors de la vérification des permissions", error);
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            logger.error("rag.activated.permissions.error", "Erreur lors de la vérification des permissions", { error: errorMessage });
             throw error;
         }
         // Initialisation Phase 0.1 si activée
         if (args.enable_phase0 !== false) {
             try {
                 const onIndexNeeded = async (filePath, eventType) => {
-                    logger.info(`🔍 Indexation automatique déclenchée: ${eventType} ${filePath}`);
+                    logger.info("rag.activated.phase0.auto_index", `Indexation automatique déclenchée: ${eventType} ${filePath}`, { file_path: filePath, event_type: eventType });
                 };
                 phase0Integration = await createPhase0IntegrationWithIndexing(onIndexNeeded, {
                     enableWorkspaceDetection: true,
@@ -256,7 +203,7 @@ export const activatedRagHandler = async (args) => {
                         enableMemoryStorage: true,
                     },
                 }, projectPath);
-                logger.info("✅ Phase 0.1 initialisée avec succès");
+                logger.info("rag.activated.phase0.initialized", "Phase 0.1 initialisée avec succès");
                 // Récupérer les métadonnées du workspace
                 const workspace = phase0Integration.getWorkspace();
                 if (workspace) {
@@ -268,15 +215,16 @@ export const activatedRagHandler = async (args) => {
                         isGitRepo: workspace.metadata.isGitRepo,
                         detectedBy: workspace.metadata.detectedBy,
                     };
-                    logger.info("📋 Workspace détecté", projectMetadata);
+                    logger.info("rag.activated.phase0.workspace_detected", "Workspace détecté", projectMetadata);
                 }
             }
             catch (error) {
-                logger.error("Erreur Phase 0.1, continuation sans", error);
+                const errorMessage = error instanceof Error ? error.message : String(error);
+                logger.error("rag.activated.phase0.error", "Erreur Phase 0.1, continuation sans", { error: errorMessage });
             }
         }
         // ========== PHASE 1: Static Analysis ==========
-        logger.info("🔬 Phase 1 - Analyse Statique");
+        logger.info("rag.activated.phase1.start", "Phase 1 - Analyse Statique");
         let analysisResults = null;
         if (args.mode === 'analyze_only' || args.chunking_strategy === 'logical') {
             try {
@@ -288,14 +236,15 @@ export const activatedRagHandler = async (args) => {
                     languages: [],
                     metadata: {}
                 };
-                logger.info("✅ Analyse statique simulée (à implémenter)");
+                logger.info("rag.activated.phase1.simulated", "Analyse statique simulée (à implémenter)");
             }
             catch (error) {
-                logger.error("Erreur analyse statique, continuation avec chunking fixe", error);
+                const errorMessage = error instanceof Error ? error.message : String(error);
+                logger.error("rag.activated.phase1.error", "Erreur analyse statique, continuation avec chunking fixe", { error: errorMessage });
             }
         }
         // ========== PHASE 2: Intelligent Chunking Configuration ==========
-        logger.info("✂️ Phase 2 - Configuration Chunking Intelligent");
+        logger.info("rag.activated.phase2.start", "Phase 2 - Configuration Chunking Intelligent");
         const configManager = getRagConfigManager();
         const defaults = configManager.getDefaults();
         // Configuration du chunking basée sur la stratégie
@@ -310,9 +259,9 @@ export const activatedRagHandler = async (args) => {
             contentTypes: args.content_types,
             languages: args.languages
         };
-        logger.info("📊 Configuration chunking", chunkingOptions);
+        logger.info("rag.activated.phase2.config", "Configuration chunking", chunkingOptions);
         // ========== PHASE 3: Specialized Embeddings Configuration ==========
-        logger.info("🧠 Phase 3 - Configuration Embeddings Spécialisés");
+        logger.info("rag.activated.phase3.start", "Phase 3 - Configuration Embeddings Spécialisés");
         // Configuration des modèles par type
         const embeddingModels = args.embedding_models || {};
         const defaultModels = {
@@ -325,13 +274,13 @@ export const activatedRagHandler = async (args) => {
         const embeddingProvider = defaults.embedding_provider;
         setEmbeddingProvider(embeddingProvider, defaultModels.fallback);
         // Note: Le routage embeddings par type sera implémenté dans vector-store.ts
-        logger.info("🔧 Configuration embeddings", {
+        logger.info("rag.activated.phase3.config", "Configuration embeddings", {
             provider: embeddingProvider,
             models: { ...defaultModels, ...embeddingModels },
             routingEnabled: false // À implémenter dans vector-store.ts
         });
         // ========== PHASE 4: Injection & Update ==========
-        logger.info("🚀 Phase 4 - Injection & Mise à Jour");
+        logger.info("rag.activated.phase4.start", "Phase 4 - Injection & Mise à Jour");
         let injectionResult;
         const options = {
             filePatterns: args.file_patterns || defaults.file_patterns,
@@ -345,23 +294,24 @@ export const activatedRagHandler = async (args) => {
             metadataOverrides: args.metadata_overrides
         };
         // Sélection du mode d'opération
-        switch (args.mode || 'full') {
+        const mode = args.mode || 'full';
+        switch (mode) {
             case 'full':
-                logger.info("📦 Mode: Indexation complète");
+                logger.info("rag.activated.mode.full", "Mode: Indexation complète");
                 injectionResult = await indexProject(projectPath, options);
                 break;
             case 'incremental':
-                logger.info("🔄 Mode: Mise à jour incrémentale");
+                logger.info("rag.activated.mode.incremental", "Mode: Mise à jour incrémentale");
                 injectionResult = await updateProject(projectPath, options);
                 break;
             case 'watch':
-                logger.info("👁️ Mode: Surveillance temps réel");
+                logger.info("rag.activated.mode.watch", "Mode: Surveillance temps réel");
                 // Pour le mode watch, on fait une indexation initiale puis on laisse le watcher actif
                 injectionResult = await indexProject(projectPath, options);
-                logger.info("✅ Indexation initiale terminée, watcher actif");
+                logger.info("rag.activated.mode.watch.initial_index", "Indexation initiale terminée, watcher actif");
                 break;
             case 'analyze_only':
-                logger.info("📊 Mode: Analyse seulement");
+                logger.info("rag.activated.mode.analyze_only", "Mode: Analyse seulement");
                 // Retourner les résultats d'analyse sans injection
                 const endTime = Date.now();
                 const duration = ((endTime - startTime) / 1000).toFixed(2);
@@ -401,10 +351,11 @@ export const activatedRagHandler = async (args) => {
         if (phase0Integration && phase0Integration.isActive() && args.mode !== 'watch') {
             try {
                 await phase0Integration.stop();
-                logger.info("✅ Phase 0.1 arrêtée proprement");
+                logger.info("rag.activated.phase0.stopped", "Phase 0.1 arrêtée proprement");
             }
             catch (error) {
-                logger.warn("⚠️ Erreur lors de l'arrêt de Phase 0.1", error);
+                const errorMessage = error instanceof Error ? error.message : String(error);
+                logger.warn("rag.activated.phase0.stop_error", "Erreur lors de l'arrêt de Phase 0.1", { error: errorMessage });
             }
         }
         // Collecter les statistiques Phase 0
@@ -419,7 +370,7 @@ export const activatedRagHandler = async (args) => {
             file_watcher: false
         };
         // Préparer la réponse
-        logger.info("✅ Pipeline activated_rag terminé avec succès", {
+        logger.info("rag.activated.completed", "Pipeline activated_rag terminé avec succès", {
             duration: `${duration}s`,
             mode: args.mode || 'full',
             total_files: injectionResult.totalFiles,
@@ -452,66 +403,57 @@ export const activatedRagHandler = async (args) => {
                         project_metadata: {
                             project_path: projectPath,
                             project_hash: "N/A", // À implémenter dans indexer.ts
-                            last_indexed: new Date().toISOString(),
-                            total_size_bytes: 0,
-                            file_types: {}
+                            last_indexed: new Date().toISOString()
                         },
+                        // Phase 0 stats
+                        phase_0_stats: phase0Stats,
                         // Configuration utilisée
                         config_used: {
                             mode: args.mode || 'full',
-                            enable_phase0: args.enable_phase0 !== false,
-                            enable_watcher: args.enable_watcher === true,
                             chunking_strategy: chunkingStrategy,
                             max_chunk_size: maxChunkSize,
-                            embedding_provider: embeddingProvider,
-                            embedding_models: { ...defaultModels, ...embeddingModels }
-                        },
-                        // Statistiques Phase 0
-                        phase0_stats: phase0Stats,
-                        // Erreurs (si any)
-                        errors: injectionResult.errors > 0 ? [] : undefined
+                            content_types: args.content_types,
+                            languages: args.languages,
+                            enable_phase0: args.enable_phase0 !== false,
+                            enable_watcher: args.enable_watcher === true
+                        }
                     }, null, 2)
                 }]
         };
     }
     catch (error) {
+        // ========== GESTION DES ERREURS ==========
         const endTime = Date.now();
         const duration = ((endTime - startTime) / 1000).toFixed(2);
-        logger.error("❌ Erreur dans le pipeline activated_rag", {
-            duration: `${duration}s`,
-            error: error instanceof Error ? error.message : String(error)
+        logger.error("rag.activated.error", "Erreur dans le pipeline activated_rag", {
+            error: error.message,
+            stack: error.stack,
+            duration: `${duration}s`
         });
-        throw error;
+        // Arrêter Phase 0.1 si active
+        if (phase0Integration && phase0Integration.isActive()) {
+            try {
+                await phase0Integration.stop();
+                logger.warn("rag.activated.phase0.emergency_stop", "Phase 0.1 arrêtée en urgence");
+            }
+            catch (stopError) {
+                // Ignorer les erreurs d'arrêt
+            }
+        }
+        // Retour d'erreur structuré pour MCP
+        return {
+            content: [{
+                    type: "text",
+                    text: JSON.stringify({
+                        success: false,
+                        error: "PIPELINE_ERROR",
+                        message: error.message,
+                        duration_seconds: duration,
+                        timestamp: new Date().toISOString(),
+                        stack_trace: error.stack,
+                        phase_0_active: phase0Integration ? phase0Integration.isActive() : false
+                    }, null, 2)
+                }]
+        };
     }
 };
-/**
- * Test de l'outil (pour usage en développement)
- */
-export async function testActivatedRag() {
-    console.log("🧪 Test de l'outil activated_rag v2.0.0...");
-    const logger = ActivatedRagLogger.getInstance();
-    logger.setLogLevel(LogLevel.DEBUG);
-    try {
-        const testProjectPath = process.cwd(); // Utiliser le répertoire courant pour le test
-        logger.info(`✅ Test avec projet: ${testProjectPath}`);
-        // Tester le mode analyze_only
-        const result = await activatedRagHandler({
-            mode: "analyze_only",
-            project_path: testProjectPath,
-            file_patterns: ["**/*.ts", "**/*.js"],
-            chunking_strategy: "logical",
-            enable_phase0: true
-        });
-        logger.info("✅ Test réussi", {
-            has_result: !!result,
-            success: true
-        });
-        return result;
-    }
-    catch (error) {
-        logger.error("❌ Test échoué", error);
-        throw error;
-    }
-}
-// Export pour les tests
-export { ActivatedRagLogger, LogLevel };

@@ -150,18 +150,18 @@ export class ChunkerIntegration {
             return;
         }
 
-        console.log('🚀 Initialisation de l\'intégration du chunker...');
+        // Log silencieux pour MCP
 
         try {
             // Initialiser Tree-sitter
             await this.treeSitterManager.initialize();
-            console.log('✅ Tree-sitter initialisé');
+            // Log silencieux pour MCP
 
             this.isInitialized = true;
-            console.log('✅ Intégration du chunker initialisée');
+            // Log silencieux pour MCP
 
         } catch (error) {
-            console.error('❌ Erreur lors de l\'initialisation du chunker:', error);
+            // Log silencieux pour MCP
             throw error;
         }
     }
@@ -220,11 +220,11 @@ export class ChunkerIntegration {
 
         // Vérifier si le fichier doit être traité
         if (!this.shouldProcessFile(event.path)) {
-            console.log(`⏭️  Fichier ignoré: ${event.relativePath}`);
+            // Log silencieux pour MCP
             return [];
         }
 
-        console.log(`🔍 Traitement du fichier: ${event.relativePath} (${event.type})`);
+        // Log silencieux pour MCP
 
         try {
             // 1. Parser le fichier
@@ -248,7 +248,7 @@ export class ChunkerIntegration {
             // 3. Générer les chunks
             const chunkingResult = await this.chunker.chunk(parseResult, semanticUnits);
 
-            console.log(`✅ ${chunkingResult.chunks.length} chunks générés pour ${event.relativePath}`);
+            // Log silencieux pour MCP
 
             // 4. Émettre les événements de chunks
             const chunkEvents: ChunkEvent[] = [];
@@ -326,7 +326,7 @@ export class ChunkerIntegration {
             try {
                 await handler(event);
             } catch (error) {
-                console.error('❌ Erreur dans le handler d\'événement de chunk:', error);
+                // Log silencieux pour MCP
             }
         }
     }
@@ -356,7 +356,7 @@ export class ChunkerIntegration {
             try {
                 await this.processFileEvent(event);
             } catch (error) {
-                console.error(`❌ Erreur dans le handler du file watcher:`, error);
+                // Log silencieux pour MCP
             }
         };
     }
@@ -365,17 +365,17 @@ export class ChunkerIntegration {
      * Arrête l'intégration
      */
     async shutdown(): Promise<void> {
-        console.log('🛑 Arrêt de l\'intégration du chunker...');
+        // Log silencieux pour MCP
 
         try {
             await this.treeSitterManager.shutdown();
-            console.log('✅ Tree-sitter arrêté');
+            // Log silencieux pour MCP
 
             this.isInitialized = false;
-            console.log('✅ Intégration du chunker arrêtée');
+            // Log silencieux pour MCP
 
         } catch (error) {
-            console.error('❌ Erreur lors de l\'arrêt du chunker:', error);
+            // Log silencieux pour MCP
             throw error;
         }
     }
@@ -434,15 +434,7 @@ export function createChunkLoggingHandler(
     prefix: string = 'CHUNKER'
 ): ChunkEventHandler {
     return (event: ChunkEvent) => {
-        const timestamp = event.timestamp.toISOString().split('T')[1].slice(0, -1);
-        const chunk = event.chunk;
-        const sourceFile = event.sourceEvent.relativePath;
-
-        console.log(`[${timestamp}] ${prefix}: ${event.type.toUpperCase()} ${chunk.type}:${chunk.id}`);
-        console.log(`       Fichier: ${sourceFile}`);
-        console.log(`       Type: ${chunk.type}, Granularité: ${chunk.granularity}`);
-        console.log(`       Lignes: ${chunk.metadata.provenance.position.startLine}-${chunk.metadata.provenance.position.endLine}`);
-        console.log(`       Temps: ${event.metadata.processingTime}ms`);
+        // Log silencieux pour MCP
     };
 }
 
@@ -457,16 +449,16 @@ export function createChunkStorageHandler(
     return async (event: ChunkEvent) => {
         try {
             await storage.saveChunk(event.chunk, event.type);
-            console.log(`💾 Chunk ${event.chunk.id} enregistré (${event.type})`);
+            // Log silencieux pour MCP
         } catch (error) {
-            console.error(`❌ Erreur lors de l'enregistrement du chunk ${event.chunk.id}:`, error);
+            // Log silencieux pour MCP
         }
     };
 }
 
 // Test unitaire si exécuté directement
 if (import.meta.url === `file://${process.argv[1]}`) {
-    console.log('🧪 Test de l\'intégration du chunker...');
+    // Log silencieux pour MCP
 
     async function runTest() {
         try {
@@ -510,7 +502,7 @@ export class HelloComponent extends Component<Props> {
                 },
             });
 
-            console.log('✅ Intégration du chunker créée');
+            // Log silencieux pour MCP
 
             // Ajouter un handler de logging
             integration.addChunkEventHandler(createChunkLoggingHandler('TEST'));
@@ -529,21 +521,21 @@ export class HelloComponent extends Component<Props> {
             };
 
             // Traiter l'événement
-            console.log('🔍 Traitement du fichier de test...');
+            // Log silencieux pour MCP
             const chunkEvents = await integration.processFileEvent(mockEvent);
 
-            console.log(`✅ ${chunkEvents.length} événements de chunks générés`);
+            // Log silencieux pour MCP
 
             // Afficher un résumé
             if (chunkEvents.length > 0) {
-                console.log('📊 Résumé des chunks:');
+                // Log silencieux pour MCP
                 const byType: Record<string, number> = {};
                 chunkEvents.forEach(event => {
                     byType[event.chunk.type] = (byType[event.chunk.type] || 0) + 1;
                 });
 
                 Object.entries(byType).forEach(([type, count]) => {
-                    console.log(`  ${type}: ${count}`);
+                    // Log silencieux pour MCP
                 });
             }
 
@@ -552,15 +544,15 @@ export class HelloComponent extends Component<Props> {
 
             // Nettoyer
             fs.rmSync(testDir, { recursive: true, force: true });
-            console.log('🧹 Répertoire de test nettoyé');
+            // Log silencieux pour MCP
 
-            console.log('✅ Test de l\'intégration du chunker réussi !');
+            // Log silencieux pour MCP
 
         } catch (error) {
-            console.error('❌ Test de l\'intégration du chunker échoué:', error);
+            // Log silencieux pour MCP
             process.exit(1);
         }
     }
 
-    runTest().catch(console.error);
+    runTest().catch(() => { });
 }

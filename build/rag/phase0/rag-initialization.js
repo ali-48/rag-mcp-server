@@ -286,7 +286,7 @@ async function testVectorStoreConnection(dbConfig) {
     }
     if (dbConfig.vectors.type === 'postgres') {
         // Simulation de test de connexion
-        console.log(`[INFO] Test de connexion PostgreSQL simulé pour ${dbConfig.vectors.host}:${dbConfig.vectors.port}`);
+        // Log silencieux pour MCP
         return true;
     }
     // Type de DB non supporté
@@ -301,9 +301,7 @@ async function testVectorStoreConnection(dbConfig) {
 async function registerProjectInRegistry(projectInfo) {
     // Pour l'instant, on simule l'enregistrement
     // Dans une version future, on enregistrerait dans un registry MCP global
-    console.log(`[INFO] Projet enregistré dans le registry MCP: ${projectInfo.projectId}`);
-    console.log(`  - Chemin: ${projectInfo.rootPath}`);
-    console.log(`  - Mode: ${projectInfo.mode}`);
+    // Log silencieux pour MCP
     return true;
 }
 // ========== FONCTION PRINCIPALE ==========
