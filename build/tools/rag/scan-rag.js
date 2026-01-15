@@ -1,9 +1,11 @@
 // src/tools/rag/scan-rag.ts
 // Outil scan_rag - Phase 0: Workspace Detection & File Analysis
 // Responsabilités: Détection workspace, analyse statique, préparation pour indexation
+// Version asynchrone: retourne un task_id immédiatement
 import { logger } from "../../core/logger.js";
-import { createPhase0IntegrationWithIndexing } from "../../rag/phase0/phase0-integration.js";
 import { isRagInitialized } from "../../rag/phase0/rag-state.js";
+import { createRagJob } from "../../rag/queue/job-types.js";
+import { getRagQueue } from "../../rag/queue/rag-queue.js";
 /**
  * Définition de l'outil scan_rag
  */
@@ -63,7 +65,8 @@ export const scanRagTool = {
     },
 };
 /**
- * Handler pour l'outil scan_rag
+ * Handler pour l'outil scan_rag (version asynchrone)
+ * Retourne immédiatement un task_id et crée un job dans la file d'attente
  */
 export const scanRagHandler = async (args) => {
     const startTime = Date.now();
@@ -112,190 +115,49 @@ export const scanRagHandler = async (args) => {
                     }]
             };
         }
-        logger.info("rag.scan.start", "Début du scan du projet", { project_path: projectPath });
-        // Vérification des permissions
-        const fs = await import('fs');
-        const path = await import('path');
-        if (!fs.existsSync(projectPath)) {
-            throw new Error(`Le chemin du projet n'existe pas: ${projectPath}`);
-        }
-        // Initialisation Phase 0
-        let phase0Integration = null;
-        let projectMetadata = null;
-        if (args.enable_workspace_detection !== false) {
-            try {
-                const onIndexNeeded = async (filePath, eventType) => {
-                    logger.debug("rag.scan.phase0.auto_index", `Indexation automatique déclenchée: ${eventType} ${filePath}`, {
-                        file_path: filePath,
-                        event_type: eventType
-                    });
-                };
-                phase0Integration = await createPhase0IntegrationWithIndexing(onIndexNeeded, {
-                    enableWorkspaceDetection: true,
-                    enableFileWatcher: args.enable_file_watcher === true,
-                    enableLogging: true,
-                    fileWatcherOptions: {
-                        debounceDelay: 500,
-                        recursive: true,
-                        logEvents: true,
-                    },
-                    loggerOptions: {
-                        minLevel: 'info',
-                        enableConsole: true,
-                        enableMemoryStorage: true,
-                    },
-                }, projectPath);
-                logger.info("rag.scan.phase0.initialized", "Phase 0 initialisée avec succès");
-                // Récupérer les métadonnées du workspace
-                const workspace = phase0Integration.getWorkspace();
-                if (workspace) {
-                    projectMetadata = {
-                        path: workspace.path,
-                        vscodeWorkspace: workspace.vscodeWorkspace,
-                        language: workspace.language,
-                        fileCount: workspace.metadata.fileCount,
-                        isGitRepo: workspace.metadata.isGitRepo,
-                        detectedBy: workspace.metadata.detectedBy,
-                    };
-                    logger.info("rag.scan.phase0.workspace_detected", "Workspace détecté", projectMetadata);
-                }
+        // Créer un job de scan dans la file d'attente
+        const queue = getRagQueue();
+        const job = createRagJob('scan', projectPath, {
+            metadata: {
+                args: args,
+                startTime: startTime
             }
-            catch (error) {
-                const errorMessage = error instanceof Error ? error.message : String(error);
-                logger.error("rag.scan.phase0.error", "Erreur Phase 0, continuation sans", { error: errorMessage });
-            }
-        }
-        // Scan des fichiers
-        const fg = await import('fast-glob');
-        const filePatterns = args.file_patterns || ["**/*"];
-        const files = await fg.default(filePatterns, {
-            cwd: projectPath,
-            absolute: true,
-            dot: args.include_hidden === true,
-            onlyFiles: true,
-            followSymbolicLinks: false,
-            deep: args.max_depth || 10,
         });
-        logger.info("rag.scan.files.found", `${files.length} fichiers trouvés`, { count: files.length });
-        // Analyse basique des fichiers
-        const fileAnalysis = [];
-        const contentTypes = args.content_types || ['code', 'doc', 'config', 'other'];
-        const languages = args.languages || [];
-        for (const filePath of files.slice(0, 100)) { // Limiter à 100 fichiers pour la démo
-            try {
-                const stats = fs.statSync(filePath);
-                const ext = path.extname(filePath).toLowerCase();
-                const relativePath = path.relative(projectPath, filePath);
-                // Détection basique du type de contenu
-                let contentType = 'other';
-                if (['.js', '.ts', '.py', '.java', '.cpp', '.c', '.go', '.rs', '.php'].includes(ext)) {
-                    contentType = 'code';
-                }
-                else if (['.md', '.txt', '.rst', '.adoc'].includes(ext)) {
-                    contentType = 'doc';
-                }
-                else if (['.json', '.yaml', '.yml', '.toml', '.ini', '.cfg', '.conf'].includes(ext)) {
-                    contentType = 'config';
-                }
-                // Détection basique du langage
-                let language = 'unknown';
-                if (ext === '.js')
-                    language = 'javascript';
-                else if (ext === '.ts')
-                    language = 'typescript';
-                else if (ext === '.py')
-                    language = 'python';
-                else if (ext === '.java')
-                    language = 'java';
-                else if (ext === '.cpp' || ext === '.c')
-                    language = 'c++';
-                else if (ext === '.go')
-                    language = 'go';
-                else if (ext === '.rs')
-                    language = 'rust';
-                else if (ext === '.php')
-                    language = 'php';
-                // Filtrer par type de contenu et langage si spécifiés
-                if (contentTypes.includes(contentType) &&
-                    (languages.length === 0 || languages.includes(language))) {
-                    fileAnalysis.push({
-                        path: relativePath,
-                        absolute_path: filePath,
-                        size_bytes: stats.size,
-                        modified: stats.mtime.toISOString(),
-                        content_type: contentType,
-                        language: language,
-                        extension: ext
-                    });
-                }
-            }
-            catch (error) {
-                // Ignorer les erreurs de lecture de fichier
-            }
+        const enqueueResult = await queue.enqueue(job);
+        if (!enqueueResult.queued) {
+            throw new Error(`Impossible d'ajouter le job à la file d'attente: ${enqueueResult.message}`);
         }
-        // Collecter les statistiques
-        const statsByType = fileAnalysis.reduce((acc, file) => {
-            acc[file.content_type] = (acc[file.content_type] || 0) + 1;
-            return acc;
-        }, {});
-        const statsByLanguage = fileAnalysis.reduce((acc, file) => {
-            acc[file.language] = (acc[file.language] || 0) + 1;
-            return acc;
-        }, {});
-        // Arrêter Phase 0 si nécessaire
-        if (phase0Integration && phase0Integration.isActive()) {
-            try {
-                await phase0Integration.stop();
-                logger.info("rag.scan.phase0.stopped", "Phase 0 arrêtée proprement");
-            }
-            catch (error) {
-                const errorMessage = error instanceof Error ? error.message : String(error);
-                logger.warn("rag.scan.phase0.stop_error", "Erreur lors de l'arrêt de Phase 0", { error: errorMessage });
-            }
-        }
-        const endTime = Date.now();
-        const duration = ((endTime - startTime) / 1000).toFixed(2);
-        logger.info("rag.scan.completed", "Scan terminé avec succès", {
-            duration: `${duration}s`,
-            total_files: files.length,
-            analyzed_files: fileAnalysis.length
+        logger.info("rag.scan.job.created", "Job de scan créé", {
+            jobId: job.id,
+            projectPath: projectPath,
+            position: enqueueResult.position
         });
-        // Préparer la réponse
+        // Formater la réponse asynchrone
+        const asyncResponse = {
+            status: "accepted",
+            action: "scan_rag",
+            task_id: job.id,
+            execution: "background",
+            message: "Scan démarré en arrière-plan. Utilisez get_status pour suivre la progression.",
+            next_action: "get_status",
+            notes_for_ai: [
+                "Le scan s'exécute de manière asynchrone",
+                `Utilisez get_status avec scope=task et task_id=${job.id} pour suivre la progression`,
+                "Le projet sera verrouillé pour les autres opérations mutatrices pendant l'exécution",
+                "Vous pouvez continuer à utiliser query_rag pendant le scan"
+            ]
+        };
         return {
             content: [{
                     type: "text",
-                    text: JSON.stringify({
-                        status: "ok",
-                        message: "Scan terminé avec succès",
-                        project_path: projectPath,
-                        duration_seconds: parseFloat(duration),
-                        stats: {
-                            total_files_found: files.length,
-                            files_analyzed: fileAnalysis.length,
-                            by_content_type: statsByType,
-                            by_language: statsByLanguage
-                        },
-                        project_metadata: projectMetadata,
-                        file_analysis: fileAnalysis.slice(0, 50), // Limiter à 50 fichiers pour la réponse
-                        recommendations: {
-                            chunking_strategy: statsByType.code > statsByType.doc ? 'logical' : 'fixed',
-                            estimated_chunks: Math.ceil(files.length / 10),
-                            suggested_content_types: Object.keys(statsByType).filter(type => statsByType[type] > 0),
-                            suggested_languages: Object.keys(statsByLanguage).filter(lang => statsByLanguage[lang] > 0)
-                        },
-                        next_steps: [
-                            "Utilisez index_rag pour indexer les fichiers analysés",
-                            "Utilisez query_rag pour rechercher dans les fichiers indexés"
-                        ],
-                        timestamp: new Date().toISOString()
-                    }, null, 2)
+                    text: JSON.stringify(asyncResponse, null, 2)
                 }]
         };
     }
     catch (error) {
         const endTime = Date.now();
         const duration = ((endTime - startTime) / 1000).toFixed(2);
-        logger.error("rag.scan.error", "Erreur lors du scan", {
+        logger.error("rag.scan.error", "Erreur lors de la création du job de scan", {
             error: error.message,
             stack: error.stack,
             duration: `${duration}s`
@@ -305,7 +167,7 @@ export const scanRagHandler = async (args) => {
                     type: "text",
                     text: JSON.stringify({
                         status: "error",
-                        error: "SCAN_ERROR",
+                        error: "SCAN_JOB_CREATION_ERROR",
                         message: error.message,
                         duration_seconds: parseFloat(duration),
                         timestamp: new Date().toISOString(),

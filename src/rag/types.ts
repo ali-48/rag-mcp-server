@@ -50,6 +50,7 @@ export interface SearchOptions {
   projectFilter?: string;
   limit?: number;
   threshold?: number;
+  timeout?: number; // Timeout en secondes (exception pour query_rag)
 }
 
 export interface ProjectStats {

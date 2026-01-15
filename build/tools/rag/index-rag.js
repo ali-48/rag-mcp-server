@@ -4,11 +4,125 @@
 // Responsabilités: Indexation asynchrone avec task_id, progression, file d'attente
 import { getRagConfigManager } from "../../config/rag-config.js";
 import { logger } from "../../core/logger.js";
-import { generateTaskId, getProgressTracker } from "../../core/progress-tracker.js";
-import { getTaskQueue } from "../../core/task-queue.js";
+import { getProgressTracker } from "../../core/progress-tracker.js";
 import { indexProject, updateProject } from "../../rag/indexer.js";
 import { isRagInitialized } from "../../rag/phase0/rag-state.js";
+import { createRagJob } from "../../rag/queue/job-types.js";
+import { getRagQueue } from "../../rag/queue/rag-queue.js";
 import { setEmbeddingProvider } from "../../rag/vector-store-refactored.js";
+/**
+ * Définition de l'outil prepare_rag (Phase 1: Préparation des fichiers)
+ */
+export const prepareRagTool = {
+    name: "prepare_rag",
+    description: "Phase 1: Préparation des fichiers pour l'embedding (chunking, nettoyage, normalisation)",
+    inputSchema: {
+        type: "object",
+        properties: {
+            project_path: {
+                type: "string",
+                description: "Chemin absolu vers le projet (auto-détecté si vide)"
+            },
+            chunking_strategy: {
+                type: "string",
+                enum: ["logical", "fixed", "ai_enhanced"],
+                description: "Stratégie de chunking",
+                default: "logical"
+            },
+            max_chunk_size: {
+                type: "number",
+                description: "Taille maximale des chunks (tokens)",
+                default: 1000,
+                minimum: 100,
+                maximum: 10000
+            },
+            chunk_overlap: {
+                type: "number",
+                description: "Chevauchement entre chunks (tokens)",
+                default: 200,
+                minimum: 0,
+                maximum: 1000
+            },
+            content_types: {
+                type: "array",
+                items: {
+                    type: "string",
+                    enum: ["code", "doc", "config", "other"]
+                },
+                description: "Types de contenu à inclure"
+            },
+            languages: {
+                type: "array",
+                items: { type: "string" },
+                description: "Langages à inclure (ex: ['typescript', 'python'])"
+            },
+            enable_llm_enrichment: {
+                type: "boolean",
+                description: "Activer l'enrichissement LLM optionnel",
+                default: false
+            },
+            metadata_overrides: {
+                type: "object",
+                description: "Surcharges de métadonnées",
+                additionalProperties: true
+            }
+        },
+        required: []
+    },
+};
+/**
+ * Définition de l'outil embed_rag (Phase 2: Génération d'embeddings)
+ */
+export const embedRagTool = {
+    name: "embed_rag",
+    description: "Phase 2: Génération d'embeddings pour les chunks préparés",
+    inputSchema: {
+        type: "object",
+        properties: {
+            project_path: {
+                type: "string",
+                description: "Chemin absolu vers le projet (auto-détecté si vide)"
+            },
+            embedding_model: {
+                type: "string",
+                description: "Modèle d'embedding à utiliser",
+                default: "nomic-embed-text"
+            },
+            batch_size: {
+                type: "number",
+                description: "Taille des lots pour la génération d'embeddings",
+                default: 32,
+                minimum: 1,
+                maximum: 256
+            },
+            max_concurrent_batches: {
+                type: "number",
+                description: "Nombre maximum de lots concurrents",
+                default: 2,
+                minimum: 1,
+                maximum: 8
+            },
+            enable_cache: {
+                type: "boolean",
+                description: "Activer le cache d'embeddings",
+                default: true
+            },
+            cache_ttl_seconds: {
+                type: "number",
+                description: "Durée de vie du cache en secondes",
+                default: 86400,
+                minimum: 60,
+                maximum: 604800
+            },
+            metadata_overrides: {
+                type: "object",
+                description: "Surcharges de métadonnées",
+                additionalProperties: true
+            }
+        },
+        required: []
+    },
+};
 /**
  * Définition de l'outil index_rag refactorisé
  */
@@ -334,107 +448,49 @@ export const indexRagHandler = async (args) => {
         if (!fs.existsSync(projectPath)) {
             throw new Error(`Le chemin du projet n'existe pas: ${projectPath}`);
         }
-        // Générer un ID de tâche
-        const taskId = generateTaskId(projectPath);
         const mode = args.mode || 'full';
         logger.info("rag.index.start", "Début de l'indexation asynchrone", {
-            taskId,
             project_path: projectPath,
-            mode,
-            wait_for_completion: args.wait_for_completion === true
+            mode
         });
-        // Créer la tâche de suivi
-        const progressTracker = getProgressTracker();
-        // Estimation initiale du nombre de fichiers
-        const estimatedFiles = await estimateFileCount(projectPath, args);
-        progressTracker.create(taskId, projectPath, estimatedFiles, {
-            mode,
-            chunking_strategy: args.chunking_strategy,
-            max_chunk_size: args.max_chunk_size,
-            embedding_model: args.embedding_model,
-            enable_llm_enrichment: args.enable_llm_enrichment === true
+        // Créer un job d'indexation dans la file d'attente RAG
+        const queue = getRagQueue();
+        const job = createRagJob('index', projectPath, {
+            metadata: {
+                args: args,
+                startTime: startTime,
+                mode: mode
+            }
         });
-        // Ajouter à la file d'attente
-        const taskQueue = getTaskQueue();
-        const enqueueResult = await taskQueue.enqueue(taskId, projectPath, () => indexTask(taskId, projectPath, args, mode), 2, // Priorité moyenne
-        {
-            type: 'indexing',
-            mode,
-            startedAt: new Date().toISOString()
-        });
+        const enqueueResult = await queue.enqueue(job);
         if (!enqueueResult.queued) {
-            throw new Error(`Impossible d'ajouter la tâche à la file d'attente. File pleine (max ${enqueueResult.queueSize} tâches)`);
+            throw new Error(`Impossible d'ajouter le job à la file d'attente: ${enqueueResult.message}`);
         }
-        // Réponse immédiate avec task_id
-        const immediateResponse = {
-            success: true,
-            task_id: taskId,
-            status: {
-                state: 'queued',
-                step: 'queued',
-                progress: 0,
-                queue_position: enqueueResult.position,
-                queue_size: enqueueResult.queueSize,
-                estimated_files: estimatedFiles,
-                project_path: projectPath,
-                mode
-            },
-            message: "Tâche d'indexation ajoutée à la file d'attente",
-            next_steps: [
-                `Utilisez get_task_status avec task_id: ${taskId} pour suivre la progression`,
-                `Utilisez cancel_task avec task_id: ${taskId} pour annuler si nécessaire`
-            ],
-            timestamp: new Date().toISOString()
+        logger.info("rag.index.job.created", "Job d'indexation créé", {
+            jobId: job.id,
+            projectPath: projectPath,
+            position: enqueueResult.position
+        });
+        // Formater la réponse asynchrone
+        const asyncResponse = {
+            status: "accepted",
+            action: "index_rag",
+            task_id: job.id,
+            execution: "background",
+            message: "Indexation démarrée en arrière-plan. Utilisez get_status pour suivre la progression.",
+            next_action: "get_status",
+            notes_for_ai: [
+                "L'indexation s'exécute de manière asynchrone",
+                `Utilisez get_status avec scope=task et task_id=${job.id} pour suivre la progression`,
+                "Le projet sera verrouillé pour les autres opérations mutatrices pendant l'exécution",
+                "L'indexation inclut le chunking, embeddings et stockage dans la base vectorielle",
+                "Après l'indexation, vous pouvez exécuter query_rag pour effectuer des recherches"
+            ]
         };
-        // Si wait_for_completion est true, attendre la complétion
-        if (args.wait_for_completion === true) {
-            logger.info("rag.index.waiting", `Attente de complétion pour la tâche: ${taskId}`, {
-                taskId,
-                timeout_seconds: args.timeout_seconds || 300
-            });
-            const timeoutMs = (args.timeout_seconds || 300) * 1000;
-            const finalStatus = await taskQueue.waitForCompletion(taskId, timeoutMs);
-            const endTime = Date.now();
-            const duration = ((endTime - startTime) / 1000).toFixed(2);
-            if (finalStatus) {
-                return {
-                    content: [{
-                            type: "text",
-                            text: JSON.stringify({
-                                success: finalStatus.state === 'completed',
-                                task_id: taskId,
-                                status: finalStatus,
-                                duration_seconds: parseFloat(duration),
-                                message: finalStatus.state === 'completed'
-                                    ? "Indexation terminée avec succès"
-                                    : `Indexation ${finalStatus.state}: ${finalStatus.error?.message || 'Raison inconnue'}`,
-                                timestamp: new Date().toISOString()
-                            }, null, 2)
-                        }]
-                };
-            }
-            else {
-                // Timeout ou tâche non trouvée
-                return {
-                    content: [{
-                            type: "text",
-                            text: JSON.stringify({
-                                success: false,
-                                task_id: taskId,
-                                error: "TIMEOUT",
-                                message: `Timeout d'attente (${args.timeout_seconds || 300}s). La tâche est toujours en cours.`,
-                                duration_seconds: parseFloat(duration),
-                                timestamp: new Date().toISOString()
-                            }, null, 2)
-                        }]
-                };
-            }
-        }
-        // Retourner la réponse immédiate
         return {
             content: [{
                     type: "text",
-                    text: JSON.stringify(immediateResponse, null, 2)
+                    text: JSON.stringify(asyncResponse, null, 2)
                 }]
         };
     }
@@ -455,6 +511,234 @@ export const indexRagHandler = async (args) => {
                         message: error.message,
                         duration_seconds: parseFloat(duration),
                         timestamp: new Date().toISOString()
+                    }, null, 2)
+                }]
+        };
+    }
+};
+/**
+ * Handler pour l'outil embed_rag (version asynchrone)
+ * Retourne immédiatement un task_id et crée un job dans la file d'attente RAG
+ */
+export const embedRagHandler = async (args) => {
+    const startTime = Date.now();
+    try {
+        // Détection automatique du projet si non spécifié
+        let projectPath = args.project_path;
+        if (!projectPath) {
+            try {
+                const fs = await import('fs');
+                const path = await import('path');
+                const cwd = process.cwd();
+                const projectFiles = ['.git', 'package.json', 'pyproject.toml', 'Cargo.toml', 'go.mod'];
+                const hasProjectFile = projectFiles.some(file => fs.existsSync(path.join(cwd, file)));
+                if (hasProjectFile) {
+                    projectPath = cwd;
+                    logger.info("rag.embed.project.auto_detected", `Projet auto-détecté: ${projectPath}`, { path: projectPath });
+                }
+                else {
+                    throw new Error("Impossible de détecter automatiquement le projet. Spécifiez 'project_path'.");
+                }
+            }
+            catch (error) {
+                const errorMessage = error instanceof Error ? error.message : String(error);
+                logger.error("rag.embed.project.detection_error", "Erreur de détection automatique", { error: errorMessage });
+                throw error;
+            }
+        }
+        // Vérifier si le RAG est initialisé pour ce projet
+        const isInitialized = await isRagInitialized(projectPath);
+        if (!isInitialized) {
+            const errorMessage = `RAG non initialisé pour le projet: ${projectPath}. Utilisez d'abord l'outil init_rag.`;
+            logger.error("rag.embed.not_initialized", errorMessage, { project_path: projectPath });
+            return {
+                content: [{
+                        type: "text",
+                        text: JSON.stringify({
+                            status: "error",
+                            error: "RAG_NOT_INITIALIZED",
+                            message: errorMessage,
+                            required_action: "run_init_rag",
+                            details: {
+                                project_path: projectPath,
+                                timestamp: new Date().toISOString()
+                            }
+                        }, null, 2)
+                    }]
+            };
+        }
+        // Créer un job d'embedding dans la file d'attente RAG
+        const queue = getRagQueue();
+        const job = createRagJob('embed', projectPath, {
+            metadata: {
+                args: args,
+                startTime: startTime
+            }
+        });
+        const enqueueResult = await queue.enqueue(job);
+        if (!enqueueResult.queued) {
+            throw new Error(`Impossible d'ajouter le job à la file d'attente: ${enqueueResult.message}`);
+        }
+        logger.info("rag.embed.job.created", "Job d'embedding créé", {
+            jobId: job.id,
+            projectPath: projectPath,
+            position: enqueueResult.position
+        });
+        // Formater la réponse asynchrone
+        const asyncResponse = {
+            status: "accepted",
+            action: "embed_rag",
+            task_id: job.id,
+            execution: "background",
+            message: "Génération d'embeddings démarrée en arrière-plan. Utilisez get_status pour suivre la progression.",
+            next_action: "get_status",
+            notes_for_ai: [
+                "La génération d'embeddings s'exécute de manière asynchrone",
+                `Utilisez get_status avec scope=task et task_id=${job.id} pour suivre la progression`,
+                "Le projet sera verrouillé pour les autres opérations mutatrices pendant l'exécution",
+                "Les embeddings sont générés par lots pour optimiser les performances",
+                "Après la génération d'embeddings, vous pouvez exécuter index_rag"
+            ]
+        };
+        return {
+            content: [{
+                    type: "text",
+                    text: JSON.stringify(asyncResponse, null, 2)
+                }]
+        };
+    }
+    catch (error) {
+        const endTime = Date.now();
+        const duration = ((endTime - startTime) / 1000).toFixed(2);
+        logger.error("rag.embed.error", "Erreur lors de la création du job d'embedding", {
+            error: error.message,
+            stack: error.stack,
+            duration: `${duration}s`
+        });
+        return {
+            content: [{
+                    type: "text",
+                    text: JSON.stringify({
+                        status: "error",
+                        error: "EMBED_JOB_CREATION_ERROR",
+                        message: error.message,
+                        duration_seconds: parseFloat(duration),
+                        timestamp: new Date().toISOString(),
+                        stack_trace: error.stack
+                    }, null, 2)
+                }]
+        };
+    }
+};
+/**
+ * Handler pour l'outil prepare_rag (version asynchrone)
+ * Retourne immédiatement un task_id et crée un job dans la file d'attente RAG
+ */
+export const prepareRagHandler = async (args) => {
+    const startTime = Date.now();
+    try {
+        // Détection automatique du projet si non spécifié
+        let projectPath = args.project_path;
+        if (!projectPath) {
+            try {
+                const fs = await import('fs');
+                const path = await import('path');
+                const cwd = process.cwd();
+                const projectFiles = ['.git', 'package.json', 'pyproject.toml', 'Cargo.toml', 'go.mod'];
+                const hasProjectFile = projectFiles.some(file => fs.existsSync(path.join(cwd, file)));
+                if (hasProjectFile) {
+                    projectPath = cwd;
+                    logger.info("rag.prepare.project.auto_detected", `Projet auto-détecté: ${projectPath}`, { path: projectPath });
+                }
+                else {
+                    throw new Error("Impossible de détecter automatiquement le projet. Spécifiez 'project_path'.");
+                }
+            }
+            catch (error) {
+                const errorMessage = error instanceof Error ? error.message : String(error);
+                logger.error("rag.prepare.project.detection_error", "Erreur de détection automatique", { error: errorMessage });
+                throw error;
+            }
+        }
+        // Vérifier si le RAG est initialisé pour ce projet
+        const isInitialized = await isRagInitialized(projectPath);
+        if (!isInitialized) {
+            const errorMessage = `RAG non initialisé pour le projet: ${projectPath}. Utilisez d'abord l'outil init_rag.`;
+            logger.error("rag.prepare.not_initialized", errorMessage, { project_path: projectPath });
+            return {
+                content: [{
+                        type: "text",
+                        text: JSON.stringify({
+                            status: "error",
+                            error: "RAG_NOT_INITIALIZED",
+                            message: errorMessage,
+                            required_action: "run_init_rag",
+                            details: {
+                                project_path: projectPath,
+                                timestamp: new Date().toISOString()
+                            }
+                        }, null, 2)
+                    }]
+            };
+        }
+        // Créer un job de préparation dans la file d'attente RAG
+        const queue = getRagQueue();
+        const job = createRagJob('prepare', projectPath, {
+            metadata: {
+                args: args,
+                startTime: startTime
+            }
+        });
+        const enqueueResult = await queue.enqueue(job);
+        if (!enqueueResult.queued) {
+            throw new Error(`Impossible d'ajouter le job à la file d'attente: ${enqueueResult.message}`);
+        }
+        logger.info("rag.prepare.job.created", "Job de préparation créé", {
+            jobId: job.id,
+            projectPath: projectPath,
+            position: enqueueResult.position
+        });
+        // Formater la réponse asynchrone
+        const asyncResponse = {
+            status: "accepted",
+            action: "prepare_rag",
+            task_id: job.id,
+            execution: "background",
+            message: "Préparation démarrée en arrière-plan. Utilisez get_status pour suivre la progression.",
+            next_action: "get_status",
+            notes_for_ai: [
+                "La préparation s'exécute de manière asynchrone",
+                `Utilisez get_status avec scope=task et task_id=${job.id} pour suivre la progression`,
+                "Le projet sera verrouillé pour les autres opérations mutatrices pendant l'exécution",
+                "La préparation inclut le chunking, nettoyage et normalisation des fichiers",
+                "Après la préparation, vous pouvez exécuter embed_rag"
+            ]
+        };
+        return {
+            content: [{
+                    type: "text",
+                    text: JSON.stringify(asyncResponse, null, 2)
+                }]
+        };
+    }
+    catch (error) {
+        const endTime = Date.now();
+        const duration = ((endTime - startTime) / 1000).toFixed(2);
+        logger.error("rag.prepare.error", "Erreur lors de la création du job de préparation", {
+            error: error.message,
+            stack: error.stack,
+            duration: `${duration}s`
+        });
+        return {
+            content: [{
+                    type: "text",
+                    text: JSON.stringify({
+                        status: "error",
+                        error: "PREPARE_JOB_CREATION_ERROR",
+                        message: error.message,
+                        duration_seconds: parseFloat(duration),
+                        timestamp: new Date().toISOString(),
+                        stack_trace: error.stack
                     }, null, 2)
                 }]
         };

@@ -6,6 +6,7 @@
 import { logger } from "../../core/logger.js";
 import { ToolDefinition, ToolHandler } from "../../core/tool-registry.js";
 import { formatErrorForMCP } from "../../rag/errors/rag-usage-error.js";
+import { getPhaseAnalysis } from "../../rag/guards/rag-guards.js";
 import { getTaskStatus } from "../../rag/queue/job-types.js";
 import { getRagQueue } from "../../rag/queue/rag-queue.js";
 import { StateManager } from "../../rag/state-manager.js";
@@ -176,26 +177,96 @@ async function handleGlobalStatus(): Promise<GetStatusResponse> {
 }
 
 /**
+ * Détermine les actions autorisées basées sur l'analyse des phases
+ */
+function determineAllowedActions(phaseAnalysis: any): string[] {
+    const allowedActions = ['get_status']; // Toujours autorisé
+
+    // Basé sur la phase actuelle et le statut
+    const currentPhase = phaseAnalysis.current_phase;
+    const currentStatus = phaseAnalysis.current_status;
+    const nextPhase = phaseAnalysis.next_phase;
+
+    // Ajouter init_rag si le projet n'est pas initialisé
+    if (currentPhase === 'init' && currentStatus === 'pending') {
+        allowedActions.push('init_rag');
+        return allowedActions;
+    }
+
+    // Si le projet est initialisé, ajouter les outils selon les phases
+    allowedActions.push('scan_rag');
+    if (currentPhase === 'scan' && currentStatus === 'done') {
+        allowedActions.push('prepare_rag');
+    }
+    if (currentPhase === 'prepare' && currentStatus === 'done') {
+        allowedActions.push('embed_rag');
+    }
+    if (currentPhase === 'embed' && currentStatus === 'done') {
+        allowedActions.push('index_rag');
+    }
+    if (currentPhase === 'index' && currentStatus === 'done') {
+        allowedActions.push('query_rag');
+    }
+
+    // Si une phase est en cours, ajouter l'outil correspondant
+    if (currentStatus === 'running') {
+        const toolMap: Record<string, string> = {
+            'scan': 'scan_rag',
+            'prepare': 'prepare_rag',
+            'embed': 'embed_rag',
+            'index': 'index_rag'
+        };
+        if (toolMap[currentPhase]) {
+            allowedActions.push(toolMap[currentPhase]);
+        }
+    }
+
+    return allowedActions;
+}
+
+/**
  * Gère le statut d'un projet
  */
 async function handleProjectStatus(projectId: string): Promise<GetStatusResponse> {
     const stateManager = StateManager.getInstance();
     const projectStatus = await stateManager.getProjectStatus(projectId);
 
-    // Les actions autorisées sont déjà définies dans projectStatus
+    // Utiliser les guards pour analyser les phases et déterminer les actions autorisées
+    const phaseAnalysis = await getPhaseAnalysis(projectId);
+    const allowed_actions = determineAllowedActions(phaseAnalysis);
+
+    // Construire les notes pour l'IA
     const notes_for_ai = [
         ...projectStatus.notes_for_ai,
+        ...phaseAnalysis.notes_for_ai,
         "Utilisez get_status avec scope=task pour suivre les tâches de ce projet",
-        "Les actions autorisées dépendent de l'état du pipeline RAG"
+        "Les actions autorisées sont déterminées dynamiquement par l'état du pipeline RAG"
     ];
+
+    // Déterminer l'action requise
+    let required_action = projectStatus.required_action;
+    if (phaseAnalysis.next_phase) {
+        const toolMap: Record<string, string> = {
+            'init': 'init_rag',
+            'scan': 'scan_rag',
+            'prepare': 'prepare_rag',
+            'embed': 'embed_rag',
+            'index': 'index_rag',
+            'query': 'query_rag'
+        };
+        const nextTool = toolMap[phaseAnalysis.next_phase];
+        if (nextTool) {
+            required_action = `Exécutez ${nextTool} pour continuer le pipeline`;
+        }
+    }
 
     return {
         status: 'ok',
         scope: 'project',
         data: projectStatus,
         notes_for_ai,
-        allowed_actions: projectStatus.allowed_actions,
-        required_action: projectStatus.required_action
+        allowed_actions,
+        required_action
     };
 }
 

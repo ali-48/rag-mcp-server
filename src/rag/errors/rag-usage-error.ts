@@ -130,6 +130,54 @@ export class RagUsageError extends Error {
     }
 
     /**
+     * Génère des notes pour l'IA basées sur l'erreur
+     */
+    private generateNotesForAI(): string[] {
+        const notes: string[] = [
+            `Erreur RAG: ${this.code}`,
+            this.message,
+        ];
+
+        if (this.requiredAction) {
+            notes.push(`Action requise: ${this.requiredAction}`);
+        }
+
+        if (this.help) {
+            notes.push(`Aide: ${this.help}`);
+        }
+
+        if (this.details?.recommendations) {
+            if (Array.isArray(this.details.recommendations)) {
+                this.details.recommendations.forEach((rec: string, index: number) => {
+                    notes.push(`Recommandation ${index + 1}: ${rec}`);
+                });
+            }
+        }
+
+        // Ajouter des notes spécifiques selon le code d'erreur
+        switch (this.code) {
+            case 'RAG_PROJECT_NOT_INITIALIZED':
+                notes.push('Le projet doit être initialisé avec init_rag avant toute opération RAG');
+                notes.push('Vérifiez que le chemin du projet est correct et accessible');
+                break;
+            case 'RAG_PHASE_REQUIREMENTS_NOT_MET':
+                notes.push('Les phases RAG doivent être exécutées dans l\'ordre: init → scan → prepare → embed → index → query');
+                notes.push('Utilisez get_status pour vérifier l\'état actuel du pipeline');
+                break;
+            case 'RAG_JOB_ALREADY_RUNNING':
+                notes.push('Un seul job mutateur peut s\'exécuter à la fois');
+                notes.push('Utilisez get_status pour vérifier les jobs en cours');
+                break;
+            case 'RAG_QUEUE_FULL':
+                notes.push('La file d\'attente RAG a une taille limitée pour éviter la surcharge mémoire');
+                notes.push('Attendez que des jobs se terminent ou annulez des jobs en attente');
+                break;
+        }
+
+        return notes;
+    }
+
+    /**
      * Formate l'erreur pour MCP (JSON strict)
      */
     formatForMCP(): Record<string, any> {
@@ -140,6 +188,7 @@ export class RagUsageError extends Error {
                 message: this.message,
                 code: this.code,
                 timestamp: this.timestamp.toISOString(),
+                notes_for_ai: this.generateNotesForAI(),
             },
         };
 

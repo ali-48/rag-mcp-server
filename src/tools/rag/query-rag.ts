@@ -139,6 +139,14 @@ export const queryRagTool: ToolDefinition = {
                 default: 500,
                 minimum: 0,
                 maximum: 10000
+            },
+            // Exception: query_rag conserve un timeout pour limiter la durée de recherche
+            timeout_seconds: {
+                type: "number",
+                description: "Timeout en secondes pour la recherche (exception - conservé pour query_rag)",
+                default: 30,
+                minimum: 1,
+                maximum: 300
             }
         },
         required: ["query"]
@@ -227,7 +235,8 @@ export const queryRagHandler: ToolHandler = async (args) => {
             formatOutput: args.format_output !== false,
             includeMetadata: args.include_metadata === true,
             includeContent: args.include_content !== false,
-            maxContentLength: args.max_content_length || 500
+            maxContentLength: args.max_content_length || 500,
+            timeout: args.timeout_seconds || 30 // Exception: timeout conservé pour query_rag
         };
 
         // Exécution de la recherche
