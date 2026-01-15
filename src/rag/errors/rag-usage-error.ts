@@ -347,7 +347,7 @@ export class RagUsageError extends Error {
                 details: {
                     maxQueueSize: maxSize,
                     recommendations: [
-                        "Vérifiez les jobs en cours avec `get_task_status`",
+                        "Vérifiez les jobs en cours avec `get_status`",
                         "Annulez les jobs non essentiels avec `cancel_task`",
                         "Attendez la fin des jobs en cours",
                     ],

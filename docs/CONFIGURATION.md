@@ -58,6 +58,93 @@ Le système de configuration RAG centralisée permet de gérer tous les paramèt
 }
 ```
 
+## 🔄 Nouveau Flux de Configuration (RAG v3)
+
+### Configuration Centralisée avec rag-config-v3.json
+
+Le serveur RAG MCP utilise désormais une configuration centralisée via `config/rag-config-v3.json` pour gérer les outils exposés et leur visibilité. Ce nouveau flux remplace l'ancien système de configuration statique.
+
+#### Structure de Configuration
+
+```json
+{
+  "system": {
+    "mode": "memory-only",
+    "exposed_tools": [
+      "init_rag",
+      "scan_rag",
+      "index_rag",
+      "query_rag",
+      "manage_projects",
+      "pipeline_validator",
+      "get_status"
+    ],
+    "legacy_tools": [
+      "activated_rag",
+      "injection_rag",
+      "index_project",
+      "update_project",
+      "search_code",
+      "recherche_rag"
+    ],
+    "legacy_mode": false
+  }
+}
+```
+
+#### Fonctionnement du Flux
+
+1. **Chargement au Démarrage** : Le serveur charge `config/rag-config-v3.json` via `getRagConfigManager`
+2. **Configuration du Registre** : La configuration est appliquée au `AutoRegistryV2` via `configureFromConfig`
+3. **Enregistrement Automatique** : Les outils sont enregistrés selon leur visibilité définie dans `exposed_tools` et `legacy_tools`
+
+#### Intégration dans src/index.ts
+
+```typescript
+// Fonction principale
+async function main() {
+  // Initialiser la redirection des logs
+  initializeLogRedirection();
+
+  // Charger la configuration RAG v3
+  const { getRagConfigManager } = await import('./config/rag-config.js');
+  const configManager = getRagConfigManager('config/rag-config-v3.json');
+  const config = configManager.getConfig();
+
+  // Configurer le registre automatique avec la configuration
+  const { autoRegistryV2 } = await import('./core/registry-v2.js');
+  autoRegistryV2.configureFromConfig(config);
+
+  // Initialiser le registre automatique v2
+  const registeredCount = await initializeAutoRegistryV2({ verbose: false });
+
+  // ... reste du code
+}
+```
+
+#### Migration depuis l'Ancien Système
+
+- **Ancien** : Configuration statique dans `src/core/registry-v2.ts`
+- **Nouveau** : Configuration dynamique via `rag-config-v3.json`
+- **Avantages** : Modification sans recompilation, configuration par environnement
+
+#### Outils Supprimés/Fusionnés
+
+- `recherche_rag` : Fusionné dans `query_rag` avec paramètre `legacy_mode`
+- `get_task_status` : Remplacé par `get_status` avec 3 scopes (global, projet, tâche)
+
+#### Vérification de la Configuration
+
+```bash
+# Build et test
+npm run build
+node build/index.js
+
+# Vérifier que les outils exposés correspondent à la configuration
+```
+
+---
+
 ## 🧠 Phase 0.3 - LLM Enrichment Configuration
 
 ### Configuration de la Phase 0.3
