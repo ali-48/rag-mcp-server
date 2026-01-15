@@ -161,9 +161,9 @@ async function handleGlobalStatus(): Promise<GetStatusResponse> {
 
     const notes_for_ai = [
         ...globalStatus.notes_for_ai,
-        "Le système RAG est opérationnel",
-        "Utilisez get_status avec scope=project pour voir l'état détaillé d'un projet",
-        "Utilisez get_status avec scope=task pour suivre une tâche spécifique"
+        "Système RAG: opérationnel",
+        "Scope disponible: global, project, task",
+        "Actions disponibles: init_rag, scan_rag, prepare_rag, embed_rag, index_rag, query_rag, get_status"
     ];
 
     return {
@@ -239,8 +239,11 @@ async function handleProjectStatus(projectId: string): Promise<GetStatusResponse
     const notes_for_ai = [
         ...projectStatus.notes_for_ai,
         ...phaseAnalysis.notes_for_ai,
-        "Utilisez get_status avec scope=task pour suivre les tâches de ce projet",
-        "Les actions autorisées sont déterminées dynamiquement par l'état du pipeline RAG"
+        "Projet: " + projectId,
+        "Phase actuelle: " + phaseAnalysis.current_phase,
+        "Statut phase: " + phaseAnalysis.current_status,
+        "Phase suivante: " + (phaseAnalysis.next_phase || "aucune"),
+        "Actions autorisées: " + allowed_actions.join(", ")
     ];
 
     // Déterminer l'action requise
@@ -286,8 +289,10 @@ async function handleTaskStatus(taskId: string): Promise<GetStatusResponse> {
     // Les actions autorisées sont déjà définies dans taskStatus
     const notes_for_ai = [
         ...taskStatus.notes_for_ai,
-        "Utilisez get_status avec scope=project pour voir l'état du projet",
-        "Les actions autorisées dépendent de l'état de la tâche"
+        "Tâche: " + taskId,
+        "État: " + taskStatus.state,
+        "Progression: " + (taskStatus.progress || 0) + "%",
+        "Actions autorisées: " + (taskStatus.allowed_actions?.join(", ") || "aucune")
     ];
 
     return {

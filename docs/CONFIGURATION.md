@@ -130,8 +130,31 @@ async function main() {
 
 #### Outils Supprimés/Fusionnés
 
-- `recherche_rag` : Fusionné dans `query_rag` avec paramètre `legacy_mode`
+- `recherche_rag` : Fusionné dans `query_rag` (paramètre `legacy_mode` supprimé)
 - `get_task_status` : Remplacé par `get_status` avec 3 scopes (global, projet, tâche)
+- `legacy_mode` : Paramètre supprimé de `query_rag`, remplacé par détection automatique basée sur `format_output`
+
+#### Nouveaux Schémas MCP
+
+Les schémas MCP suivants ont été ajoutés dans `src/core/mcp-schemas.ts` :
+
+- `queryRagInputSchema` / `queryRagOutputSchema` : Schémas pour l'outil `query_rag`
+- `cancelTaskInputSchema` / `cancelTaskOutputSchema` : Schémas pour l'outil `cancel_task`
+- `listTasksInputSchema` / `listTasksOutputSchema` : Schémas pour l'outil `list_tasks`
+- `getStatusInputSchema` / `getStatusOutputSchema` : Schémas pour l'outil `get_status`
+
+Ces schémas sont intégrés au mapping `toolSchemas` pour la validation automatique.
+
+#### Messages Orientés IA
+
+Les outils suivants ont été durcis pour des messages orientés IA :
+
+- `get_status` : Messages factuels avec `notes_for_ai` et `allowed_actions`
+- `cancel_task` : Messages purement factuels, élimination du langage émotionnel
+- `list_tasks` : Format structuré IA avec statistiques et filtres
+- `query_rag` : Messages simplifiés avec notes pour l'IA et format JSON standardisé
+
+Les réponses incluent désormais des champs `notes_for_ai` avec des informations concrètes pour l'interprétation par l'IA.
 
 #### Vérification de la Configuration
 
@@ -582,7 +605,7 @@ Ces métriques permettent d'optimiser :
 
 ---
 
-**Dernière mise à jour** : 13/01/2026  
+**Dernière mise à jour** : 15/01/2026  
 **Auteur** : Système de Configuration RAG  
 **Statut** : Production Ready ✅  
 **Phase 0.3** : Disponible (feature flag)

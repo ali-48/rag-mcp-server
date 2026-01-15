@@ -216,12 +216,6 @@ export const queryRagTool = {
                 minimum: 0,
                 maximum: 10000
             },
-            // Rétrocompatibilité avec search_code
-            legacy_mode: {
-                type: "boolean",
-                description: "Activer le mode rétrocompatible avec search_code (formatage texte simple)",
-                default: false
-            },
             // Exception: query_rag conserve un timeout pour limiter la durée de recherche
             timeout_seconds: {
                 type: "number",
@@ -274,12 +268,17 @@ export const queryRagHandler = async (args) => {
                         text: JSON.stringify({
                             status: "error",
                             error: "RAG_NOT_INITIALIZED",
-                            message: errorMessage,
+                            message: `RAG non initialisé: ${projectPath}`,
                             required_action: "run_init_rag",
                             details: {
                                 project_path: projectPath,
                                 timestamp: new Date().toISOString()
-                            }
+                            },
+                            notes_for_ai: [
+                                "RAG non initialisé pour ce projet",
+                                "Action requise: init_rag",
+                                "Projet: " + projectPath
+                            ]
                         }, null, 2)
                     }]
             };
@@ -335,13 +334,6 @@ export const queryRagHandler = async (args) => {
             executionTime: parseInt(duration) * 1000,
             totalResults: searchResult.results?.length || 0
         };
-        // Mode rétrocompatible
-        if (args.legacy_mode === true) {
-            const legacyText = prepareLegacyResponse(searchResult.results || [], metadata);
-            return {
-                content: [{ type: "text", text: legacyText }]
-            };
-        }
         // Formatage humain
         if (args.format_output !== false) {
             const humanReadableText = formatHumanReadable(searchResult.results || [], metadata, {
@@ -374,9 +366,15 @@ export const queryRagHandler = async (args) => {
                             top_k: args.top_k || 10,
                             threshold: args.threshold || 0.3,
                             search_mode: args.search_mode || 'semantic',
-                            enable_reranking: args.enable_reranking === true,
-                            legacy_mode: args.legacy_mode || false
+                            enable_reranking: args.enable_reranking === true
                         },
+                        notes_for_ai: [
+                            "Recherche RAG réussie",
+                            "Résultats: " + (searchResult.results?.length || 0),
+                            "Durée: " + duration + "s",
+                            "Scope: " + (args.scope || 'project'),
+                            "Mode: " + (args.search_mode || 'semantic')
+                        ],
                         next_steps: [
                             "Affinez votre requête pour des résultats plus précis",
                             "Utilisez scan_rag pour analyser les changements dans le projet",
@@ -401,9 +399,14 @@ export const queryRagHandler = async (args) => {
                     text: JSON.stringify({
                         status: "error",
                         error: "QUERY_ERROR",
-                        message: error.message,
+                        message: `Erreur recherche: ${error.message}`,
                         duration_seconds: parseFloat(duration),
                         timestamp: new Date().toISOString(),
+                        notes_for_ai: [
+                            "Erreur lors de la recherche RAG",
+                            "Message: " + error.message,
+                            "Durée: " + duration + "s"
+                        ],
                         stack_trace: error.stack
                     }, null, 2)
                 }]

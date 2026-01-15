@@ -353,6 +353,402 @@ export const getStatusOutputSchema = {
     additionalProperties: false
 };
 /**
+ * Schémas pour l'outil query_rag
+ */
+export const queryRagInputSchema = {
+    type: 'object',
+    properties: {
+        query: {
+            type: 'string',
+            description: 'Requête de recherche sémantique',
+            minLength: 1
+        },
+        project_path: {
+            type: 'string',
+            description: 'Chemin absolu vers le projet (auto-détecté si vide)'
+        },
+        scope: {
+            type: 'string',
+            enum: ['project', 'global'],
+            description: 'Scope de recherche',
+            default: 'project'
+        },
+        content_types: {
+            type: 'array',
+            items: {
+                type: 'string',
+                enum: ['code', 'doc', 'config', 'other']
+            },
+            description: 'Types de contenu à inclure'
+        },
+        languages: {
+            type: 'array',
+            items: { type: 'string' },
+            description: 'Langages à inclure (ex: [\'typescript\', \'python\'])'
+        },
+        file_extensions: {
+            type: 'array',
+            items: { type: 'string' },
+            description: 'Extensions de fichier à inclure (ex: [\'.ts\', \'.py\'])'
+        },
+        roles: {
+            type: 'array',
+            items: { type: 'string' },
+            description: 'Rôles à inclure (ex: [\'core\', \'example\', \'template\'])'
+        },
+        top_k: {
+            type: 'number',
+            description: 'Nombre maximum de résultats à retourner',
+            default: 10,
+            minimum: 1,
+            maximum: 100
+        },
+        threshold: {
+            type: 'number',
+            description: 'Seuil de similarité minimum (0.0-1.0)',
+            default: 0.3,
+            minimum: 0,
+            maximum: 1
+        },
+        dynamic_threshold: {
+            type: 'boolean',
+            description: 'Activer le seuil dynamique basé sur la distribution des scores',
+            default: false
+        },
+        search_mode: {
+            type: 'string',
+            enum: ['semantic', 'hybrid', 'text'],
+            description: 'Mode de recherche',
+            default: 'semantic'
+        },
+        text_query: {
+            type: 'string',
+            description: 'Requête textuelle pour la recherche hybride'
+        },
+        semantic_weight: {
+            type: 'number',
+            description: 'Poids pour la recherche sémantique (0.0-1.0)',
+            default: 0.7,
+            minimum: 0,
+            maximum: 1
+        },
+        text_weight: {
+            type: 'number',
+            description: 'Poids pour la recherche textuelle (0.0-1.0)',
+            default: 0.3,
+            minimum: 0,
+            maximum: 1
+        },
+        enable_reranking: {
+            type: 'boolean',
+            description: 'Activer le re-ranking basé sur les métadonnées',
+            default: false
+        },
+        prefer_recent: {
+            type: 'boolean',
+            description: 'Préférer les fichiers récents dans le re-ranking',
+            default: true
+        },
+        prefer_smaller_files: {
+            type: 'boolean',
+            description: 'Préférer les fichiers plus petits dans le re-ranking',
+            default: true
+        },
+        priority_content_types: {
+            type: 'array',
+            items: { type: 'string' },
+            description: 'Types de contenu prioritaires pour le re-ranking',
+            default: ['code', 'doc']
+        },
+        format_output: {
+            type: 'boolean',
+            description: 'Formater la sortie pour une lecture humaine',
+            default: true
+        },
+        include_metadata: {
+            type: 'boolean',
+            description: 'Inclure les métadonnées complètes dans la sortie',
+            default: false
+        },
+        include_content: {
+            type: 'boolean',
+            description: 'Inclure le contenu complet dans la sortie',
+            default: true
+        },
+        max_content_length: {
+            type: 'number',
+            description: 'Longueur maximale du contenu à inclure (caractères)',
+            default: 500,
+            minimum: 0,
+            maximum: 10000
+        },
+        timeout_seconds: {
+            type: 'number',
+            description: 'Timeout en secondes pour la recherche (exception - conservé pour query_rag)',
+            default: 30,
+            minimum: 1,
+            maximum: 300
+        }
+    },
+    required: ['query'],
+    additionalProperties: false
+};
+export const queryRagOutputSchema = {
+    type: 'object',
+    properties: {
+        status: {
+            type: 'string',
+            enum: ['ok', 'error'],
+            description: 'Statut de la recherche'
+        },
+        message: {
+            type: 'string',
+            description: 'Message descriptif'
+        },
+        query: {
+            type: 'string',
+            description: 'Requête de recherche'
+        },
+        project_path: {
+            type: 'string',
+            description: 'Chemin du projet recherché'
+        },
+        duration_seconds: {
+            type: 'number',
+            description: 'Durée d\'exécution en secondes'
+        },
+        results: {
+            type: 'array',
+            description: 'Résultats de la recherche',
+            items: {
+                type: 'object',
+                properties: {
+                    filePath: { type: 'string' },
+                    score: { type: 'number' },
+                    content: { type: 'string' },
+                    metadata: { type: 'object' }
+                },
+                required: ['filePath', 'score']
+            }
+        },
+        stats: {
+            type: 'object',
+            description: 'Statistiques de la recherche',
+            properties: {
+                total_results: { type: 'number' },
+                execution_time_ms: { type: 'number' },
+                projects_scanned: { type: 'number' }
+            },
+            additionalProperties: false
+        },
+        config_used: {
+            type: 'object',
+            description: 'Configuration utilisée',
+            properties: {
+                scope: { type: 'string' },
+                top_k: { type: 'number' },
+                threshold: { type: 'number' },
+                search_mode: { type: 'string' },
+                enable_reranking: { type: 'boolean' }
+            },
+            additionalProperties: false
+        },
+        next_steps: {
+            type: 'array',
+            items: { type: 'string' },
+            description: 'Étapes suivantes recommandées'
+        },
+        timestamp: {
+            type: 'string',
+            format: 'date-time',
+            description: 'Horodatage de la recherche'
+        }
+    },
+    required: ['status', 'message', 'query', 'timestamp'],
+    additionalProperties: false
+};
+/**
+ * Schémas pour l'outil cancel_task
+ */
+export const cancelTaskInputSchema = {
+    type: 'object',
+    properties: {
+        task_id: {
+            type: 'string',
+            description: 'ID de la tâche à annuler (obtenu via index_rag ou activated_rag)'
+        },
+        reason: {
+            type: 'string',
+            description: 'Raison de l\'annulation (optionnel)',
+            default: 'Annulée par l\'utilisateur'
+        },
+        force: {
+            type: 'boolean',
+            description: 'Forcer l\'annulation même si la tâche est en cours d\'exécution',
+            default: false
+        }
+    },
+    required: ['task_id'],
+    additionalProperties: false
+};
+export const cancelTaskOutputSchema = {
+    type: 'object',
+    properties: {
+        success: {
+            type: 'boolean',
+            description: 'Succès de l\'annulation'
+        },
+        task_id: {
+            type: 'string',
+            description: 'ID de la tâche'
+        },
+        cancelled: {
+            type: 'boolean',
+            description: 'Si la tâche a été annulée'
+        },
+        cancellation_method: {
+            type: 'string',
+            description: 'Méthode d\'annulation utilisée'
+        },
+        reason: {
+            type: 'string',
+            description: 'Raison de l\'annulation'
+        },
+        final_status: {
+            type: 'object',
+            description: 'Statut final de la tâche',
+            properties: {
+                state: { type: 'string' },
+                step: { type: 'string' },
+                progress: { type: 'number' },
+                files_processed: { type: 'number' },
+                files_total: { type: 'number' }
+            },
+            additionalProperties: false
+        },
+        previous_state: {
+            type: 'string',
+            description: 'État précédent de la tâche'
+        },
+        duration_ms: {
+            type: 'number',
+            description: 'Durée de l\'opération en millisecondes'
+        },
+        timestamp: {
+            type: 'string',
+            format: 'date-time',
+            description: 'Horodatage de l\'annulation'
+        },
+        recommendations: {
+            type: 'array',
+            items: { type: 'string' },
+            description: 'Recommandations pour les étapes suivantes'
+        }
+    },
+    required: ['success', 'task_id', 'cancelled', 'timestamp'],
+    additionalProperties: false
+};
+/**
+ * Schémas pour l'outil list_tasks
+ */
+export const listTasksInputSchema = {
+    type: 'object',
+    properties: {
+        project_path: {
+            type: 'string',
+            description: 'Chemin du projet (optionnel, liste toutes les tâches si vide)'
+        },
+        state_filter: {
+            type: 'string',
+            enum: ['all', 'queued', 'running', 'completed', 'failed', 'cancelled'],
+            description: 'Filtrer par état',
+            default: 'all'
+        },
+        limit: {
+            type: 'number',
+            description: 'Nombre maximum de tâches à retourner',
+            default: 50,
+            minimum: 1,
+            maximum: 1000
+        },
+        include_stats: {
+            type: 'boolean',
+            description: 'Inclure les statistiques globales',
+            default: true
+        }
+    },
+    additionalProperties: false
+};
+export const listTasksOutputSchema = {
+    type: 'object',
+    properties: {
+        success: {
+            type: 'boolean',
+            description: 'Succès de l\'opération'
+        },
+        tasks: {
+            type: 'array',
+            description: 'Liste des tâches',
+            items: {
+                type: 'object',
+                properties: {
+                    task_id: { type: 'string' },
+                    project_path: { type: 'string' },
+                    state: { type: 'string' },
+                    step: { type: 'string' },
+                    progress: { type: 'number' },
+                    files_processed: { type: 'number' },
+                    files_total: { type: 'number' },
+                    started_at: { type: 'string', format: 'date-time' },
+                    updated_at: { type: 'string', format: 'date-time' },
+                    completed_at: { type: 'string', format: 'date-time' }
+                },
+                required: ['task_id', 'project_path', 'state']
+            }
+        },
+        total_tasks: {
+            type: 'number',
+            description: 'Nombre total de tâches retournées'
+        },
+        stats: {
+            type: 'object',
+            description: 'Statistiques globales',
+            properties: {
+                progress_tracker: {
+                    type: 'object',
+                    properties: {
+                        total_tasks: { type: 'number' },
+                        by_state: { type: 'object' },
+                        memory_usage_kb: { type: 'number' }
+                    },
+                    additionalProperties: false
+                },
+                task_queue: {
+                    type: 'object',
+                    properties: {
+                        total_projects: { type: 'number' },
+                        total_queued_tasks: { type: 'number' },
+                        total_running_tasks: { type: 'number' }
+                    },
+                    additionalProperties: false
+                }
+            },
+            additionalProperties: false
+        },
+        timestamp: {
+            type: 'string',
+            format: 'date-time',
+            description: 'Horodatage de la requête'
+        },
+        duration_ms: {
+            type: 'number',
+            description: 'Durée de l\'opération en millisecondes'
+        }
+    },
+    required: ['success', 'tasks', 'total_tasks', 'timestamp'],
+    additionalProperties: false
+};
+/**
  * Schéma d'erreur standard pour tous les outils
  */
 export const errorOutputSchema = {
@@ -404,6 +800,18 @@ export const toolSchemas = {
     get_status: {
         input: getStatusInputSchema,
         output: getStatusOutputSchema
+    },
+    query_rag: {
+        input: queryRagInputSchema,
+        output: queryRagOutputSchema
+    },
+    cancel_task: {
+        input: cancelTaskInputSchema,
+        output: cancelTaskOutputSchema
+    },
+    list_tasks: {
+        input: listTasksInputSchema,
+        output: listTasksOutputSchema
     }
 };
 /**

@@ -69,7 +69,12 @@ export const cancelTaskHandler: ToolHandler = async (args) => {
                         error: "TASK_NOT_FOUND",
                         message: `Tâche non trouvée: ${taskId}`,
                         task_id: taskId,
-                        timestamp: new Date().toISOString()
+                        timestamp: new Date().toISOString(),
+                        notes_for_ai: [
+                            "Tâche non trouvée",
+                            "Vérifier l'ID de tâche",
+                            "Utiliser list_tasks pour voir les tâches disponibles"
+                        ]
                     }, null, 2)
                 }]
             };
@@ -88,10 +93,15 @@ export const cancelTaskHandler: ToolHandler = async (args) => {
                     text: JSON.stringify({
                         success: false,
                         error: "TASK_ALREADY_COMPLETED",
-                        message: `La tâche est déjà terminée (état: ${currentStatus.state})`,
+                        message: `Tâche déjà terminée: ${taskId}`,
                         task_id: taskId,
                         current_state: currentStatus.state,
-                        timestamp: new Date().toISOString()
+                        timestamp: new Date().toISOString(),
+                        notes_for_ai: [
+                            "Tâche déjà terminée",
+                            "État: " + currentStatus.state,
+                            "Utiliser get_status pour voir les résultats"
+                        ]
                     }, null, 2)
                 }]
             };
@@ -109,10 +119,15 @@ export const cancelTaskHandler: ToolHandler = async (args) => {
                     text: JSON.stringify({
                         success: false,
                         error: "TASK_ALREADY_FAILED",
-                        message: `La tâche a déjà échoué (état: ${currentStatus.state})`,
+                        message: `Tâche déjà échouée: ${taskId}`,
                         task_id: taskId,
                         current_state: currentStatus.state,
-                        timestamp: new Date().toISOString()
+                        timestamp: new Date().toISOString(),
+                        notes_for_ai: [
+                            "Tâche déjà échouée",
+                            "État: " + currentStatus.state,
+                            "Utiliser get_status pour voir les détails de l'erreur"
+                        ]
                     }, null, 2)
                 }]
             };
@@ -130,10 +145,15 @@ export const cancelTaskHandler: ToolHandler = async (args) => {
                     text: JSON.stringify({
                         success: false,
                         error: "TASK_ALREADY_CANCELLED",
-                        message: `La tâche est déjà annulée (état: ${currentStatus.state})`,
+                        message: `Tâche déjà annulée: ${taskId}`,
                         task_id: taskId,
                         current_state: currentStatus.state,
-                        timestamp: new Date().toISOString()
+                        timestamp: new Date().toISOString(),
+                        notes_for_ai: [
+                            "Tâche déjà annulée",
+                            "État: " + currentStatus.state,
+                            "Utiliser get_status pour voir le statut final"
+                        ]
                     }, null, 2)
                 }]
             };
@@ -178,11 +198,16 @@ export const cancelTaskHandler: ToolHandler = async (args) => {
                     text: JSON.stringify({
                         success: false,
                         error: "CANCELLATION_FAILED",
-                        message: "Impossible d'annuler la tâche. Elle pourrait être en cours d'exécution avancée.",
+                        message: `Annulation échouée: ${taskId}`,
                         task_id: taskId,
                         current_state: currentStatus.state,
-                        recommendation: force ? "La tâche est peut-être trop avancée pour être annulée" : "Essayez avec force=true",
-                        timestamp: new Date().toISOString()
+                        timestamp: new Date().toISOString(),
+                        notes_for_ai: [
+                            "Annulation échouée",
+                            "État actuel: " + currentStatus.state,
+                            "Force utilisée: " + force,
+                            "Recommandation: " + (force ? "Tâche trop avancée pour annulation" : "Essayer avec force=true")
+                        ]
                     }, null, 2)
                 }]
             };
@@ -210,10 +235,16 @@ export const cancelTaskHandler: ToolHandler = async (args) => {
             previous_state: currentStatus.state,
             duration_ms: duration,
             timestamp: new Date().toISOString(),
+            notes_for_ai: [
+                "Annulation réussie",
+                "Méthode: " + cancellationMethod,
+                "État précédent: " + currentStatus.state,
+                "État final: " + (finalStatus?.state || 'cancelled'),
+                "Durée: " + duration + "ms"
+            ],
             recommendations: [
-                "La tâche a été annulée avec succès",
-                "Vous pouvez vérifier le statut avec get_status",
-                "Vous pouvez relancer l'indexation si nécessaire"
+                "Vérifier statut avec get_status",
+                "Relancer indexation si nécessaire"
             ]
         };
 
@@ -364,7 +395,14 @@ export const listTasksHandler: ToolHandler = async (args) => {
                 completed_at: task.completedAt
             })),
             total_tasks: tasks.length,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
+            notes_for_ai: [
+                "Liste des tâches récupérée",
+                "Filtre: " + (projectPath || "tous les projets"),
+                "État: " + stateFilter,
+                "Limite: " + limit,
+                "Total: " + tasks.length + " tâches"
+            ]
         };
 
         // Ajouter les statistiques si demandées
@@ -419,9 +457,14 @@ export const listTasksHandler: ToolHandler = async (args) => {
                 text: JSON.stringify({
                     success: false,
                     error: "LIST_ERROR",
-                    message: error.message,
+                    message: `Erreur liste tâches: ${error.message}`,
                     duration_ms: duration,
-                    timestamp: new Date().toISOString()
+                    timestamp: new Date().toISOString(),
+                    notes_for_ai: [
+                        "Erreur lors de la liste des tâches",
+                        "Message: " + error.message,
+                        "Durée: " + duration + "ms"
+                    ]
                 }, null, 2)
             }]
         };
