@@ -1,5 +1,4 @@
 {
-  // Configuration TypeScript spécifique au projet
   "typescript.tsdk": "node_modules/typescript/lib",
   "typescript.preferences.importModuleSpecifier": "project-relative",
   "typescript.preferences.includePackageJsonAutoImports": "on",
@@ -13,28 +12,23 @@
   "typescript.updateImportsOnFileMove.enabled": "always",
   "typescript.format.enable": true,
 
-  // ESLint & Prettier
   "eslint.validate": ["typescript", "javascript", "json"],
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.formatOnSave": true,
   "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": true
+    "source.fixAll.eslint": "always"
   },
   "eslint.alwaysShowStatus": true,
-  "eslint.format.enable": true,
+  "eslint.format.enable": "on",
 
-  // Node / NPM
-  "npm.enableScriptExplorer": true,
   "npm.runSilent": true,
   "npm.packageManager": "npm",
 
-  // Vitest (utilisé dans ce projet)
   "vitest.enable": true,
   "vitest.commandLine": "npm run test",
   "vitest.include": ["test/**/*.test.ts", "test/**/*.spec.ts"],
   "vitest.exclude": ["node_modules", "dist", "build"],
 
-  // Base de données - Connexions SQLite pour RAG
   "sqltools.connections": [
     {
       "name": "RAG Memory SQLite",
@@ -63,7 +57,6 @@
     }
   ],
 
-  // Exclusions de fichiers
   "files.exclude": {
     "**/node_modules": true,
     "**/dist": true,
@@ -73,27 +66,22 @@
     "**/*.log": true
   },
 
-  // Associations de fichiers spécifiques RAG
   "files.associations": {
     "*.ragignore": "ignore",
     "*.ragconfig": "json",
     "rag-config*.json": "json"
   },
 
-  // Terminal
   "terminal.integrated.defaultProfile.linux": "bash",
   "terminal.integrated.cwd": "${workspaceFolder}",
 
-  // Git
   "git.autofetch": true,
   "git.enableSmartCommit": true,
 
-  // IA & Copilot (désactivé pour usage humain)
   "github.copilot.enable": false,
   "github.copilot.inlineSuggest.enable": false,
   "visualstudioexptteam.vscodeintellicode.suggestions": true,
 
-  // Éditeur
   "editor.tabSize": 2,
   "editor.detectIndentation": false,
   "editor.rulers": [80, 120],
@@ -102,7 +90,6 @@
   "editor.renderWhitespace": "boundary",
   "editor.renderControlCharacters": true,
 
-  // Recherche
   "search.exclude": {
     "**/node_modules": true,
     "**/dist": true,
@@ -110,15 +97,12 @@
     "**/.git": true
   },
 
-  // Télémetrie
   "telemetry.enableTelemetry": false,
   "telemetry.enableCrashReporter": false,
 
-  // Extensions
   "extensions.autoUpdate": true,
   "extensions.autoCheckUpdates": true,
 
-  // Workspace
   "files.autoSave": "onFocusChange",
   "files.trimTrailingWhitespace": true,
   "files.insertFinalNewline": true,

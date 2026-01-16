@@ -134,6 +134,79 @@
       "group": "test",
       "problemMatcher": [],
       "detail": "Check for unused dependencies"
+    },
+    {
+      "label": "RAG: Ingest Documents",
+      "type": "shell",
+      "command": "node build/index.js --mode=ingest --path=./docs",
+      "group": "none",
+      "problemMatcher": [],
+      "detail": "Ingest documents into RAG pipeline"
+    },
+    {
+      "label": "RAG: Index Vectors",
+      "type": "shell",
+      "command": "node build/index.js --mode=index",
+      "group": "none",
+      "problemMatcher": [],
+      "detail": "Create vector embeddings for ingested documents"
+    },
+    {
+      "label": "RAG: Query",
+      "type": "shell",
+      "command": "node build/index.js --mode=query --query=\"How to use RAG MCP?\"",
+      "group": "none",
+      "problemMatcher": [],
+      "detail": "Query RAG pipeline with semantic search"
+    },
+    {
+      "label": "RAG: Clean Cache",
+      "type": "shell",
+      "command": "rm -rf rag/cache rag/temp",
+      "group": "clean",
+      "problemMatcher": [],
+      "detail": "Clean RAG pipeline cache and temporary files"
+    },
+    {
+      "label": "RAG: Initialize Databases",
+      "type": "shell",
+      "command": "./.vscode/init-databases.sh",
+      "group": "build",
+      "problemMatcher": [],
+      "detail": "Initialize SQLite and PostgreSQL databases for RAG"
+    },
+    {
+      "label": "RAG: Install Extensions",
+      "type": "shell",
+      "command": "./.vscode/install-extensions.sh",
+      "group": "build",
+      "problemMatcher": [],
+      "detail": "Install recommended VS Code extensions for RAG development"
+    },
+    {
+      "label": "RAG: Monitor Logs",
+      "type": "shell",
+      "command": "tail -f logs/rag-server.log",
+      "group": "none",
+      "isBackground": true,
+      "problemMatcher": [],
+      "detail": "Monitor RAG MCP Server logs in real-time"
+    },
+    {
+      "label": "RAG: Test Pipeline",
+      "type": "shell",
+      "command": "npm run test:rag",
+      "group": "test",
+      "problemMatcher": [],
+      "detail": "Run RAG pipeline integration tests"
+    },
+    {
+      "label": "RAG: Export Config",
+      "type": "shell",
+      "command": "node scripts/export-config.js",
+      "group": "build",
+      "problemMatcher": [],
+      "detail": "Export RAG configuration for deployment"
     }
   ]
 }

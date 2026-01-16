@@ -202,6 +202,28 @@ code --list-extensions | grep -E "(dbaeumer|esbenp|eamodio|block|mtxr|editorconf
 
 ---
 
+## 🔧 Maintenance et Corrections
+
+### Corrections appliquées (16/01/2026)
+
+1. **Problème de type dans `settings.json`** :
+
+   - **Ligne 21** : `"eslint.format.enable": true,` → `"eslint.format.enable": "on",`
+   - **Raison** : VS Code attend un type "string" (valeur attendue : `"on"` ou `"off"`)
+
+2. **Configuration obsolète dans `settings.json`** :
+   - **Ligne 27** : Suppression de `"npm.enableScriptExplorer": true,`
+   - **Raison** : L'explorateur de scripts NPM est maintenant disponible dans le menu "Views" de l'Explorateur
+
+### Vérification de la configuration
+
+- ✅ Tous les fichiers `.vscode/` sont syntaxiquement corrects
+- ✅ Aucun avertissement ou erreur dans VS Code
+- ✅ ESLint, Prettier et Vitest fonctionnent correctement
+- ✅ Connexions SQLite accessibles via SQLTools
+
+---
+
 ## 🎉 Conclusion
 
 L'environnement VS Code est maintenant entièrement configuré pour le développement du RAG MCP Server avec :
@@ -211,6 +233,7 @@ L'environnement VS Code est maintenant entièrement configuré pour le développ
 3. **Connexions SQLite réelles configurées**
 4. **Workflow de debug et test fonctionnel**
 5. **Configuration cohérente avec les règles RAG**
+6. **Corrections appliquées pour éliminer les avertissements**
 
 La configuration respecte les **Règles Absolues RAG MCP Server** (version 3.0.0) et suit les meilleures pratiques pour le développement TypeScript/Node.js.
 
