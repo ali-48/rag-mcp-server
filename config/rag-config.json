@@ -6,15 +6,16 @@
         "mode": "memory-only",
         "exposed_tools": [
             "init_rag",
-            "scan_rag",
-            "index_rag",
+            "activated_rag",
+            "get_status",
             "query_rag",
-            "manage_projects",
-            "pipeline_validator",
-            "get_status"
+            "cancel_task"
         ],
         "legacy_tools": [
-            "activated_rag",
+            "scan_rag",
+            "index_rag",
+            "manage_projects",
+            "pipeline_validator",
             "injection_rag",
             "index_project",
             "update_project",
@@ -60,8 +61,8 @@
     },
     "legacy": {
         "activated_rag": {
-            "enabled": false,
-            "redirect_to_pipeline": true,
+            "enabled": true,
+            "redirect_to_pipeline": false,
             "error_message": "activated_rag est désactivé. Utilisez le pipeline RAG explicite: init_rag → scan_rag → index_rag → query_rag",
             "migration_guide": "docs/MIGRATION_V2_V3.md"
         },

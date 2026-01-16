@@ -50,9 +50,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 async function main() {
     // Initialiser la redirection des logs console.* vers logger.ts
     initializeLogRedirection();
-    // Charger la configuration RAG v3
+    // Charger la configuration RAG v3 (rag-config.json est maintenant v3.0.0)
     const { getRagConfigManager } = await import('./config/rag-config.js');
-    const configManager = getRagConfigManager('config/rag-config-v3.json');
+    const configManager = getRagConfigManager();
     const config = configManager.getConfig();
     // Configurer le registre automatique avec la configuration
     const { autoRegistryV2 } = await import('./core/registry-v2.js');

@@ -8,7 +8,7 @@ import { detectContentType } from "./content-detector.js";
 import { shouldIgnoreFile } from "./ignore-filter.js";
 import { getLlmCache } from "./llm-cache.js";
 import { initLLMEnricher } from "./phase0/llm-enrichment/index.js";
-import { embedAndStore } from "./vector-store-refactored.js";
+import { embedAndStore } from "./vector-store.js";
 // Fonction pour découper le texte en chunks de manière intelligente
 async function chunkIntelligently(text, filePath, contentType, language, chunkSize = 1000, overlap = 200) {
     const chunks = [];

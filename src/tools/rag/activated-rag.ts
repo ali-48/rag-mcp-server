@@ -8,7 +8,9 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import { logger } from "../../core/logger.js";
 import { ToolDefinition, ToolHandler, toolRegistry } from "../../core/tool-registry.js";
-import { getRagState, isRagInitialized } from "../../rag/phase0/rag-state.js";
+import { isRagInitialized } from "../../rag/phase0/rag-state.js";
+import { formatErrorResponse, formatSuccessResponse } from "../../rag/response-formatter.js";
+import { StateManager } from "../../rag/state-manager.js";
 
 /**
  * Interface pour une phase de pipeline
@@ -186,6 +188,38 @@ export const activatedRagRefactoredHandler: ToolHandler = async (args) => {
             project_path: args.project_path
         });
 
+        // ========== VÉRIFICATION NON-RÉENTRANCE (Règle #15) ==========
+        const stateManager = StateManager.getInstance();
+        const isCommandExecuted = await stateManager.isCommandExecuted('activated_rag');
+
+        if (isCommandExecuted && !args.force) {
+            const errorMessage = 'command_already_executed: activated_rag a déjà été exécuté. Utilisez force=true pour forcer une ré-exécution.';
+            logger.error("rag.activated.refactored.already_executed", errorMessage, { execution_id: executionId });
+
+            return {
+                content: [{
+                    type: "text",
+                    text: JSON.stringify(formatErrorResponse(
+                        'COMMAND_ALREADY_EXECUTED',
+                        errorMessage,
+                        {
+                            requiredAction: 'use_force_true',
+                            notesForAI: [
+                                'La commande activated_rag a déjà été exécutée',
+                                'Utilisez force=true pour forcer une ré-exécution',
+                                'Cela réexécutera le pipeline complet'
+                            ],
+                            allowedActions: ['activated_rag'],
+                            nextSteps: [
+                                'Ajoutez force=true à votre requête',
+                                'Ou utilisez get_status pour vérifier l\'état actuel'
+                            ]
+                        }
+                    ), null, 2)
+                }]
+            };
+        }
+
         // ========== DÉTECTION AUTOMATIQUE DU PROJET ==========
         let projectPath = args.project_path;
         if (!projectPath) {
@@ -203,17 +237,23 @@ export const activatedRagRefactoredHandler: ToolHandler = async (args) => {
             return {
                 content: [{
                     type: "text",
-                    text: JSON.stringify({
-                        success: false,
-                        error: "RAG_NOT_INITIALIZED",
-                        message: errorMessage,
-                        required_action: "run_init_rag",
-                        details: {
-                            project_path: projectPath,
-                            rag_state: await getRagState(projectPath),
-                            timestamp: new Date().toISOString()
+                    text: JSON.stringify(formatErrorResponse(
+                        'RAG_NOT_INITIALIZED',
+                        errorMessage,
+                        {
+                            requiredAction: 'run_init_rag',
+                            notesForAI: [
+                                'RAG non initialisé pour ce projet',
+                                'Action requise: init_rag',
+                                `Projet: ${projectPath}`
+                            ],
+                            allowedActions: ['init_rag'],
+                            nextSteps: [
+                                'Exécutez init_rag pour initialiser l\'infrastructure RAG',
+                                'Puis réessayez activated_rag'
+                            ]
                         }
-                    }, null, 2)
+                    ), null, 2)
                 }]
             };
         }
@@ -268,6 +308,11 @@ export const activatedRagRefactoredHandler: ToolHandler = async (args) => {
             executionId
         );
 
+        // Marquer la commande comme exécutée si succès (Règle #15)
+        if (summary.success) {
+            await stateManager.markCommandExecuted('activated_rag');
+        }
+
         logger.info("rag.activated.refactored.completed", "Orchestration pipeline terminée", {
             execution_id: executionId,
             duration: `${duration}s`,
@@ -276,10 +321,41 @@ export const activatedRagRefactoredHandler: ToolHandler = async (args) => {
             phases_failed: summary.phases_failed
         });
 
+        // Formater la réponse avec notes_for_ai et allowed_actions
+        const notesForAI = [
+            `Pipeline ${workflow.name} exécuté avec succès`,
+            `Durée totale: ${duration}s`,
+            `Phases exécutées: ${summary.summary.phases_executed}`,
+            `Phases échouées: ${summary.summary.phases_failed}`,
+            `Taux de succès: ${summary.summary.success_rate}`,
+            'Actions disponibles: query_rag, get_status'
+        ];
+
+        const allowedActions = ['query_rag', 'get_status'];
+        if (summary.success) {
+            allowedActions.push('activated_rag'); // Peut être réexécuté avec force=true
+        }
+
+        const formattedResponse = formatSuccessResponse(
+            `Pipeline ${workflow.name} exécuté avec succès`,
+            summary,
+            {
+                nextSteps: [
+                    'Utilisez query_rag pour effectuer des recherches sémantiques',
+                    'Utilisez get_status pour vérifier l\'état du système',
+                    'Utilisez activated_rag avec force=true pour réexécuter le pipeline'
+                ],
+                notesForAI
+            }
+        );
+
+        // Ajouter allowed_actions à la réponse
+        formattedResponse.allowed_actions = allowedActions;
+
         return {
             content: [{
                 type: "text",
-                text: JSON.stringify(summary, null, 2)
+                text: JSON.stringify(formattedResponse, null, 2)
             }]
         };
 
@@ -298,15 +374,24 @@ export const activatedRagRefactoredHandler: ToolHandler = async (args) => {
         return {
             content: [{
                 type: "text",
-                text: JSON.stringify({
-                    success: false,
-                    execution_id: executionId,
-                    error: "PIPELINE_ORCHESTRATION_ERROR",
-                    message: error.message,
-                    duration_seconds: parseFloat(duration),
-                    timestamp: new Date().toISOString(),
-                    stack_trace: error.stack
-                }, null, 2)
+                text: JSON.stringify(formatErrorResponse(
+                    'PIPELINE_ORCHESTRATION_ERROR',
+                    error.message,
+                    {
+                        notesForAI: [
+                            'Erreur lors de l\'orchestration du pipeline',
+                            `Message: ${error.message}`,
+                            `Durée: ${duration}s`,
+                            'Consultez les logs pour plus de détails'
+                        ],
+                        allowedActions: ['activated_rag', 'get_status'],
+                        nextSteps: [
+                            'Vérifiez les logs pour plus de détails',
+                            'Corrigez les erreurs et réessayez',
+                            'Utilisez get_status pour vérifier l\'état du système'
+                        ]
+                    }
+                ), null, 2)
             }]
         };
     }

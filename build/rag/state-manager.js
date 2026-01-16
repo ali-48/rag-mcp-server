@@ -57,6 +57,12 @@ export class StateManager {
         return join(stateDir, `${projectHash}.json`);
     }
     /**
+     * Obtient le chemin du fichier d'état global
+     */
+    getGlobalStateFilePath() {
+        return join(this.projectRoot, 'rag', 'state.json');
+    }
+    /**
      * Obtient le chemin du fichier de verrou pour un projet
      */
     getLockFilePath(projectPath, resource = 'state') {
@@ -480,6 +486,100 @@ export class StateManager {
                     state_file: stateFilePath
                 });
             }
+        }
+    }
+    /**
+     * Charge l'état global du RAG MCP Server
+     */
+    async getGlobalState() {
+        const globalStatePath = this.getGlobalStateFilePath();
+        if (!existsSync(globalStatePath)) {
+            return null;
+        }
+        try {
+            const stateContent = readFileSync(globalStatePath, 'utf-8');
+            return JSON.parse(stateContent);
+        }
+        catch (error) {
+            logger.error("rag.state_manager.global_load_error", "Erreur lors du chargement de l'état global", {
+                error: error.message
+            });
+            return null;
+        }
+    }
+    /**
+     * Sauvegarde l'état global du RAG MCP Server
+     */
+    async saveGlobalState(state) {
+        const globalStatePath = this.getGlobalStateFilePath();
+        const stateDir = dirname(globalStatePath);
+        // Charger l'état existant
+        const existingState = await this.getGlobalState();
+        const now = new Date().toISOString();
+        // Fusionner avec l'état existant
+        const mergedState = {
+            rules_version: '3.0.0',
+            architecture_version: '3.0.0',
+            execution_id: `rag-${Date.now()}-x${Math.random().toString(36).substr(2, 4)}`,
+            compatibility_check: {
+                rules_compatible: true,
+                architecture_compatible: true,
+                last_check: now
+            },
+            backend: 'sqlite',
+            indexed: false,
+            last_update: null,
+            project_id: 'rag-mcp-server',
+            command_executed: {
+                init_rag: false,
+                activated_rag: false
+            },
+            metadata: {},
+            ...existingState,
+            ...state
+        };
+        // Mettre à jour la date de dernière mise à jour
+        mergedState.last_update = now;
+        // Créer le répertoire si nécessaire
+        if (!existsSync(stateDir)) {
+            mkdirSync(stateDir, { recursive: true });
+        }
+        // Sauvegarder l'état
+        writeFileSync(globalStatePath, JSON.stringify(mergedState, null, 2));
+        if (this.config.verbose) {
+            logger.info("rag.state_manager.global_state_saved", "État global sauvegardé", {
+                rules_version: mergedState.rules_version,
+                architecture_version: mergedState.architecture_version,
+                backend: mergedState.backend
+            });
+        }
+    }
+    /**
+     * Vérifie si une commande a déjà été exécutée
+     */
+    async isCommandExecuted(commandName) {
+        const globalState = await this.getGlobalState();
+        if (!globalState) {
+            return false;
+        }
+        return globalState.command_executed[commandName] === true;
+    }
+    /**
+     * Marque une commande comme exécutée
+     */
+    async markCommandExecuted(commandName) {
+        const globalState = await this.getGlobalState() || {};
+        await this.saveGlobalState({
+            ...globalState,
+            command_executed: {
+                ...(globalState.command_executed || { init_rag: false, activated_rag: false }),
+                [commandName]: true
+            }
+        });
+        if (this.config.verbose) {
+            logger.info("rag.state_manager.command_marked_executed", "Commande marquée comme exécutée", {
+                command: commandName
+            });
         }
     }
     /**

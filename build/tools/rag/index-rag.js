@@ -9,7 +9,7 @@ import { indexProject, updateProject } from "../../rag/indexer.js";
 import { isRagInitialized } from "../../rag/phase0/rag-state.js";
 import { createRagJob } from "../../rag/queue/job-types.js";
 import { getRagQueue } from "../../rag/queue/rag-queue.js";
-import { setEmbeddingProvider } from "../../rag/vector-store-refactored.js";
+import { setEmbeddingProvider } from "../../rag/vector-store.js";
 /**
  * Définition de l'outil prepare_rag (Phase 1: Préparation des fichiers)
  */

@@ -28,6 +28,29 @@ export interface RagProjectState {
 }
 
 /**
+ * Interface pour l'état global du RAG MCP Server
+ */
+export interface RagGlobalState {
+    rules_version: string;
+    architecture_version: string;
+    execution_id: string;
+    compatibility_check: {
+        rules_compatible: boolean;
+        architecture_compatible: boolean;
+        last_check: string;
+    };
+    backend: string;
+    indexed: boolean;
+    last_update: string | null;
+    project_id: string;
+    command_executed: {
+        init_rag: boolean;
+        activated_rag: boolean;
+    };
+    metadata?: Record<string, any>;
+}
+
+/**
  * Interface pour un verrou
  */
 export interface StateLock {
@@ -108,6 +131,13 @@ export class StateManager {
         const projectHash = this.hashProjectPath(projectPath);
         const stateDir = join(this.projectRoot, this.config.state_dir);
         return join(stateDir, `${projectHash}.json`);
+    }
+
+    /**
+     * Obtient le chemin du fichier d'état global
+     */
+    private getGlobalStateFilePath(): string {
+        return join(this.projectRoot, 'rag', 'state.json');
     }
 
     /**
@@ -595,6 +625,113 @@ export class StateManager {
                     state_file: stateFilePath
                 });
             }
+        }
+    }
+
+    /**
+     * Charge l'état global du RAG MCP Server
+     */
+    async getGlobalState(): Promise<RagGlobalState | null> {
+        const globalStatePath = this.getGlobalStateFilePath();
+
+        if (!existsSync(globalStatePath)) {
+            return null;
+        }
+
+        try {
+            const stateContent = readFileSync(globalStatePath, 'utf-8');
+            return JSON.parse(stateContent) as RagGlobalState;
+        } catch (error: any) {
+            logger.error("rag.state_manager.global_load_error", "Erreur lors du chargement de l'état global", {
+                error: error.message
+            });
+            return null;
+        }
+    }
+
+    /**
+     * Sauvegarde l'état global du RAG MCP Server
+     */
+    async saveGlobalState(state: Partial<RagGlobalState>): Promise<void> {
+        const globalStatePath = this.getGlobalStateFilePath();
+        const stateDir = dirname(globalStatePath);
+
+        // Charger l'état existant
+        const existingState = await this.getGlobalState();
+        const now = new Date().toISOString();
+
+        // Fusionner avec l'état existant
+        const mergedState: RagGlobalState = {
+            rules_version: '3.0.0',
+            architecture_version: '3.0.0',
+            execution_id: `rag-${Date.now()}-x${Math.random().toString(36).substr(2, 4)}`,
+            compatibility_check: {
+                rules_compatible: true,
+                architecture_compatible: true,
+                last_check: now
+            },
+            backend: 'sqlite',
+            indexed: false,
+            last_update: null,
+            project_id: 'rag-mcp-server',
+            command_executed: {
+                init_rag: false,
+                activated_rag: false
+            },
+            metadata: {},
+            ...existingState,
+            ...state
+        };
+
+        // Mettre à jour la date de dernière mise à jour
+        mergedState.last_update = now;
+
+        // Créer le répertoire si nécessaire
+        if (!existsSync(stateDir)) {
+            mkdirSync(stateDir, { recursive: true });
+        }
+
+        // Sauvegarder l'état
+        writeFileSync(globalStatePath, JSON.stringify(mergedState, null, 2));
+
+        if (this.config.verbose) {
+            logger.info("rag.state_manager.global_state_saved", "État global sauvegardé", {
+                rules_version: mergedState.rules_version,
+                architecture_version: mergedState.architecture_version,
+                backend: mergedState.backend
+            });
+        }
+    }
+
+    /**
+     * Vérifie si une commande a déjà été exécutée
+     */
+    async isCommandExecuted(commandName: keyof RagGlobalState['command_executed']): Promise<boolean> {
+        const globalState = await this.getGlobalState();
+        if (!globalState) {
+            return false;
+        }
+        return globalState.command_executed[commandName] === true;
+    }
+
+    /**
+     * Marque une commande comme exécutée
+     */
+    async markCommandExecuted(commandName: keyof RagGlobalState['command_executed']): Promise<void> {
+        const globalState = await this.getGlobalState() || {} as Partial<RagGlobalState>;
+
+        await this.saveGlobalState({
+            ...globalState,
+            command_executed: {
+                ...(globalState.command_executed || { init_rag: false, activated_rag: false }),
+                [commandName]: true
+            }
+        });
+
+        if (this.config.verbose) {
+            logger.info("rag.state_manager.command_marked_executed", "Commande marquée comme exécutée", {
+                command: commandName
+            });
         }
     }
 
