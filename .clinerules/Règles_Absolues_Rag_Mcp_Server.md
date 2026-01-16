@@ -1,361 +1,199 @@
-# 📜 Règles absolues pour développer un **RAG MCP Server**
+# 📜 Règles absolues compressées — RAG MCP Server
 
-> **Ce document définit les 6 règles NON NÉGOCIABLES** à respecter pour concevoir, développer et maintenir un système RAG (Retrieval-Augmented Generation) intégré à un **MCP Server**.
->
-> Version: 2.0.0 | Dernière mise à jour: 2026-01-16
->
-> ⚠️ **AVERTISSEMENT : VIOLATION CRITIQUE**
-> Toute violation de ces règles absolues doit être signalée immédiatement
-> et corrigée avant tout merge. Les violations répétées entraînent
-> une revue d'architecture obligatoire par le Conseil d'Architecture Évolutive.
+> Version: 3.0.0 | Dernière mise à jour: 2026-01-16
 
 ---
 
-## 🔥 RÈGLE ABSOLUE #1 : Base décisionnelle immuable
+## 🔹 R1 : Base décisionnelle immuable
 
-### Principe
+- Toutes décisions = règles existantes
+- Modif règles → validation Conseil d'Architecture
+- Processus : proposition → analyse → review → implémentation → doc
 
-**Toute décision future concernant le RAG MCP Server doit impérativement se baser sur les règles existantes. Les règles elles-mêmes ne peuvent être modifiées qu'après revue officielle par le Conseil d'Architecture Évolutive.**
+## 🔹 R2 : Séparation des responsabilités
 
-### Implications
+| Module       | Rôle                     | Interdit                   |
+| ------------ | ----------------------- | -------------------------- |
+| init_rag     | Initialisation projet    | Exécution RAG              |
+| activated_rag| Pipeline RAG             | Création fichiers          |
+| MCP Server   | Orchestration            | Log texte stdout           |
+| LLM          | Raisonnement             | Accès direct fichiers      |
 
-1. **Stabilité garantie** : Pas de changement arbitraire d'architecture
-2. **Cohérence maintenue** : Tous les développements suivent les mêmes principes
-3. **Évolutivité contrôlée** : Les évolutions sont planifiées et validées
-4. **Rétrocompatibilité** : Les changements ne cassent pas les implémentations existantes
+## 🔹 R3 : JSON strict
 
-### Processus de modification
+- ✅ JSON pur pour MCP (`result`, `status`…)  
+- ❌ Pas d’icônes ni décorations dans JSON métier  
+- ✅ Icônes seulement dans
+- ✅ Logs humains séparés (`stderr` ou `rag.log`)
 
-```mermaid
-graph TD
-    A[Proposition modification] --> B{Soumission Conseil}
-    B --> C[Analyse impact]
-    C --> D{Impact majeur?}
-    D -->|Non| E[Review rapide 2 membres]
-    D -->|Oui| F[Review complet Conseil]
-    E --> G[Approbation simple]
-    F --> H[Délibération Conseil]
-    G --> I[Implémentation]
-    H --> I
-    I --> J[Validation post-implémentation]
-    J --> K[Documentation mise à jour]
-```
+## 🔹 R4 : Architecture RAG standard
 
-### Exemples d'application
+- `/rag/db/` : SQLite / vecteurs  
+- `/rag/config/` : JSON configs  
+- `/rag/logs/` : logs structurés  
+- `.ragignore`, `state.json` obligatoire  
+- `init_rag` = création, config, DB  
+- `activated_rag` = pipeline complet  
+- Pipeline RAG : Scan → Filtrage → Analyse → Chunking → Embedding → Indexation → Retrieval
 
-- ✅ **Autorisé** : Implémenter une nouvelle fonctionnalité selon les règles existantes
-- ❌ **Interdit** : Changer l'ordre du pipeline RAG sans validation Conseil
-- ❌ **Interdit** : Ajouter un backend hardcodé sans passer par la configuration
-- ❌ **Interdit** : Créer des doublons de fichiers sans fusion/archivage
+## 🔹 R5 : Backend configurable uniquement
 
----
+- Default SQLite local  
+- PostgreSQL / Pinecone / Weaviate / Qdrant optionnel via config  
+- ❌ Pas de hardcode DB  
 
-## 🔥 RÈGLE ABSOLUE #2 : Séparation stricte des responsabilités
+## 🔹 R6 : LLM & MCP
 
-### Principe
+- LLM = pas d’accès direct aux fichiers  
+- Analyse fichier → outil MCP  
+- Minimalisme MCP : max 5 outils essentiels  
+- Messages IA-first obligatoires  
+- Schémas input/output validés
 
-**Un module = une responsabilité = un contrat clair**
+## 🔹 R7 : Usage unique des commandes MCP
 
-### Rôles et interdictions
+- `init_rag` & `activated_rag` = 1 seule exécution  
+- Répétition = `command_already_executed`
 
-| Élément        | Rôle                  | Interdiction absolue          |
-| -------------- | --------------------- | ----------------------------- |
-| `init_rag`     | Initialisation projet | ❌ Aucune exécution RAG        |
-| `activate_rag` | Pipeline RAG runtime  | ❌ Aucune création de fichiers |
-| MCP Server     | Orchestration         | ❌ Log texte dans stdout       |
-| LLM (Ollama)   | Raisonnement          | ❌ Accès direct aux fichiers   |
+## 🔹 R8 : Ordre / Séquence outils MCP
 
-### Conséquences
+1. init_rag → 1 fois  
+2. activated_rag → 1 fois  
+3. get_status → illimité  
+4. query_rag → illimité  
+5. cancel_task → optionnel  
 
-- `init_rag` crée uniquement les répertoires, fichiers de config et bases SQLite vides
-- `activate_rag` vérifie l'initialisation puis exécute le pipeline RAG complet
-- Tout accès filesystem passe par des outils MCP dédiés
+- Validation ordre automatique avant exécution  
 
----
+## 🔹 R9 : Processus background sans timeout
 
-## 🔥 RÈGLE ABSOLUE #3 : JSON strict ou rien
+- ❌ Pas de setTimeout / AbortController / kill  
+- ✅ Reprise via checkpoint  
+- ✅ Annulation uniquement `cancel_task`
 
-### Principe
+## 🔹 R10 : Affichage temps réel + logs
 
-**Tout ce qui transite vers MCP / LLM = JSON strict**
+| Flux      | Contenu                    | Format       |
+| ----------| -------------------------- | ------------|
+| stdout    | JSON MCP                   | JSON strict |
+| stderr    | Progression humaine        | Texte enrichi|
+| rag.log   | Logs structurés            | JSON structuré |
 
-#### ✅ Autorisé
+## 🔹 R11 : Cache mémoire + récupération contexte
 
-```json
-{ "status": "ok", "step": "init_rag" }
-```
+- Embeddings, chunks, requêtes, décisions IA  
+- Historique chat Cline automatiquement injecté  
+- Stockage SQLite `/rag/db/memory.sqlite`  
 
-#### ❌ Interdit
+## 🔹 R12 : Automatisation en boucle continue
 
-```
-[init_rag] Détails : création DB...
-```
+- Pipeline RAG automatisé ou déclenchement événementiel  
+- ❌ Pas de rappel `init_rag` / `activated_rag`  
+- ✅ Utilisation cache et mémoire interne  
+- Reprise sans intervention humaine  
 
-### Logging séparé
+## 🔹 R13 : Observabilité totale + logs structurés
 
-| Flux      | Contenu                 | Destination          |
-| --------- | ----------------------- | -------------------- |
-| `stdout`  | JSON machine uniquement | MCP Client           |
-| `stderr`  | erreurs techniques      | Terminal             |
-| `rag.log` | logs humains structurés | Fichier de log       |
+- Phase par phase, sous-processus, cache, erreurs, décisions IA  
+- Logs JSON consultables via `get_status` (`detailed:true`)  
+- Alertes sur anomalies  
 
-### Structure de log recommandée
+## 🔹 R14 : Gouvernance stricte
 
-```json
-{
-  "module": "rag.init",
-  "action": "create_db",
-  "status": "success",
-  "timestamp": "ISO-8601"
-}
-```
+- Modifs règles = validation Conseil Architecture  
+- Review commits obligatoire  
+- Checklist review : conformité R1-R14, tests, messages IA-first, schémas MCP
 
----
+## 🔹 R15 : Non-réentrance commandes MCP
 
-## 🔥 RÈGLE ABSOLUE #4 : Architecture RAG obligatoire
+- Commande usage unique = jamais relançable  
+- ❌ Retry automatique, boucle, crash, redémarrage  
+- État persistant `command_executed=true` dans `state.json`
 
-### Structure de fichiers standard
+## 🔹 R16 : JSON MCP unique par stdout
 
-```text
-/rag/
- ├─ db/
- │   ├─ memory.sqlite
- │   ├─ vectors.sqlite
- │   └─ metadata.sqlite
- │
- ├─ config/
- │   ├─ rag.config.json
- │   ├─ db.config.json
- │   └─ embedding.config.json
- │
- ├─ logs/
- │   └─ rag.log
- │
- ├─ .ragignore
- └─ state.json
-```
+- ✅ 1 JSON final = réponse MCP  
+- ❌ Pas de JSON intermédiaires sur stdout  
+- Progression via `stderr` ou `get_status`
 
-🚫 Aucun autre emplacement n'est autorisé
+## 🔹 R17 : Séparation JSON métier / logs
 
-### Rôle EXCLUSIF de `init_rag`
+- `stdout` = JSON MCP contractuel  
+- `rag.log` = JSON observabilité  
+- ❌ Jamais interchanger ou réutiliser
 
-`init_rag` **DOIT** :
+## 🔹 R18 : Immutabilité `state.json`
 
-1. Créer les répertoires `/rag/db` et `/rag/config`
-2. Générer les fichiers de configuration par défaut
-3. Initialiser les bases SQLite (tables vides)
-4. Créer `.ragignore`
-5. Enregistrer le projet dans la mémoire MCP
-6. Retourner **UN SEUL JSON FINAL**
+- Modifiable uniquement par moteur RAG  
+- ❌ Pas d'édition manuelle ou "fix IA"  
+- Toute mutation = trace log obligatoire
 
-🚫 `init_rag` ne doit JAMAIS :
+## 🔹 R19 : IA ≠ décision architecturale
 
-- analyser des fichiers
-- générer des embeddings
-- appeler un LLM
+- IA peut : proposer, analyser, suggérer  
+- IA ne peut pas : choisir backend, modifier pipeline, changer règles
 
-### Rôle EXCLUSIF de `activate_rag`
+## 🔹 R20 : Réentrance sous-fonctions internes
 
-`activate_rag` **DOIT** :
+- Sous-fonctions (scan, chunk, embedding…) = réentrantes et idempotentes  
+- Survie crash, reprise checkpoint  
+- ≠ Commandes MCP globales (non réentrantes)
 
-1. Vérifier que `init_rag` a été exécuté
-2. Charger la configuration
-3. Exécuter le pipeline RAG :
+## 🔹 R21 : Contexte Cline en lecture seule
 
-   - Analyse
-   - Chunking
-   - Embeddings
-   - Indexation
-   - Retrieval
+- Injection contexte = lecture seule  
+- ❌ Pas de modification historique  
+- ❌ Pas de "correction" du passé
 
-🚫 `activate_rag` ne doit JAMAIS :
+## 🔹 R22 : Zéro effet de bord non déclaré
 
-- créer de fichiers système
-- modifier la configuration
+- Commande MCP = effets déclarés uniquement  
+- ❌ Création fichier cachée, écriture DB hors pipeline  
+- Audit automatique des effets
 
-### Pipeline RAG — Ordre NON modifiable
+## 🔹 R23 : Versionnage runtime obligatoire
 
-```text
-1. Scan fichiers
-2. Filtrage (.ragignore)
-3. Analyse structurelle
-4. (Optionnel) Analyse LLM
-5. Chunking
-6. Embeddings
-7. Indexation
-8. Retrieval
-```
+- `state.json` contient : `rules_version`, `architecture_version`  
+- Validation compatibilité versions au démarrage  
+- Incohérence = warning critique
 
-🚫 Changer l'ordre = RAG instable
+## 🔹 R24 : IA ≠ humain (sorties dédiées)
 
-### Gestion d'état obligatoire
-
-**`state.json` obligatoire** contient :
-
-- version RAG
-- backend DB
-- état d'indexation
-- date dernière mise à jour
+- Sortie IA = JSON structuré, déterministe, parsable  
+- Sortie humain = texte enrichi, émotions, contexte  
+- ❌ Emojis dans JSON métier (sauf `notes_for_ai`)
 
 ---
 
-## 🔥 RÈGLE ABSOLUE #5 : Base de données configurable uniquement
-
-### Backend par défaut
+## ⚠️ Synthèse pour IA
 
 ```json
 {
-  "type": "sqlite",
-  "mode": "local",
-  "vector_extension": false
+  "rules_version": "3.0.0",
+  "mandatory": [
+    "R1-Base décisionnelle",
+    "R2-Séparation responsabilités",
+    "R3-JSON strict",
+    "R4-Architecture RAG standard",
+    "R5-Backend configurable",
+    "R6-LLM & MCP",
+    "R7-Usage unique MCP",
+    "R8-Ordre outils MCP",
+    "R9-Processus sans timeout",
+    "R10-Affichage temps réel",
+    "R11-Cache mémoire",
+    "R12-Automatisation boucle",
+    "R13-Observabilité",
+    "R14-Gouvernance",
+    "R15-Non-réentrance commandes MCP",
+    "R16-JSON MCP unique par stdout",
+    "R17-Séparation JSON métier/logs",
+    "R18-Immutabilité state.json",
+    "R19-IA ≠ décision architecturale",
+    "R20-Réentrance sous-fonctions internes",
+    "R21-Contexte Cline lecture seule",
+    "R22-Zéro effet de bord non déclaré",
+    "R23-Versionnage runtime obligatoire",
+    "R24-IA ≠ humain (sorties dédiées)"
+  ]
 }
-```
-
-📌 PostgreSQL est **OPTIONNEL**, jamais hardcodé
-
-### Interdictions absolues
-
-- ❌ Aucun backend hardcodé
-- ❌ Aucun `if (postgres)` dans le code
-- ❌ Aucune dépendance système obligatoire
-
-👉 Le backend est **CHOISI UNIQUEMENT via config**
-
-### Stratégie multi-environnements
-
-**SQLite pour développement, vraie DB vectore pour production**
-
-#### Environnement développement
-
-```json
-{
-  "database": {
-    "type": "sqlite",
-    "mode": "local",
-    "vector_extension": false
-  }
-}
-```
-
-#### Environnement production
-
-```json
-{
-  "database": {
-    "type": "postgres", // ou pinecone, weaviate, qdrant
-    "mode": "remote",
-    "vector_extension": true,
-    "connection": { /* config spécifique */ }
-  }
-}
-```
-
-### Migration obligatoire
-
-**Scripts de migration doivent être fournis** pour SQLite → Production
-
----
-
-## 🔥 RÈGLE ABSOLUE #6 : LLM & MCP — Règles d'or
-
-### Ollama (ou autre LLM)
-
-- ❌ N'analyse JAMAIS de fichiers directement
-- ❌ Ne lit PAS le filesystem
-- ✅ Reçoit UNIQUEMENT :
-
-  - texte
-  - JSON
-  - chunks préparés
-
-👉 Toute analyse de fichier passe par un **outil MCP**
-
-### Analyse poussée par LLM (optionnelle)
-
-```json
-"deep_llm_analysis": false
-```
-
-- Désactivée par défaut
-- Activée explicitement
-- Exécutée **AVANT embeddings**
-- Jamais bloquante
-
-### Minimalisme MCP
-
-**Limiter aux outils essentiels (5 maximum)**
-
-| Outil | Rôle | Statut |
-|-------|------|--------|
-| `activated_rag` | Orchestration pipeline | Obligatoire |
-| `get_status` | Consultation progression | Obligatoire |
-| `query_rag` | Recherche sémantique | Obligatoire |
-| `cancel_task` | Annulation tâche | Optionnel |
-| `list_tasks` | Liste tâches | Optionnel |
-
-### Messages IA-first
-
-**Toute réponse MCP doit être optimisée pour interprétation IA**
-
-```json
-{
-  "status": "success",
-  "result": { /* données métier */ },
-  "notes_for_ai": "Explication structurée pour l'IA",
-  "allowed_actions": ["action1", "action2"],
-  "next_steps": ["étape suggérée"]
-}
-```
-
-### Schémas MCP complets
-
-**Tout outil MCP doit avoir des schémas input/output validés**
-
-```typescript
-// src/core/mcp-schemas.ts
-export const activatedRagSchema = {
-  input: { /* schéma JSON Schema */ },
-  output: { /* schéma JSON Schema */ },
-  examples: [ /* exemples valides */ ]
-};
-```
-
----
-
-## 🚨 Règles de survie (synthèse)
-
-- 🧠 **Un LLM ne fait PAS du système**
-- 🗂️ **Le filesystem n'est jamais implicite**
-- 📄 **JSON strict ou crash**
-- 🔌 **Pas de service externe obligatoire**
-- 🧱 **Initialisation ≠ Exécution**
-- 🔥 **Aucune duplication de code** (fusionner ou archiver)
-- 🎯 **Messages IA-first obligatoires**
-- ⚙️ **Configuration unique v3** (source de vérité)
-- 🧪 **Tests multi-backends obligatoires**
-
----
-
-## ✅ Conclusion
-
-> Un RAG MCP Server est un **système distribué**, pas un script.
-
-Respecter ces 6 règles absolues garantit :
-
-- **Stabilité** : Pas de crash inattendu
-- **Auditabilité** : Tout est traçable et loggé
-- **Extensibilité** : Nouveaux backends, nouvelles phases
-- **Maintenabilité** : Bugs localisables et corrigeables
-- **Interopérabilité** : Compatible avec tout client MCP
-- **Qualité IA** : Messages structurés, pilotage automatique
-- **Zéro hallucination structurelle** : Architecture prévisible
-
-🚀 **Toute implémentation future DOIT se conformer à ce document.**
-
----
-
-**Mainteneurs:** Équipe RAG MCP Server  
-**Contact:** Via issues GitHub  
-**Dernière révision:** 2026-01-16  
-**Prochaine révision:** 2026-03-16  
-**Statut:** **ACTIF** - Conformité obligatoire pour tout nouveau développement

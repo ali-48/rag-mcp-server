@@ -457,6 +457,112 @@ export const activatedRagSchema = {
 
 ---
 
+## 🏗️ Éléments architecturaux obligatoires
+
+### A1 : Sous-fonctions de récupération contexte Cline
+
+L'architecture doit **explicitement prévoir** :
+
+* **Récupération du chat courant** : Accès au contexte conversationnel en cours
+* **Récupération de l'historique Cline** : Historique complet des interactions
+* **Récupération de la mémoire cache** : État mémoire persistant
+* **Fusion contexte projet + historique + état RAG** : Intégration automatique
+
+👉 Ces éléments **ne sont pas optionnels** et doivent être formalisés dans l'architecture.
+
+### A2 : Cache & mémoire persistante (RAG ≠ stateless)
+
+À formaliser dans l'architecture :
+
+* **Cache embeddings** : Stockage temporaire des embeddings calculés
+* **Cache chunks** : Chunks analysés et préparés
+* **Cache requêtes** : Historique des recherches sémantiques
+* **Mémoire de décisions IA** : Raisonnements et décisions précédentes
+
+👉 Sans ces composants :
+* Redondance des calculs
+* Coûts inutiles
+* Dérives de raisonnement
+
+### A3 : Boucles d'automatisation en arrière-plan (IA-first)
+
+Architecture doit inclure :
+
+* **Boucles non bloquantes** : Exécution en background sans bloquer l'interface
+* **Déclenchement par état** : Activation basée sur changement d'état système
+* **Déclenchement par événement** : Réaction aux modifications fichiersystem
+* **Déclenchement par fin de phase** : Transition automatique entre phases
+* **Sans rappel de commandes MCP** : Utilisation exclusive d'état, cache, mémoire
+
+### A4 : Pipeline COMPLET jusqu'à embeddings (pas seulement outils MCP)
+
+À documenter comme **flux interne continu** :
+
+```
+Contexte Cline
+→ mémoire cache
+→ scan
+→ filtrage (.ragignore)
+→ analyse structurelle
+→ (optionnel) analyse LLM enrichie
+→ chunking intelligent
+→ embeddings multi-modèles
+→ indexation vectorielle
+→ état final
+```
+
+👉 `init_rag` et `activated_rag` **ne sont que des déclencheurs**, pas le pipeline lui-même.
+
+### A5 : Architecture pensée pour DB vecteur réelle (pas SQLite-centric)
+
+À écrire noir sur blanc :
+
+* **SQLite = développement uniquement** : Jamais pour production à grande échelle
+* **Interfaces supportant gros volumes** : Capacité à gérer des millions de vecteurs
+* **Support index distribués** : Architecture compatible avec index distribués
+* **Support latence réseau** : Tolérance aux délais réseau pour backends distants
+
+### A6 : Observabilité totale des processus internes
+
+L'architecture doit garantir :
+
+* **Visibilité phase par phase** : Monitoring détaillé de chaque étape
+* **Visibilité des sous-processus** : Traçabilité des traitements individuels
+* **Visibilité mémoire/cache** : État des caches, hits/misses, expiration
+* **Visibilité erreurs partielles** : Fichiers échoués avec raison détaillée
+
+### A7 : Processus unique actif par projet
+
+**Règle stricte** :
+
+* 1 pipeline RAG actif maximum par projet
+* Pas de parallélisation sauvage
+* Pas de relance "par-dessus" un processus en cours
+
+👉 Le système doit refuser toute nouvelle activation tant qu'un process est actif.
+
+### A8 : Automatisation ≠ Répétition de commande
+
+**Règle fondamentale** :
+
+* Une boucle automatique ne doit **JAMAIS** rappeler `init_rag` ou `activated_rag`
+* Les boucles utilisent exclusivement :
+  * État système
+  * Cache mémoire
+  * Mémoire persistante
+  * Reprise interne
+
+### A9 : Intégration Cline/mémoire obligatoire
+
+**Architecture doit prévoir** :
+
+* Injection automatique du contexte Cline dans le pipeline
+* Persistance des décisions IA pour continuité de raisonnement
+* Récupération de l'historique pour amélioration contextuelle
+* Fusion avec état RAG pour cohérence globale
+
+---
+
 ## 🧪 Validation des règles (étendue)
 
 ### Checklist avant commit (étendue)
