@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Lock file for reproducible VS Code extension installation",
   "generated": "2026-01-16T20:56:00+01:00",
+  "updated": "2026-01-16T21:25:00+01:00",
   "extensions": {
     "essential": [
       {
@@ -122,6 +123,26 @@
         "description": "Fully-featured TOML language support"
       }
     ],
+    "audit": [
+      {
+        "id": "christian-kohler.path-intellisense",
+        "version": "2.10.0",
+        "name": "Path Intellisense",
+        "description": "Visualisation fiable des chemins + imports réels pour mapping"
+      },
+      {
+        "id": "pflannery.vscode-versionlens",
+        "version": "1.22.4",
+        "name": "Version Lens",
+        "description": "Audit dépendances npm liées aux imports"
+      },
+      {
+        "id": "wix.vscode-import-cost",
+        "version": "3.3.0",
+        "name": "Import Cost",
+        "description": "Poids logique des imports (utile même hors bundle)"
+      }
+    ],
     "optional": [
       {
         "id": "ms-azuretools.vscode-docker",
@@ -149,5 +170,5 @@
       }
     ]
   },
-  "installationScript": "#!/bin/bash\n# Install all extensions from lock file\ncat > install-extensions.sh << 'EOF'\n#!/bin/bash\n# Essential extensions\ncode --install-extension dbaeumer.vscode-eslint@3.0.21\ncode --install-extension esbenp.prettier-vscode@12.1.0\ncode --install-extension eamodio.gitlens@2026.1.1504\ncode --install-extension block.vscode-mcp-extension@0.2.0\ncode --install-extension mtxr.sqltools@0.28.5\ncode --install-extension editorconfig.editorconfig@0.17.4\ncode --install-extension redhat.vscode-yaml@1.19.1\n\n# Recommended extensions\ncode --install-extension christian-kohler.npm-intellisense@1.4.5\ncode --install-extension connor4312.esbuild-problem-matchers@0.0.3\ncode --install-extension ckolkman.vscode-postgres@1.4.3\ncode --install-extension redis.redis-for-vscode@1.4.0\ncode --install-extension alefragnani.project-manager@13.0.1\ncode --install-extension streetsidesoftware.code-spell-checker@4.4.0\ncode --install-extension usernamehw.errorlens@3.26.0\ncode --install-extension yoavbls.pretty-ts-errors@0.7.0\ncode --install-extension visualstudioexptteam.vscodeintellicode@1.3.2\ncode --install-extension gruntfuggly.todo-tree@0.0.226\ncode --install-extension aaron-bond.better-comments@3.0.2\ncode --install-extension tamasfe.even-better-toml@0.21.2\nEOF\nchmod +x install-extensions.sh\n./install-extensions.sh"
+  "installationScript": "#!/bin/bash\n# Install all extensions from lock file\ncat > install-extensions.sh << 'EOF'\n#!/bin/bash\n# Essential extensions\ncode --install-extension dbaeumer.vscode-eslint@3.0.21\ncode --install-extension esbenp.prettier-vscode@12.1.0\ncode --install-extension eamodio.gitlens@2026.1.1504\ncode --install-extension block.vscode-mcp-extension@0.2.0\ncode --install-extension mtxr.sqltools@0.28.5\ncode --install-extension editorconfig.editorconfig@0.17.4\ncode --install-extension redhat.vscode-yaml@1.19.1\n\n# Recommended extensions\ncode --install-extension christian-kohler.npm-intellisense@1.4.5\ncode --install-extension connor4312.esbuild-problem-matchers@0.0.3\ncode --install-extension ckolkman.vscode-postgres@1.4.3\ncode --install-extension redis.redis-for-vscode@1.4.0\ncode --install-extension alefragnani.project-manager@13.0.1\ncode --install-extension streetsidesoftware.code-spell-checker@4.4.0\ncode --install-extension usernamehw.errorlens@3.26.0\ncode --install-extension yoavbls.pretty-ts-errors@0.7.0\ncode --install-extension visualstudioexptteam.vscodeintellicode@1.3.2\ncode --install-extension gruntfuggly.todo-tree@0.0.226\ncode --install-extension aaron-bond.better-comments@3.0.2\ncode --install-extension tamasfe.even-better-toml@0.21.2\n\n# Audit extensions\ncode --install-extension christian-kohler.path-intellisense@2.10.0\ncode --install-extension pflannery.vscode-versionlens@1.22.4\ncode --install-extension wix.vscode-import-cost@3.3.0\nEOF\nchmod +x install-extensions.sh\n./install-extensions.sh"
 }

@@ -62,3 +62,15 @@ web_modules/        # Web modules
 dist/               # Dossier de distribution (si utilisé)
 out/                # Dossier de sortie
 *.tsbuildinfo       # Fichier d'info de build TypeScript
+
+# ==================== Audit et mapping ====================
+# Fichiers d'audit temporaires (voir audit/.gitignore pour plus de détails)
+audit/*.tmp
+audit/*.temp
+audit/*.log
+audit/*_intermediate.json
+audit/*_partial.json
+audit/.cache/
+audit/cache/
+audit/tmp/
+audit/temp/

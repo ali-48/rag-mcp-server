@@ -96,7 +96,17 @@
 
     // XML
     "dotjoshjohnson.xml",
-    "redhat.vscode-xml"
+    "redhat.vscode-xml",
+
+    // ============================================
+    // Extensions AUDIT & MAPPING (Nouveau)
+    // ============================================
+
+    // Path intellisense pour mapping
+    "christian-kohler.path-intellisense",
+
+    // Version lens pour audit dépendances
+    "pflannery.vscode-versionlens"
   ],
 
   "unwantedRecommendations": [

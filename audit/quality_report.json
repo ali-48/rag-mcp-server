@@ -1,0 +1,302 @@
+{
+  "generated": "2026-01-16T21:44:02.576Z",
+  "overallScore": 15,
+  "metrics": [
+    {
+      "name": "Score moyen des fichiers",
+      "value": 32.333333333333336,
+      "max": 100,
+      "score": 32.333333333333336,
+      "weight": 0.3,
+      "description": "Score de qualité moyen de tous les fichiers"
+    },
+    {
+      "name": "Couverture de tests",
+      "value": 0,
+      "max": 100,
+      "score": 0,
+      "weight": 0.25,
+      "description": "Pourcentage de code couvert par les tests"
+    },
+    {
+      "name": "Complexité moyenne",
+      "value": 442,
+      "max": 50,
+      "score": 0,
+      "weight": 0.2,
+      "description": "Complexité cyclomatique moyenne"
+    },
+    {
+      "name": "Problèmes de code",
+      "value": 343,
+      "max": 100,
+      "score": 0,
+      "weight": 0.15,
+      "description": "Nombre total de problèmes (ESLint, TypeScript, duplication)"
+    },
+    {
+      "name": "Maintenabilité",
+      "value": 54.76190476190476,
+      "max": 100,
+      "score": 54.76190476190476,
+      "weight": 0.1,
+      "description": "Index de maintenabilité moyen"
+    }
+  ],
+  "files": [
+    {
+      "filePath": "ANALYSE_HISTORIQUE_COMPLETE.md",
+      "metrics": {
+        "lines": 268,
+        "complexity": 125,
+        "maintainability": 51,
+        "duplication": 0,
+        "issues": 17
+      },
+      "score": 4
+    },
+    {
+      "filePath": "CONTRIBUTING.md",
+      "metrics": {
+        "lines": 144,
+        "complexity": 40,
+        "maintainability": 70,
+        "duplication": 0,
+        "issues": 7
+      },
+      "score": 74
+    },
+    {
+      "filePath": "GUIDE-NOUVEAUX-OUTILS-V2.md",
+      "metrics": {
+        "lines": 950,
+        "complexity": 418,
+        "maintainability": 23,
+        "duplication": 0,
+        "issues": 26
+      },
+      "score": 0
+    },
+    {
+      "filePath": "GUIDE-NOUVEAUX-OUTILS.md",
+      "metrics": {
+        "lines": 325,
+        "complexity": 128,
+        "maintainability": 49,
+        "duplication": 0,
+        "issues": 15
+      },
+      "score": 1
+    },
+    {
+      "filePath": "RAG_ARCHITECTURE_RULES.md",
+      "metrics": {
+        "lines": 661,
+        "complexity": 163,
+        "maintainability": 35,
+        "duplication": 0,
+        "issues": 20
+      },
+      "score": 0
+    },
+    {
+      "filePath": "RAG_EXECUTION_RULES.md",
+      "metrics": {
+        "lines": 500,
+        "complexity": 112,
+        "maintainability": 42,
+        "duplication": 0,
+        "issues": 15
+      },
+      "score": 0
+    },
+    {
+      "filePath": "RAPPORT_NETTOYAGE_CODE_MORT.md",
+      "metrics": {
+        "lines": 126,
+        "complexity": 32,
+        "maintainability": 73,
+        "duplication": 0,
+        "issues": 8
+      },
+      "score": 76
+    },
+    {
+      "filePath": "RAPPORT_NETTOYAGE_FINAL.md",
+      "metrics": {
+        "lines": 249,
+        "complexity": 64,
+        "maintainability": 56,
+        "duplication": 0,
+        "issues": 17
+      },
+      "score": 37
+    },
+    {
+      "filePath": "README.md",
+      "metrics": {
+        "lines": 539,
+        "complexity": 223,
+        "maintainability": 36,
+        "duplication": 0,
+        "issues": 22
+      },
+      "score": 0
+    },
+    {
+      "filePath": "README_VSCODE_CONFIG.md",
+      "metrics": {
+        "lines": 367,
+        "complexity": 50,
+        "maintainability": 54,
+        "duplication": 0,
+        "issues": 6
+      },
+      "score": 54
+    },
+    {
+      "filePath": "Règles_Absolues_Rag_Mcp_Server.md",
+      "metrics": {
+        "lines": 1185,
+        "complexity": 263,
+        "maintainability": 19,
+        "duplication": 0,
+        "issues": 35
+      },
+      "score": 0
+    },
+    {
+      "filePath": "VSCODE_CONFIGURATION_RAG_MCP.md",
+      "metrics": {
+        "lines": 243,
+        "complexity": 58,
+        "maintainability": 57,
+        "duplication": 0,
+        "issues": 18
+      },
+      "score": 38
+    },
+    {
+      "filePath": "memory.json",
+      "metrics": {
+        "lines": 39,
+        "complexity": 405,
+        "maintainability": 75,
+        "duplication": 0,
+        "issues": 25
+      },
+      "score": 0
+    },
+    {
+      "filePath": "package-lock.json",
+      "metrics": {
+        "lines": 7813,
+        "complexity": 6775,
+        "maintainability": 0,
+        "duplication": 0,
+        "issues": 36
+      },
+      "score": 0
+    },
+    {
+      "filePath": "package.json",
+      "metrics": {
+        "lines": 68,
+        "complexity": 59,
+        "maintainability": 78,
+        "duplication": 0,
+        "issues": 15
+      },
+      "score": 48
+    },
+    {
+      "filePath": "rag-dashboard.js",
+      "metrics": {
+        "lines": 371,
+        "complexity": 167,
+        "maintainability": 44,
+        "duplication": 0,
+        "issues": 19
+      },
+      "score": 0
+    },
+    {
+      "filePath": "run-all-tests.js",
+      "metrics": {
+        "lines": 188,
+        "complexity": 55,
+        "maintainability": 62,
+        "duplication": 0,
+        "issues": 15
+      },
+      "score": 50
+    },
+    {
+      "filePath": "test-recherche-rag.md",
+      "metrics": {
+        "lines": 269,
+        "complexity": 69,
+        "maintainability": 55,
+        "duplication": 0,
+        "issues": 16
+      },
+      "score": 34
+    },
+    {
+      "filePath": "test-report.md",
+      "metrics": {
+        "lines": 140,
+        "complexity": 36,
+        "maintainability": 71,
+        "duplication": 0,
+        "issues": 6
+      },
+      "score": 78
+    },
+    {
+      "filePath": "tsconfig.json",
+      "metrics": {
+        "lines": 30,
+        "complexity": 19,
+        "maintainability": 100,
+        "duplication": 0,
+        "issues": 0
+      },
+      "score": 98
+    },
+    {
+      "filePath": "tsconfig.test.json",
+      "metrics": {
+        "lines": 24,
+        "complexity": 21,
+        "maintainability": 100,
+        "duplication": 0,
+        "issues": 5
+      },
+      "score": 87
+    }
+  ],
+  "recommendations": [
+    "🚨 Augmenter la couverture de tests (actuellement 0%, cible: 80%)",
+    "⚠️  Refactoriser 10 fichiers critiques (score < 30)",
+    "   - ANALYSE_HISTORIQUE_COMPLETE.md (score: 4)",
+    "   - GUIDE-NOUVEAUX-OUTILS-V2.md (score: 0)",
+    "   - GUIDE-NOUVEAUX-OUTILS.md (score: 1)",
+    "   - RAG_ARCHITECTURE_RULES.md (score: 0)",
+    "   - RAG_EXECUTION_RULES.md (score: 0)",
+    "📏 Diviser 5 fichiers trop longs (> 500 lignes)"
+  ],
+  "stats": {
+    "totalFiles": 21,
+    "filesByScore": {
+      "excellent": 1,
+      "good": 4,
+      "moderate": 2,
+      "poor": 4,
+      "critical": 10
+    },
+    "averageLines": 690,
+    "averageComplexity": 442,
+    "totalIssues": 343
+  }
+}

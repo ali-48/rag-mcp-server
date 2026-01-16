@@ -1,0 +1,29 @@
+# Fichiers d'audit temporaires - ne pas versionner
+*.tmp
+*.temp
+*.log
+
+# Fichiers générés par les scripts d'audit
+# (les fichiers JSON finaux sont versionnés, mais pas les intermédiaires)
+*_intermediate.json
+*_partial.json
+
+# Fichiers de cache
+.cache/
+cache/
+
+# Fichiers de lock temporaires
+*.lock
+
+# Fichiers de sortie temporaires
+/tmp/
+temp/
+
+# Exceptions - fichiers à versionner
+!unified_audit.json
+!project_tree.txt
+!imports_graph.json
+!imports_graph.svg
+!symbols_map.json
+!call_graph.json
+!quality_report.json
