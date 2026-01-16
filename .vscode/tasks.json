@@ -1,0 +1,139 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "npm: build",
+      "type": "npm",
+      "script": "build",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": ["$tsc"],
+      "detail": "Build TypeScript project"
+    },
+    {
+      "label": "npm: start",
+      "type": "npm",
+      "script": "start",
+      "group": "none",
+      "isBackground": true,
+      "problemMatcher": [],
+      "detail": "Start RAG MCP Server"
+    },
+    {
+      "label": "npm: dev",
+      "type": "npm",
+      "script": "dev",
+      "group": "none",
+      "isBackground": true,
+      "problemMatcher": ["$tsc-watch"],
+      "detail": "TypeScript watch mode"
+    },
+    {
+      "label": "npm: test",
+      "type": "npm",
+      "script": "test",
+      "group": "test",
+      "problemMatcher": [],
+      "detail": "Run all tests"
+    },
+    {
+      "label": "npm: test:dev",
+      "type": "npm",
+      "script": "test:dev",
+      "group": "none",
+      "isBackground": true,
+      "problemMatcher": [],
+      "detail": "Run tests in watch mode"
+    },
+    {
+      "label": "Clean Build",
+      "type": "shell",
+      "command": "rm -rf build build-test",
+      "group": "clean",
+      "problemMatcher": [],
+      "detail": "Clean build directories"
+    },
+    {
+      "label": "TypeScript Check",
+      "type": "shell",
+      "command": "npx tsc --noEmit",
+      "group": "build",
+      "problemMatcher": ["$tsc"],
+      "detail": "TypeScript type checking without emit"
+    },
+    {
+      "label": "ESLint Fix",
+      "type": "shell",
+      "command": "npx eslint . --fix",
+      "group": "build",
+      "problemMatcher": ["$eslint-stylish"],
+      "detail": "Run ESLint auto-fix"
+    },
+    {
+      "label": "Prettier Format",
+      "type": "shell",
+      "command": "npx prettier --write .",
+      "group": "build",
+      "problemMatcher": [],
+      "detail": "Format all files with Prettier"
+    },
+    {
+      "label": "Install Dependencies",
+      "type": "shell",
+      "command": "npm install",
+      "group": "build",
+      "problemMatcher": [],
+      "detail": "Install npm dependencies"
+    },
+    {
+      "label": "Update Dependencies",
+      "type": "shell",
+      "command": "npm update",
+      "group": "build",
+      "problemMatcher": [],
+      "detail": "Update npm dependencies"
+    },
+    {
+      "label": "Run RAG Pipeline",
+      "type": "shell",
+      "command": "node build/index.js --mode=full",
+      "group": "none",
+      "problemMatcher": [],
+      "detail": "Run full RAG pipeline"
+    },
+    {
+      "label": "Database Migration",
+      "type": "shell",
+      "command": "node scripts/migrate-rag-store.js",
+      "group": "none",
+      "problemMatcher": [],
+      "detail": "Run RAG database migration"
+    },
+    {
+      "label": "Generate Documentation",
+      "type": "shell",
+      "command": "npx typedoc --out docs/api src/index.ts",
+      "group": "build",
+      "problemMatcher": [],
+      "detail": "Generate TypeScript documentation"
+    },
+    {
+      "label": "Security Audit",
+      "type": "shell",
+      "command": "npm audit",
+      "group": "test",
+      "problemMatcher": [],
+      "detail": "Run npm security audit"
+    },
+    {
+      "label": "Check Dependencies",
+      "type": "shell",
+      "command": "npx depcheck",
+      "group": "test",
+      "problemMatcher": [],
+      "detail": "Check for unused dependencies"
+    }
+  ]
+}

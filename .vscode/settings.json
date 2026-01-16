@@ -1,0 +1,126 @@
+{
+  // Configuration TypeScript spécifique au projet
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.preferences.importModuleSpecifier": "project-relative",
+  "typescript.preferences.includePackageJsonAutoImports": "on",
+  "typescript.suggest.autoImports": true,
+  "typescript.suggest.completeFunctionCalls": true,
+  "typescript.tsserver.maxTsServerMemory": 4096,
+  "typescript.tsserver.watchOptions": {
+    "watchFile": "useFsEvents",
+    "watchDirectory": "useFsEvents"
+  },
+  "typescript.updateImportsOnFileMove.enabled": "always",
+  "typescript.format.enable": true,
+
+  // ESLint & Prettier
+  "eslint.validate": ["typescript", "javascript", "json"],
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": true
+  },
+  "eslint.alwaysShowStatus": true,
+  "eslint.format.enable": true,
+
+  // Node / NPM
+  "npm.enableScriptExplorer": true,
+  "npm.runSilent": true,
+  "npm.packageManager": "npm",
+
+  // Vitest (utilisé dans ce projet)
+  "vitest.enable": true,
+  "vitest.commandLine": "npm run test",
+  "vitest.include": ["test/**/*.test.ts", "test/**/*.spec.ts"],
+  "vitest.exclude": ["node_modules", "dist", "build"],
+
+  // Base de données - Connexions SQLite pour RAG
+  "sqltools.connections": [
+    {
+      "name": "RAG Memory SQLite",
+      "driver": "SQLite",
+      "database": "${workspaceFolder}/rag/db/memory/rag_memory.sqlite"
+    },
+    {
+      "name": "RAG Vectors SQLite",
+      "driver": "SQLite",
+      "database": "${workspaceFolder}/rag/db/vector/rag_vectors.sqlite"
+    },
+    {
+      "name": "Test Database",
+      "driver": "SQLite",
+      "database": "${workspaceFolder}/test.db"
+    },
+    {
+      "name": "RAG PostgreSQL (Configuration)",
+      "driver": "PostgreSQL",
+      "server": "localhost",
+      "port": 5432,
+      "database": "rag_db",
+      "username": "rag_user",
+      "password": "rag_password",
+      "previewLimit": 50
+    }
+  ],
+
+  // Exclusions de fichiers
+  "files.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/build": true,
+    "**/.git": true,
+    "**/.env": true,
+    "**/*.log": true
+  },
+
+  // Associations de fichiers spécifiques RAG
+  "files.associations": {
+    "*.ragignore": "ignore",
+    "*.ragconfig": "json",
+    "rag-config*.json": "json"
+  },
+
+  // Terminal
+  "terminal.integrated.defaultProfile.linux": "bash",
+  "terminal.integrated.cwd": "${workspaceFolder}",
+
+  // Git
+  "git.autofetch": true,
+  "git.enableSmartCommit": true,
+
+  // IA & Copilot (désactivé pour usage humain)
+  "github.copilot.enable": false,
+  "github.copilot.inlineSuggest.enable": false,
+  "visualstudioexptteam.vscodeintellicode.suggestions": true,
+
+  // Éditeur
+  "editor.tabSize": 2,
+  "editor.detectIndentation": false,
+  "editor.rulers": [80, 120],
+  "editor.wordWrap": "off",
+  "editor.minimap.enabled": true,
+  "editor.renderWhitespace": "boundary",
+  "editor.renderControlCharacters": true,
+
+  // Recherche
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/build": true,
+    "**/.git": true
+  },
+
+  // Télémetrie
+  "telemetry.enableTelemetry": false,
+  "telemetry.enableCrashReporter": false,
+
+  // Extensions
+  "extensions.autoUpdate": true,
+  "extensions.autoCheckUpdates": true,
+
+  // Workspace
+  "files.autoSave": "onFocusChange",
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+  "files.trimFinalNewlines": true
+}

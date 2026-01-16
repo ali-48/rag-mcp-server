@@ -1,0 +1,117 @@
+{
+  "recommendations": [
+    // ============================================
+    // NIVEAU 1 - Essentiel (Toujours activé)
+    // ============================================
+
+    // TypeScript / JavaScript
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+
+    // Git
+    "eamodio.gitlens",
+
+    // MCP & RAG spécifique
+    "block.vscode-mcp-extension",
+
+    // Base de données
+    "mtxr.sqltools",
+
+    // Configuration éditeur
+    "editorconfig.editorconfig",
+
+    // Configuration fichiers
+    "redhat.vscode-yaml",
+    "ms-vscode.vscode-json",
+
+    // ============================================
+    // NIVEAU 2 - Très utile (Activé par défaut pour ce projet)
+    // ============================================
+
+    // Node.js / NPM
+    "christian-kohler.npm-intellisense",
+    "connor4312.esbuild-problem-matchers",
+
+    // Base de données supplémentaires
+    "ckolkman.vscode-postgres",
+    "redis.redis-for-vscode",
+
+    // Gestion projet
+    "alefragnani.project-manager",
+
+    // Qualité code
+    "streetsidesoftware.code-spell-checker",
+    "usernamehw.errorlens",
+
+    // TypeScript amélioré
+    "yoavbls.pretty-ts-errors",
+
+    // IA offline
+    "visualstudioexptteam.vscodeintellicode",
+
+    // Gestion TODOs
+    "gruntfuggly.todo-tree",
+
+    // Commentaires
+    "aaron-bond.better-comments",
+
+    // Configuration
+    "tamasfe.even-better-toml",
+
+    // ============================================
+    // NIVEAU 3 - Spécialisé (Activé au besoin)
+    // ============================================
+
+    // Docker & conteneurs
+    "ms-azuretools.vscode-docker",
+    "ms-vscode-remote.remote-containers",
+
+    // GitHub
+    "github.vscode-pull-request-github",
+
+    // Git visuel
+    "mhutchie.git-graph",
+
+    // Base de données supplémentaires
+    "cweijan.vscode-mysql-client2",
+
+    // ============================================
+    // Extensions déjà installées mais optionnelles
+    // ============================================
+
+    // Débogage
+    "ms-vscode.js-debug",
+
+    // Tests
+    "orta.vscode-jest",
+
+    // Coût imports
+    "wix.vscode-import-cost",
+
+    // SVG
+    "simonsiefke.svg-preview",
+
+    // Markdown
+    "davidanson.vscode-markdownlint",
+
+    // XML
+    "dotjoshjohnson.xml",
+    "redhat.vscode-xml"
+  ],
+
+  "unwantedRecommendations": [
+    // Extensions à désactiver pour usage humain (IA seulement)
+    "github.copilot",
+    "github.copilot-chat",
+
+    // Extensions potentiellement conflictuelles
+    "ms-vscode.vscode-typescript-tslint-plugin", // Remplacé par ESLint
+    "eg2.vscode-npm-script", // Duplique fonctionnalités NPM intégrées
+
+    // Extensions obsolètes ou non pertinentes pour ce projet
+    "ms-vscode.csharp",
+    "golang.go",
+    "rust-lang.rust-analyzer",
+    "vscjava.vscode-java-pack"
+  ]
+}
