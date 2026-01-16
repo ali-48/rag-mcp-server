@@ -10,6 +10,8 @@ build-test/          # Dossier de build des tests
 logs/               # Dossier de logs
 *.tmp               # Fichiers temporaires
 *.bak               # Fichiers backup
+*.backup            # Fichiers backup (extension .backup)
+*.disabled.backup   # Fichiers backup désactivés
 *.pid               # Fichiers PID
 *.seed              # Fichiers seed
 

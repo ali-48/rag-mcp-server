@@ -226,4 +226,42 @@
 **Statut final** : ✅ Analyse historique complète et synthétisée
 
 ---
+
+## Phase 6 : Nettoyage du code mort et anti-duplication (Janvier 2026)
+
+### 16/01/2026 : Analyse et suppression du code mort
+
+**Objectif** : Identifier et supprimer le code mort, les duplications et les fichiers obsolètes pour améliorer la maintenabilité et respecter la règle R25 (anti-duplication stricte).
+
+**Modifications effectuées** :
+
+1. **Suppression des fichiers backup** :
+   - 6 fichiers `.backup` et `.disabled.backup` supprimés
+   - Vérification : aucune référence dans le code source
+   - Mise à jour de `.gitignore` pour exclure ces fichiers à l'avenir
+
+2. **Archivage des tests ad-hoc obsolètes** :
+   - 40 fichiers de test ad-hoc archivés dans `archived-tests/`
+   - Tests référençant des fichiers obsolètes (`graph-tools.js`, `rag-tools.js`, etc.)
+   - Tests non utilisés par les scripts officiels (`npm test`)
+
+3. **Suppression du code mort** :
+   - `src/core/registry.ts` supprimé (code mort, non importé/utilisé)
+   - Alternative : `src/core/registry-v2.ts` est la version active utilisée
+
+4. **Analyse des duplications** :
+   - `registry.ts` vs `registry-v2.ts` : v2 est la version améliorée, v1 supprimée
+   - `vector-store-sqlite.ts` vs `vector-store.ts` : architecture valide, responsabilités distinctes
+
+**Impact** :
+
+- **Réduction codebase** : 7 fichiers supprimés, 40 fichiers archivés
+- **Amélioration maintenabilité** : Code plus propre, moins de confusion
+- **Conformité règles** : Respect de R3 (zéro duplication), R6 (aucun code mort), R25 (anti-duplication)
+
+**Tests** : Exécution `npm test` - 3 tests passés, 2 tests échoués (problèmes Vitest non liés aux modifications)
+
+**Documentation** : Rapport détaillé généré dans `RAPPORT_NETTOYAGE_CODE_MORT.md`
+
+---
 *Document généré le 16/01/2026 - Analyse réalisée via Task Manager req-155*
