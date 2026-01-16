@@ -1,0 +1,583 @@
+#!/usr/bin/env node
+/**
+ * Script d'audit : Code Mapper
+ * Génère une cartographie technique complète du codebase
+ * Formats : JSON canonique, FreeMind Mind Map, SQLite database
+ *
+ * Usage: npx tsx scripts/code-mapper.ts [--json] [--mm] [--sql] [--output-dir <path>]
+ */
+
+import * as fs from 'fs';
+import * as path from 'path';
+import { Project } from 'ts-morph';
+
+// ============================================================================
+// TYPES ET INTERFACES
+// ============================================================================
+
+/**
+ * Type de fichier
+ */
+type FileType = 'code' | 'doc' | 'config' | 'other';
+
+/**
+ * Langage de programmation
+ */
+type Language = 'ts' | 'js' | 'json' | 'md' | 'yml' | 'yaml' | 'toml' | 'sql' | 'sh' | 'txt' | 'html' | 'css' | 'unknown';
+
+/**
+ * Visibilité d'un symbole
+ */
+type Visibility = 'public' | 'private' | 'protected';
+
+/**
+ * Type de symbole
+ */
+type SymbolKind = 'function' | 'class' | 'interface' | 'type' | 'variable' | 'enum' | 'namespace';
+
+/**
+ * Type d'import
+ */
+type ImportType = 'import' | 'require' | 'dynamic';
+
+/**
+ * Type d'appel
+ */
+type CallType = 'function' | 'method' | 'constructor' | 'async';
+
+/**
+ * Informations sur un fichier
+ */
+interface FileInfo {
+  id: string;           // file_001, file_002, etc.
+  path: string;         // Chemin relatif depuis la racine
+  type: FileType;
+  language?: Language;
+  lines: number;
+  size: number;
+  imports: ImportInfo[];
+  exports: string[];    // Noms des symboles exportés
+  functions: FunctionInfo[];
+  classes: ClassInfo[];
+  score: FileScore;
+}
+
+/**
+ * Informations sur un import
+ */
+interface ImportInfo {
+  module: string;       // Nom du module importé
+  type: ImportType;
+  names?: string[];     // Noms spécifiques importés
+}
+
+/**
+ * Informations sur une fonction
+ */
+interface FunctionInfo {
+  id: string;           // fn_001, fn_002, etc.
+  name: string;
+  visibility: Visibility;
+  lines: number;
+  complexity: number;
+  calls: string[];      // IDs des fonctions appelées
+}
+
+/**
+ * Informations sur une classe
+ */
+interface ClassInfo {
+  id: string;           // cls_001, cls_002, etc.
+  name: string;
+  methods: string[];
+  properties: string[];
+  lines: number;
+  extends?: string;     // Classe parente
+  implements?: string[]; // Interfaces implémentées
+}
+
+/**
+ * Score de qualité d'un fichier
+ */
+interface FileScore {
+  complexity: number;     // 0-1 (0 = simple, 1 = complexe)
+  maintainability: number; // 0-1 (0 = difficile, 1 = facile)
+  quality: number;        // 0-1 (0 = mauvaise, 1 = excellente)
+}
+
+/**
+ * Relation d'import
+ */
+interface ImportRelation {
+  from: string;         // ID du fichier source
+  to: string;           // ID du fichier cible ou nom du module externe
+  type: ImportType;
+}
+
+/**
+ * Relation d'appel
+ */
+interface CallRelation {
+  caller: string;       // ID de la fonction appelante
+  callee: string;       // ID de la fonction appelée
+  file: string;         // ID du fichier contenant l'appel
+}
+
+/**
+ * Relation d'héritage
+ */
+interface InheritanceRelation {
+  child: string;        // ID de la classe enfant
+  parent: string;       // ID de la classe parente ou nom du module externe
+}
+
+/**
+ * Carte de code complète
+ */
+interface CodeMap {
+  project: {
+    name: string;
+    path: string;
+    date: string;
+    language: string;
+  };
+  summary: {
+    totalFiles: number;
+    codeFiles: number;
+    configFiles: number;
+    docFiles: number;
+    functions: number;
+    classes: number;
+    interfaces: number;
+    imports: number;
+    calls: number;
+  };
+  files: FileInfo[];
+  relations: {
+    imports: ImportRelation[];
+    calls: CallRelation[];
+    inheritance: InheritanceRelation[];
+  };
+}
+
+// ============================================================================
+// CONFIGURATION
+// ============================================================================
+
+/**
+ * Dossiers à exclure de l'analyse
+ */
+const EXCLUDED_DIRS = [
+  'node_modules',
+  '.git',
+  'build',
+  'build-test',
+  'dist',
+  'coverage',
+  '.nyc_output',
+  '.vscode',
+  'logs',
+  'audit',
+  'test',
+  'test-data',
+  'test-chuking',
+  'archived-tests'
+];
+
+/**
+ * Fichiers à exclure de l'analyse
+ */
+const EXCLUDED_FILES = [
+  '.DS_Store',
+  'Thumbs.db',
+  '*.log',
+  '*.tmp',
+  '*.temp',
+  '*.map',
+  '*.d.ts'
+];
+
+/**
+ * Extensions de fichiers incluses
+ */
+const INCLUDED_EXTENSIONS = [
+  '.ts', '.js', '.json', '.md', '.yml', '.yaml', '.toml',
+  '.sql', '.sh', '.txt', '.html', '.css'
+];
+
+/**
+ * Mappage extension → langage
+ */
+const EXTENSION_TO_LANGUAGE: Record<string, Language> = {
+  '.ts': 'ts',
+  '.js': 'js',
+  '.json': 'json',
+  '.md': 'md',
+  '.yml': 'yml',
+  '.yaml': 'yaml',
+  '.toml': 'toml',
+  '.sql': 'sql',
+  '.sh': 'sh',
+  '.txt': 'txt',
+  '.html': 'html',
+  '.css': 'css'
+};
+
+/**
+ * Mappage extension → type de fichier
+ */
+const EXTENSION_TO_TYPE: Record<string, FileType> = {
+  '.ts': 'code',
+  '.js': 'code',
+  '.json': 'config',
+  '.yml': 'config',
+  '.yaml': 'config',
+  '.toml': 'config',
+  '.md': 'doc',
+  '.txt': 'doc',
+  '.sql': 'code',
+  '.sh': 'code',
+  '.html': 'code',
+  '.css': 'code'
+};
+
+// ============================================================================
+// FONCTIONS UTILITAIRES
+// ============================================================================
+
+/**
+ * Vérifie si un fichier/dossier doit être exclu
+ */
+function shouldExclude(filePath: string, isDirectory: boolean): boolean {
+  const name = path.basename(filePath);
+  const dir = path.dirname(filePath);
+
+  // Vérifier les dossiers exclus
+  if (isDirectory && EXCLUDED_DIRS.includes(name)) {
+    return true;
+  }
+
+  // Vérifier les fichiers exclus
+  if (!isDirectory) {
+    for (const pattern of EXCLUDED_FILES) {
+      if (pattern.includes('*')) {
+        const regex = new RegExp(pattern.replace('*', '.*'));
+        if (regex.test(name)) return true;
+      } else if (name === pattern) {
+        return true;
+      }
+    }
+
+    // Vérifier les extensions incluses
+    const ext = path.extname(name).toLowerCase();
+    if (ext && !INCLUDED_EXTENSIONS.includes(ext)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+/**
+ * Détermine le type de fichier basé sur l'extension
+ */
+function getFileType(filePath: string): FileType {
+  const ext = path.extname(filePath).toLowerCase();
+  return EXTENSION_TO_TYPE[ext] || 'other';
+}
+
+/**
+ * Détermine le langage basé sur l'extension
+ */
+function getLanguage(filePath: string): Language | undefined {
+  const ext = path.extname(filePath).toLowerCase();
+  return EXTENSION_TO_LANGUAGE[ext];
+}
+
+/**
+ * Génère un ID unique pour un fichier
+ */
+function generateFileId(index: number): string {
+  return `file_${String(index).padStart(3, '0')}`;
+}
+
+/**
+ * Génère un ID unique pour une fonction
+ */
+function generateFunctionId(index: number): string {
+  return `fn_${String(index).padStart(3, '0')}`;
+}
+
+/**
+ * Génère un ID unique pour une classe
+ */
+function generateClassId(index: number): string {
+  return `cls_${String(index).padStart(3, '0')}`;
+}
+
+// ============================================================================
+// FONCTIONS PRINCIPALES (À IMPLÉMENTER)
+// ============================================================================
+/**
+ * Scanne récursivement les fichiers du projet
+ */
+async function scanFiles(rootDir: string): Promise<FileInfo[]> {
+  console.log('📁 Scan des fichiers...');
+  
+  const files: FileInfo[] = [];
+  let fileIndex = 0;
+  
+  function scanDirectory(dirPath: string): void {
+    try {
+      const items = fs.readdirSync(dirPath);
+      
+      for (const item of items) {
+        const fullPath = path.join(dirPath, item);
+        const relativePath = path.relative(rootDir, fullPath);
+        
+        try {
+          const stat = fs.statSync(fullPath);
+          const isDirectory = stat.isDirectory();
+          
+          // Vérifier si l'élément doit être exclu
+          if (shouldExclude(fullPath, isDirectory)) {
+            continue;
+          }
+          
+          if (isDirectory) {
+            // Scanner récursivement les sous-dossiers
+            scanDirectory(fullPath);
+          } else {
+            // Analyser le fichier
+            fileIndex++;
+            const fileInfo = analyzeFile(fullPath, relativePath, fileIndex, stat);
+            files.push(fileInfo);
+            
+            // Afficher la progression
+            if (fileIndex % 20 === 0) {
+              console.log(`  📄 ${fileIndex} fichiers scannés...`);
+            }
+          }
+        } catch (error: any) {
+          console.warn(`⚠️  Impossible d'accéder à ${fullPath}:`, error.message);
+        }
+      }
+    } catch (error: any) {
+      console.error(`❌ Erreur lors du scan de ${dirPath}:`, error.message);
+    }
+  }
+  
+  // Démarrer le scan
+  scanDirectory(rootDir);
+  
+  console.log(`✅ ${files.length} fichiers trouvés et analysés`);
+  return files;
+}
+
+/**
+ * Analyse un fichier individuel et extrait ses métadonnées
+ */
+function analyzeFile(
+  filePath: string,
+  relativePath: string,
+  index: number,
+  stat: fs.Stats
+): FileInfo {
+  // Lire le contenu pour compter les lignes
+  const content = fs.readFileSync(filePath, 'utf8');
+  const lines = content.split('\n').length;
+  
+  // Déterminer le type et le langage
+  const fileType = getFileType(filePath);
+  const language = getLanguage(filePath);
+  
+  // Générer l'ID unique
+  const id = generateFileId(index);
+  
+  // Créer l'objet FileInfo
+  const fileInfo: FileInfo = {
+    id,
+    path: relativePath,
+    type: fileType,
+    language,
+    lines,
+    size: stat.size,
+    imports: [],      // Rempli par analyse TypeScript
+    exports: [],      // Rempli par analyse TypeScript
+    functions: [],    // Rempli par analyse TypeScript
+    classes: [],      // Rempli par analyse TypeScript
+    score: {
+      complexity: 0,
+      maintainability: 0,
+      quality: 0
+    }
+  };
+  
+  return fileInfo;
+}
+
+/**
+ * Scanne récursivement les fichiers du projet
+ */
+
+/**
+ * Analyse les fichiers TypeScript avec ts-morph
+ */
+async function analyzeTypeScriptFiles(files: FileInfo[], project: Project): Promise<void> {
+  console.log('🔍 Analyse TypeScript...');
+  // À implémenter dans T003-T006
+}
+
+/**
+ * Construit les relations entre fichiers et symboles
+ */
+async function buildRelations(files: FileInfo[]): Promise<{
+  imports: ImportRelation[];
+  calls: CallRelation[];
+  inheritance: InheritanceRelation[];
+}> {
+  console.log('🧩 Construction des relations...');
+  // À implémenter dans T007-T008
+  return { imports: [], calls: [], inheritance: [] };
+}
+
+/**
+ * Calcule les métriques de qualité
+ */
+async function calculateMetrics(files: FileInfo[]): Promise<void> {
+  console.log('📊 Calcul des métriques...');
+  // À implémenter dans T009
+}
+
+/**
+ * Génère le fichier JSON canonique
+ */
+async function generateJsonCodeMap(
+  files: FileInfo[],
+  relations: { imports: ImportRelation[]; calls: CallRelation[]; inheritance: InheritanceRelation[] },
+  outputPath: string
+): Promise<void> {
+  console.log('📄 Génération JSON...');
+  // À implémenter dans T010
+}
+
+/**
+ * Génère le fichier FreeMind Mind Map
+ */
+async function generateFreeMindMap(
+  files: FileInfo[],
+  relations: { imports: ImportRelation[]; calls: CallRelation[]; inheritance: InheritanceRelation[] },
+  outputPath: string
+): Promise<void> {
+  console.log('🗺️ Génération Mind Map...');
+  // À implémenter dans T011
+}
+
+/**
+ * Génère la base de données SQLite
+ */
+async function generateSqliteDatabase(
+  files: FileInfo[],
+  relations: { imports: ImportRelation[]; calls: CallRelation[]; inheritance: InheritanceRelation[] },
+  outputPath: string
+): Promise<void> {
+  console.log('💾 Génération base SQLite...');
+  // À implémenter dans T012
+}
+
+// ============================================================================
+// FONCTION PRINCIPALE
+// ============================================================================
+
+async function main() {
+  console.log('🚀 Démarrage du Code Mapper...');
+
+  const startTime = Date.now();
+  const rootDir = process.cwd();
+
+  // Configuration des options (à implémenter dans T013)
+  const options = {
+    outputJson: true,
+    outputMindMap: true,
+    outputSqlite: true,
+    outputDir: path.join(rootDir, 'audit')
+  };
+
+  try {
+    // 1. Créer le dossier de sortie
+    if (!fs.existsSync(options.outputDir)) {
+      fs.mkdirSync(options.outputDir, { recursive: true });
+    }
+
+    // 2. Initialiser le projet TypeScript
+    const project = new Project({
+      tsConfigFilePath: path.join(rootDir, 'tsconfig.json'),
+      skipAddingFilesFromTsConfig: true
+    });
+
+    // 3. Scanner les fichiers (T002)
+    const files = await scanFiles(rootDir);
+
+    // 4. Analyser les fichiers TypeScript (T003-T006)
+    await analyzeTypeScriptFiles(files, project);
+
+    // 5. Construire les relations (T007-T008)
+    const relations = await buildRelations(files);
+
+    // 6. Calculer les métriques (T009)
+    await calculateMetrics(files);
+
+    // 7. Générer les exports
+    if (options.outputJson) {
+      const jsonPath = path.join(options.outputDir, 'code_map.json');
+      await generateJsonCodeMap(files, relations, jsonPath);
+    }
+
+    if (options.outputMindMap) {
+      const mmPath = path.join(options.outputDir, 'code_map.mm');
+      await generateFreeMindMap(files, relations, mmPath);
+    }
+
+    if (options.outputSqlite) {
+      const dbPath = path.join(options.outputDir, 'code_map.db');
+      await generateSqliteDatabase(files, relations, dbPath);
+    }
+
+    const elapsedTime = Date.now() - startTime;
+
+    console.log('\n✅ Code Mapper terminé avec succès !');
+    console.log(`⏱️  Temps d'exécution: ${elapsedTime}ms`);
+
+  } catch (error: any) {
+    console.error('❌ Erreur lors de l\'exécution:', error.message);
+    process.exit(1);
+  }
+}
+
+// ============================================================================
+// POINT D'ENTRÉE
+// ============================================================================
+
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main().catch((error: any) => {
+    console.error('❌ Erreur fatale:', error);
+    process.exit(1);
+  });
+}
+
+// ============================================================================
+// EXPORTS POUR TESTS
+// ============================================================================
+
+export {
+  analyzeTypeScriptFiles,
+  buildRelations,
+  calculateMetrics, CallRelation, CallType, ClassInfo, CodeMap, FileInfo, FileScore,
+  // Types
+  FileType, FunctionInfo, generateClassId, generateFileId, generateFreeMindMap, generateFunctionId, generateJsonCodeMap, generateSqliteDatabase, getFileType,
+  getLanguage, ImportInfo, ImportRelation, ImportType, InheritanceRelation, Language,
+  // Fonctions principales
+  scanFiles,
+  // Fonctions utilitaires
+  shouldExclude, SymbolKind, Visibility
+};
