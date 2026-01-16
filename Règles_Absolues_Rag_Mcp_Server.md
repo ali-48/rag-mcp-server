@@ -1,6 +1,6 @@
 # 📜 Règles absolues pour développer un **RAG MCP Server**
 
-> **Ce document définit les 14 règles NON NÉGOCIABLES** à respecter pour concevoir, développer et maintenir un système RAG (Retrieval-Augmented Generation) intégré à un **MCP Server**.
+> **Ce document définit les 25 règles NON NÉGOCIABLES** à respecter pour concevoir, développer et maintenir un système RAG (Retrieval-Augmented Generation) intégré à un **MCP Server**.
 >
 > Version: 3.0.0 | Dernière mise à jour: 2026-01-16
 >
@@ -616,7 +616,7 @@ graph TD
 
 #### Checklist review
 
-- [ ] Conformité aux 14 règles absolues
+- [ ] Conformité aux 25 règles absolues
 - [ ] Aucun doublon de code créé
 - [ ] Tests unitaires adéquats
 - [ ] Documentation mise à jour
@@ -924,6 +924,221 @@ graph TD
 
 ---
 
+## 🔥 RÈGLE ABSOLUE #25 : Anti-duplication stricte (fichiers, code, logique)
+
+### Principe
+
+**Un concept = une seule implémentation. Toute duplication (fichiers, fonctions, logique) est interdite et doit être immédiatement fusionnée ou archivée.**
+
+### Interdictions absolues
+
+- ❌ **Duplication de fichiers** : Pas de `vector-store.ts` et `vector-store-refactored.ts`
+- ❌ **Duplication de fonctions** : Pas de `calculateEmbeddings()` dans deux fichiers différents
+- ❌ **Duplication de logique** : Pas de même algorithme implémenté deux fois
+- ❌ **Code mort** : Pas de fonctions non appelées, imports inutiles, TODO sans ticket
+- ❌ **Documentation divergente** : Pas de plusieurs sources de vérité contradictoires
+
+### Obligations strictes
+
+1. **Fusion immédiate** : Détection duplication → fusion dans les 24h
+2. **Archivage contrôlé** : Fichiers obsolètes → `/archive/` avec date et raison
+3. **Refactoring prioritaire** : Avant toute nouvelle feature, éliminer les duplications
+4. **Validation automatique** : CI/CD doit scanner et bloquer les duplications
+5. **Documentation unique** : Une seule source de vérité par concept
+
+### Contrôles obligatoires (pour IA)
+
+```json
+{
+  "anti_duplication_check": {
+    "files_scanned": 42,
+    "duplications_found": 0,
+    "files_archived": 3,
+    "functions_merged": 5,
+    "validation_passed": true
+  }
+}
+```
+
+### Sanction architecturale
+
+**Toute violation = blocage immédiat du merge + refactoring obligatoire avant re-soumission**
+
+#### Processus de sanction
+
+```mermaid
+graph TD
+    A[Détection duplication] --> B{Type duplication?}
+    B -->|Fichier| C[Fusion/Archivage obligatoire]
+    B -->|Fonction| D[Extraction module commun]
+    B -->|Logique| E[Refactoring abstraction]
+    C --> F[Validation CI/CD]
+    D --> F
+    E --> F
+    F --> G{Validation réussie?}
+    G -->|Non| H[Rejet merge + ticket bug]
+    G -->|Oui| I[Approval merge]
+```
+
+#### Échelles de sanction
+
+1. **Niveau 1** (Duplication mineure) : Warning + correction dans les 48h
+2. **Niveau 2** (Duplication majeure) : Blocage merge + correction immédiate
+3. **Niveau 3** (Duplication structurelle) : Review architecture + plan correction
+
+### Version IA
+
+**Pour les agents IA assistant au développement :**
+
+```json
+{
+  "notes_for_ai": "🔍 RÈGLE ANTI-DUPLICATION #25 - Vérifiez systématiquement :\n1. Ce fichier n'existe pas déjà sous un autre nom\n2. Cette fonction n'existe pas déjà dans un autre module\n3. Cette logique n'est pas déjà implémentée ailleurs\n4. La documentation est unique et à jour\n\n⚠️ AVERTISSEMENT : Toute duplication détectée doit être signalée et corrigée avant tout commit.",
+  "allowed_actions": [
+    "scan_duplications",
+    "suggest_fusion",
+    "create_refactoring_plan",
+    "archive_obsolete_file"
+  ],
+  "next_steps": [
+    "Exécuter scan anti-duplication",
+    "Proposer fusion si duplication détectée",
+    "Archiver fichiers obsolètes"
+  ]
+}
+```
+
+### Exemples d'application
+
+#### ✅ **Autorisé**
+
+```typescript
+// Un seul fichier pour VectorStore
+// src/rag/vector-store.ts (unique)
+class VectorStore {
+  // Implémentation unique
+}
+
+// Module commun pour utilitaires partagés
+// src/core/utils/math-utils.ts
+export function calculateSimilarity(a: number[], b: number[]) {
+  // Implémentation unique utilisée partout
+}
+```
+
+#### ❌ **Interdit**
+
+```typescript
+// ❌ DUPLICATION DE FICHIERS
+// src/rag/vector-store.ts
+class VectorStore { /* version A */ }
+
+// src/rag/vector-store-refactored.ts  ← INTERDIT
+class VectorStoreRefactored { /* version B */ }
+
+// ❌ DUPLICATION DE FONCTIONS
+// src/utils/embedding-utils.ts
+function calculateEmbeddings(text: string) { /* version A */ }
+
+// src/rag/embedding-service.ts  ← INTERDIT  
+function calculateEmbeddings(text: string) { /* version B */ }
+
+// ❌ CODE MORT
+// src/old/legacy-service.ts  ← INTERDIT (non importé)
+function legacyFunction() { /* jamais appelé */ }
+```
+
+### Implémentation technique
+
+#### Scan automatique
+
+```bash
+# Commande de scan anti-duplication
+npm run scan:duplications
+
+# Sortie attendue
+{
+  "status": "success",
+  "scan_results": {
+    "total_files": 150,
+    "duplicated_files": 0,
+    "duplicated_functions": 0,
+    "dead_code_found": 3,
+    "obsolete_files": 2,
+    "recommended_actions": [
+      "Archive /src/old/legacy-service.ts",
+      "Merge /src/utils/math.ts et /src/core/math.ts"
+    ]
+  }
+}
+```
+
+#### Configuration CI/CD
+
+```yaml
+# .github/workflows/anti-duplication.yml
+name: Anti-Duplication Scan
+on: [pull_request]
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Scan duplications
+        run: npm run scan:duplications
+      - name: Validate no duplications
+        run: |
+          if [ "$(jq '.scan_results.duplicated_files' results.json)" -gt 0 ]; then
+            echo "❌ Duplications détectées - Merge bloqué"
+            exit 1
+          fi
+```
+
+#### Outils de support
+
+1. **Scanner de similarité** : Détection code similaire > 80%
+2. **Analyseur d'imports** : Identification code non utilisé
+3. **Détecteur de fichiers obsolètes** : Fichiers non modifiés > 6 mois
+4. **Validateur de documentation** : Cohérence code ↔ documentation
+
+### Impact architectural
+
+1. **Réduction dette technique** : -X% de code dupliqué
+2. **Amélioration maintenance** : Un seul point de modification
+3. **Optimisation performance** : Réduction taille bundle
+4. **Clarté codebase** : Structure prévisible et cohérente
+5. **Onboarding accéléré** : Moins de confusion pour nouveaux développeurs
+
+### Métriques de conformité
+
+| Métrique | Cible | Mesure | Fréquence |
+|----------|-------|--------|-----------|
+| Taux duplication fichiers | 0% | `duplicated_files / total_files` | Chaque commit |
+| Taux duplication fonctions | < 1% | `duplicated_functions / total_functions` | Hebdomadaire |
+| Code mort détecté | 0 | `dead_code_instances` | Chaque PR |
+| Documentation unique | 100% | `docs_with_single_source / total_docs` | Mensuelle |
+
+### Exception contrôlée
+
+**Seule exception autorisée** : Tests unitaires (permission de dupliquer setup pour isolation)
+
+```typescript
+// ✅ AUTORISÉ (tests unitaires)
+// test/unit/service-a.test.ts
+const mockData = { /* setup A */ };
+
+// test/unit/service-b.test.ts  
+const mockData = { /* setup B - duplication autorisée pour isolation */ };
+```
+
+### Gouvernance
+
+- **Responsable** : Architecte principal + équipe qualité
+- **Review** : Vérification chaque PR via CI/CD
+- **Reporting** : Dashboard mensuel des métriques
+- **Amélioration** : Processus d'optimisation continue
+
+---
+
 ## 🚨 Règles de survie (synthèse)
 
 - 🧠 **Un LLM ne fait PAS du système**
@@ -947,7 +1162,7 @@ graph TD
 
 > Un RAG MCP Server est un **système distribué**, pas un script.
 
-Respecter ces 14 règles absolues garantit :
+Respecter ces 25 règles absolues garantit :
 
 - **Stabilité** : Pas de crash inattendu
 - **Auditabilité** : Tout est traçable et loggé
