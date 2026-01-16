@@ -1,8 +1,148 @@
 {
-	"folders": [
-		{
-			"path": "."
-		}
-	],
-	"settings": {}
+  "folders": [
+    {
+      "path": ".",
+      "name": "RAG MCP Server"
+    }
+  ],
+  "settings": {
+    // Hérite des paramètres du dossier .vscode/settings.json
+    // Configuration spécifique au workspace
+    "files.exclude": {
+      "**/node_modules": true,
+      "**/dist": true,
+      "**/build": true,
+      "**/.git": true,
+      "**/.env": true,
+      "**/*.log": true
+    },
+    "search.exclude": {
+      "**/node_modules": true,
+      "**/dist": true,
+      "**/build": true,
+      "**/.git": true
+    },
+    // Extensions recommandées (définies dans .vscode/extensions.json)
+    "extensions.recommendations": [
+      "dbaeumer.vscode-eslint",
+      "esbenp.prettier-vscode",
+      "eamodio.gitlens",
+      "block.vscode-mcp-extension",
+      "mtxr.sqltools",
+      "editorconfig.editorconfig",
+      "redhat.vscode-yaml",
+      "streetsidesoftware.code-spell-checker",
+      "usernamehw.errorlens",
+      "yoavbls.pretty-ts-errors",
+      "visualstudioexptteam.vscodeintellicode",
+      "gruntfuggly.todo-tree",
+      "aaron-bond.better-comments",
+      "tamasfe.even-better-toml"
+    ],
+    // Désactiver Copilot pour ce workspace
+    "github.copilot.enable": false,
+    "github.copilot.inlineSuggest.enable": false,
+    // Configuration TypeScript
+    "typescript.tsdk": "node_modules/typescript/lib",
+    "typescript.preferences.importModuleSpecifier": "project-relative",
+    // Configuration Vitest
+    "vitest.enable": true,
+    "vitest.commandLine": "npm run test",
+    // Formatage automatique
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": true
+    }
+  },
+  "extensions": {
+    "recommendations": [
+      "dbaeumer.vscode-eslint",
+      "esbenp.prettier-vscode",
+      "eamodio.gitlens",
+      "block.vscode-mcp-extension",
+      "mtxr.sqltools",
+      "editorconfig.editorconfig",
+      "redhat.vscode-yaml",
+      "streetsidesoftware.code-spell-checker",
+      "usernamehw.errorlens",
+      "yoavbls.pretty-ts-errors",
+      "visualstudioexptteam.vscodeintellicode",
+      "gruntfuggly.todo-tree",
+      "aaron-bond.better-comments",
+      "tamasfe.even-better-toml"
+    ],
+    "unwantedRecommendations": ["github.copilot", "github.copilot-chat"]
+  },
+  "tasks": {
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "Build",
+        "type": "npm",
+        "script": "build",
+        "group": "build",
+        "problemMatcher": "$tsc"
+      },
+      {
+        "label": "Dev",
+        "type": "npm",
+        "script": "dev",
+        "group": "none",
+        "isBackground": true,
+        "problemMatcher": []
+      },
+      {
+        "label": "Test",
+        "type": "npm",
+        "script": "test",
+        "group": "test"
+      },
+      {
+        "label": "Lint",
+        "type": "npm",
+        "script": "lint",
+        "group": "test"
+      },
+      {
+        "label": "Clean",
+        "type": "npm",
+        "script": "clean",
+        "group": "build"
+      }
+    ]
+  },
+  "launch": {
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "type": "node",
+        "request": "launch",
+        "name": "Debug RAG MCP Server",
+        "program": "${workspaceFolder}/src/index.ts",
+        "runtimeExecutable": "npm",
+        "runtimeArgs": ["run", "dev"],
+        "console": "integratedTerminal",
+        "internalConsoleOptions": "neverOpen",
+        "sourceMaps": true,
+        "outFiles": ["${workspaceFolder}/build/**/*.js"]
+      },
+      {
+        "type": "node",
+        "request": "launch",
+        "name": "Debug Tests",
+        "program": "${workspaceFolder}/node_modules/vitest/vitest.mjs",
+        "args": ["run", "${workspaceFolder}"],
+        "console": "integratedTerminal",
+        "internalConsoleOptions": "neverOpen"
+      },
+      {
+        "type": "node",
+        "request": "attach",
+        "name": "Attach to Process",
+        "port": 9229,
+        "restart": true
+      }
+    ]
+  }
 }
