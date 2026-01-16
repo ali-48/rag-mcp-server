@@ -208,9 +208,154 @@ export const activatedRagOutputSchema = {
     additionalProperties: false
 };
 /**
- * Schémas pour l'outil recherche_rag
+ * Schémas pour l'outil manage_projects
  */
-export const rechercheRagInputSchema = {
+export const manageProjectsInputSchema = {
+    type: 'object',
+    properties: {
+        action: {
+            type: 'string',
+            enum: ['list', 'stats'],
+            description: 'Action à effectuer',
+            default: 'list'
+        },
+        project_path: {
+            type: 'string',
+            description: 'Chemin du projet pour les statistiques (requis pour \'stats\')'
+        }
+    },
+    additionalProperties: false
+};
+export const manageProjectsOutputSchema = {
+    type: 'object',
+    properties: {
+        status: {
+            type: 'string',
+            enum: ['ok', 'error'],
+            description: 'Statut de l\'opération'
+        },
+        message: {
+            type: 'string',
+            description: 'Message descriptif'
+        },
+        action: {
+            type: 'string',
+            description: 'Action effectuée'
+        },
+        data: {
+            type: 'object',
+            description: 'Données de résultat',
+            properties: {
+                projects: {
+                    type: 'array',
+                    items: {
+                        type: 'object',
+                        properties: {
+                            path: { type: 'string' },
+                            initialized: { type: 'boolean' },
+                            indexed_at: { type: 'string', format: 'date-time' },
+                            total_files: { type: 'number' },
+                            total_chunks: { type: 'number' },
+                            last_updated: { type: 'string', format: 'date-time' }
+                        },
+                        required: ['path', 'initialized']
+                    }
+                },
+                stats: {
+                    type: 'object',
+                    description: 'Statistiques du projet (si action=stats)',
+                    additionalProperties: true
+                }
+            },
+            additionalProperties: false
+        },
+        timestamp: {
+            type: 'string',
+            format: 'date-time',
+            description: 'Horodatage de l\'opération'
+        }
+    },
+    required: ['status', 'message', 'action', 'timestamp'],
+    additionalProperties: false
+};
+/**
+ * Schémas pour l'outil get_status
+ */
+export const getStatusInputSchema = {
+    type: 'object',
+    properties: {
+        scope: {
+            type: 'string',
+            enum: ["global", "project", "task"],
+            description: "Scope du statut à récupérer",
+            default: "global"
+        },
+        project_id: {
+            type: 'string',
+            description: "ID du projet (requis si scope=project)"
+        },
+        task_id: {
+            type: 'string',
+            description: "ID de la tâche (requis si scope=task)"
+        },
+        include_notes_for_ai: {
+            type: 'boolean',
+            description: "Inclure les notes pour l'IA",
+            default: true
+        },
+        include_allowed_actions: {
+            type: 'boolean',
+            description: "Inclure les actions autorisées",
+            default: true
+        }
+    },
+    additionalProperties: false
+};
+export const getStatusOutputSchema = {
+    type: 'object',
+    properties: {
+        status: {
+            type: 'string',
+            enum: ['ok', 'error'],
+            description: 'Statut de la requête'
+        },
+        scope: {
+            type: 'string',
+            enum: ["global", "project", "task"],
+            description: "Scope du statut récupéré"
+        },
+        data: {
+            type: 'object',
+            description: 'Données de statut',
+            additionalProperties: true
+        },
+        notes_for_ai: {
+            type: 'array',
+            items: { type: 'string' },
+            description: 'Notes pour l\'IA'
+        },
+        allowed_actions: {
+            type: 'array',
+            items: { type: 'string' },
+            description: 'Actions autorisées'
+        },
+        required_action: {
+            type: 'string',
+            description: 'Action requise pour continuer'
+        },
+        timestamp: {
+            type: 'string',
+            format: 'date-time',
+            description: 'Horodatage de la requête'
+        }
+    },
+    required: ['status', 'scope', 'timestamp'],
+    additionalProperties: false
+};
+/**
+ * Schémas pour l'outil query_rag
+ */
+export const queryRagInputSchema = {
     type: 'object',
     properties: {
         query: {
@@ -218,15 +363,15 @@ export const rechercheRagInputSchema = {
             description: 'Requête de recherche sémantique',
             minLength: 1
         },
+        project_path: {
+            type: 'string',
+            description: 'Chemin absolu vers le projet (auto-détecté si vide)'
+        },
         scope: {
             type: 'string',
             enum: ['project', 'global'],
             description: 'Scope de recherche',
             default: 'project'
-        },
-        project_filter: {
-            type: 'string',
-            description: 'Filtrer par chemin de projet spécifique (requis si scope=project)'
         },
         content_types: {
             type: 'array',
@@ -337,21 +482,23 @@ export const rechercheRagInputSchema = {
             minimum: 0,
             maximum: 10000
         },
-        legacy_mode: {
-            type: 'boolean',
-            description: 'Activer le mode rétrocompatible avec search_code',
-            default: false
+        timeout_seconds: {
+            type: 'number',
+            description: 'Timeout en secondes pour la recherche (exception - conservé pour query_rag)',
+            default: 30,
+            minimum: 1,
+            maximum: 300
         }
     },
     required: ['query'],
     additionalProperties: false
 };
-export const rechercheRagOutputSchema = {
+export const queryRagOutputSchema = {
     type: 'object',
     properties: {
         status: {
             type: 'string',
-            enum: ['ok', 'error', 'no_results'],
+            enum: ['ok', 'error'],
             description: 'Statut de la recherche'
         },
         message: {
@@ -360,40 +507,56 @@ export const rechercheRagOutputSchema = {
         },
         query: {
             type: 'string',
-            description: 'Requête originale'
+            description: 'Requête de recherche'
+        },
+        project_path: {
+            type: 'string',
+            description: 'Chemin du projet recherché'
+        },
+        duration_seconds: {
+            type: 'number',
+            description: 'Durée d\'exécution en secondes'
         },
         results: {
             type: 'array',
+            description: 'Résultats de la recherche',
             items: {
                 type: 'object',
                 properties: {
-                    id: { type: 'string' },
-                    file_path: { type: 'string' },
+                    filePath: { type: 'string' },
+                    score: { type: 'number' },
                     content: { type: 'string' },
-                    score: { type: 'number', minimum: 0, maximum: 1 },
-                    metadata: { type: 'object' },
-                    project_path: { type: 'string' },
-                    content_type: { type: 'string' },
-                    language: { type: 'string' },
-                    lines_count: { type: 'number' },
-                    is_compressed: { type: 'boolean' }
+                    metadata: { type: 'object' }
                 },
-                required: ['id', 'file_path', 'content', 'score']
-            },
-            description: 'Résultats de la recherche'
+                required: ['filePath', 'score']
+            }
         },
         stats: {
             type: 'object',
             description: 'Statistiques de la recherche',
             properties: {
                 total_results: { type: 'number' },
-                filtered_results: { type: 'number' },
-                search_time_ms: { type: 'number' },
-                average_score: { type: 'number' },
-                min_score: { type: 'number' },
-                max_score: { type: 'number' }
+                execution_time_ms: { type: 'number' },
+                projects_scanned: { type: 'number' }
             },
             additionalProperties: false
+        },
+        config_used: {
+            type: 'object',
+            description: 'Configuration utilisée',
+            properties: {
+                scope: { type: 'string' },
+                top_k: { type: 'number' },
+                threshold: { type: 'number' },
+                search_mode: { type: 'string' },
+                enable_reranking: { type: 'boolean' }
+            },
+            additionalProperties: false
+        },
+        next_steps: {
+            type: 'array',
+            items: { type: 'string' },
+            description: 'Étapes suivantes recommandées'
         },
         timestamp: {
             type: 'string',
@@ -401,67 +564,173 @@ export const rechercheRagOutputSchema = {
             description: 'Horodatage de la recherche'
         }
     },
-    required: ['status', 'message', 'query', 'results', 'timestamp'],
+    required: ['status', 'message', 'query', 'timestamp'],
     additionalProperties: false
 };
 /**
- * Schémas pour l'outil manage_projects
+ * Schémas pour l'outil cancel_task
  */
-export const manageProjectsInputSchema = {
+export const cancelTaskInputSchema = {
     type: 'object',
     properties: {
-        action: {
+        task_id: {
             type: 'string',
-            enum: ['list', 'stats'],
-            description: 'Action à effectuer',
-            default: 'list'
+            description: 'ID de la tâche à annuler (obtenu via index_rag ou activated_rag)'
         },
+        reason: {
+            type: 'string',
+            description: 'Raison de l\'annulation (optionnel)',
+            default: 'Annulée par l\'utilisateur'
+        },
+        force: {
+            type: 'boolean',
+            description: 'Forcer l\'annulation même si la tâche est en cours d\'exécution',
+            default: false
+        }
+    },
+    required: ['task_id'],
+    additionalProperties: false
+};
+export const cancelTaskOutputSchema = {
+    type: 'object',
+    properties: {
+        success: {
+            type: 'boolean',
+            description: 'Succès de l\'annulation'
+        },
+        task_id: {
+            type: 'string',
+            description: 'ID de la tâche'
+        },
+        cancelled: {
+            type: 'boolean',
+            description: 'Si la tâche a été annulée'
+        },
+        cancellation_method: {
+            type: 'string',
+            description: 'Méthode d\'annulation utilisée'
+        },
+        reason: {
+            type: 'string',
+            description: 'Raison de l\'annulation'
+        },
+        final_status: {
+            type: 'object',
+            description: 'Statut final de la tâche',
+            properties: {
+                state: { type: 'string' },
+                step: { type: 'string' },
+                progress: { type: 'number' },
+                files_processed: { type: 'number' },
+                files_total: { type: 'number' }
+            },
+            additionalProperties: false
+        },
+        previous_state: {
+            type: 'string',
+            description: 'État précédent de la tâche'
+        },
+        duration_ms: {
+            type: 'number',
+            description: 'Durée de l\'opération en millisecondes'
+        },
+        timestamp: {
+            type: 'string',
+            format: 'date-time',
+            description: 'Horodatage de l\'annulation'
+        },
+        recommendations: {
+            type: 'array',
+            items: { type: 'string' },
+            description: 'Recommandations pour les étapes suivantes'
+        }
+    },
+    required: ['success', 'task_id', 'cancelled', 'timestamp'],
+    additionalProperties: false
+};
+/**
+ * Schémas pour l'outil list_tasks
+ */
+export const listTasksInputSchema = {
+    type: 'object',
+    properties: {
         project_path: {
             type: 'string',
-            description: 'Chemin du projet pour les statistiques (requis pour \'stats\')'
+            description: 'Chemin du projet (optionnel, liste toutes les tâches si vide)'
+        },
+        state_filter: {
+            type: 'string',
+            enum: ['all', 'queued', 'running', 'completed', 'failed', 'cancelled'],
+            description: 'Filtrer par état',
+            default: 'all'
+        },
+        limit: {
+            type: 'number',
+            description: 'Nombre maximum de tâches à retourner',
+            default: 50,
+            minimum: 1,
+            maximum: 1000
+        },
+        include_stats: {
+            type: 'boolean',
+            description: 'Inclure les statistiques globales',
+            default: true
         }
     },
     additionalProperties: false
 };
-export const manageProjectsOutputSchema = {
+export const listTasksOutputSchema = {
     type: 'object',
     properties: {
-        status: {
-            type: 'string',
-            enum: ['ok', 'error'],
-            description: 'Statut de l\'opération'
+        success: {
+            type: 'boolean',
+            description: 'Succès de l\'opération'
         },
-        message: {
-            type: 'string',
-            description: 'Message descriptif'
-        },
-        action: {
-            type: 'string',
-            description: 'Action effectuée'
-        },
-        data: {
-            type: 'object',
-            description: 'Données de résultat',
-            properties: {
-                projects: {
-                    type: 'array',
-                    items: {
-                        type: 'object',
-                        properties: {
-                            path: { type: 'string' },
-                            initialized: { type: 'boolean' },
-                            indexed_at: { type: 'string', format: 'date-time' },
-                            total_files: { type: 'number' },
-                            total_chunks: { type: 'number' },
-                            last_updated: { type: 'string', format: 'date-time' }
-                        },
-                        required: ['path', 'initialized']
-                    }
+        tasks: {
+            type: 'array',
+            description: 'Liste des tâches',
+            items: {
+                type: 'object',
+                properties: {
+                    task_id: { type: 'string' },
+                    project_path: { type: 'string' },
+                    state: { type: 'string' },
+                    step: { type: 'string' },
+                    progress: { type: 'number' },
+                    files_processed: { type: 'number' },
+                    files_total: { type: 'number' },
+                    started_at: { type: 'string', format: 'date-time' },
+                    updated_at: { type: 'string', format: 'date-time' },
+                    completed_at: { type: 'string', format: 'date-time' }
                 },
-                stats: {
+                required: ['task_id', 'project_path', 'state']
+            }
+        },
+        total_tasks: {
+            type: 'number',
+            description: 'Nombre total de tâches retournées'
+        },
+        stats: {
+            type: 'object',
+            description: 'Statistiques globales',
+            properties: {
+                progress_tracker: {
                     type: 'object',
-                    description: 'Statistiques du projet (si action=stats)',
-                    additionalProperties: true
+                    properties: {
+                        total_tasks: { type: 'number' },
+                        by_state: { type: 'object' },
+                        memory_usage_kb: { type: 'number' }
+                    },
+                    additionalProperties: false
+                },
+                task_queue: {
+                    type: 'object',
+                    properties: {
+                        total_projects: { type: 'number' },
+                        total_queued_tasks: { type: 'number' },
+                        total_running_tasks: { type: 'number' }
+                    },
+                    additionalProperties: false
                 }
             },
             additionalProperties: false
@@ -469,10 +738,14 @@ export const manageProjectsOutputSchema = {
         timestamp: {
             type: 'string',
             format: 'date-time',
-            description: 'Horodatage de l\'opération'
+            description: 'Horodatage de la requête'
+        },
+        duration_ms: {
+            type: 'number',
+            description: 'Durée de l\'opération en millisecondes'
         }
     },
-    required: ['status', 'message', 'action', 'timestamp'],
+    required: ['success', 'tasks', 'total_tasks', 'timestamp'],
     additionalProperties: false
 };
 /**
@@ -520,13 +793,25 @@ export const toolSchemas = {
         input: activatedRagInputSchema,
         output: activatedRagOutputSchema
     },
-    recherche_rag: {
-        input: rechercheRagInputSchema,
-        output: rechercheRagOutputSchema
-    },
     manage_projects: {
         input: manageProjectsInputSchema,
         output: manageProjectsOutputSchema
+    },
+    get_status: {
+        input: getStatusInputSchema,
+        output: getStatusOutputSchema
+    },
+    query_rag: {
+        input: queryRagInputSchema,
+        output: queryRagOutputSchema
+    },
+    cancel_task: {
+        input: cancelTaskInputSchema,
+        output: cancelTaskOutputSchema
+    },
+    list_tasks: {
+        input: listTasksInputSchema,
+        output: listTasksOutputSchema
     }
 };
 /**

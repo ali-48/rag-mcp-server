@@ -555,16 +555,16 @@ export async function testProgressTracker(): Promise<boolean> {
 if (typeof require !== 'undefined' && require.main === module) {
     testProgressTracker().then(success => {
         if (success) {
-            console.log(JSON.stringify({
+            logger.info('progress.tracker.test.cli', 'ProgressTracker testé avec succès', {
                 success: true,
                 message: 'ProgressTracker testé avec succès'
-            }, null, 2));
+            });
             process.exit(0);
         } else {
-            console.error(JSON.stringify({
+            logger.error('progress.tracker.test.cli', 'Échec du test ProgressTracker', {
                 success: false,
                 message: 'Échec du test ProgressTracker'
-            }, null, 2));
+            });
             process.exit(1);
         }
     });

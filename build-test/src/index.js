@@ -50,6 +50,13 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 async function main() {
     // Initialiser la redirection des logs console.* vers logger.ts
     initializeLogRedirection();
+    // Charger la configuration RAG v3 (rag-config.json est maintenant v3.0.0)
+    const { getRagConfigManager } = await import('./config/rag-config.js');
+    const configManager = getRagConfigManager();
+    const config = configManager.getConfig();
+    // Configurer le registre automatique avec la configuration
+    const { autoRegistryV2 } = await import('./core/registry-v2.js');
+    autoRegistryV2.configureFromConfig(config);
     // Initialiser le registre automatique v2 (logs réduits pour MCP)
     const registeredCount = await initializeAutoRegistryV2({ verbose: false });
     // Récupérer la liste des outils

@@ -111,4 +111,83 @@ export function formatJobForLog(job) {
     const durationStr = duration ? `${Math.round(duration / 1000)}s` : 'N/A';
     return `[${job.id}] ${job.type} (${job.status}) - ${job.projectPath} - ${durationStr}`;
 }
+/**
+ * Récupère le statut d'une tâche
+ */
+export function getTaskStatus(job) {
+    const duration = getJobDuration(job);
+    const now = new Date();
+    const startedAt = job.startedAt || now;
+    const completedAt = job.completedAt || now;
+    // Déterminer l'état
+    let state;
+    switch (job.status) {
+        case 'pending':
+            state = 'pending';
+            break;
+        case 'running':
+            state = 'running';
+            break;
+        case 'done':
+            state = 'completed';
+            break;
+        case 'failed':
+            state = 'failed';
+            break;
+        default:
+            state = 'pending';
+    }
+    // Calculer la progression
+    let percent = 0;
+    let eta_seconds = 0;
+    if (job.status === 'running') {
+        // Estimation basée sur le temps écoulé
+        const elapsed = now.getTime() - startedAt.getTime();
+        // Pour l'instant, on utilise une estimation fixe
+        percent = 50; // À remplacer par une estimation réelle
+        eta_seconds = Math.max(0, (elapsed * (100 - percent)) / (percent * 1000));
+    }
+    else if (job.status === 'done') {
+        percent = 100;
+        eta_seconds = 0;
+    }
+    else if (job.status === 'failed') {
+        percent = 0;
+        eta_seconds = 0;
+    }
+    const notes_for_ai = [
+        `Tâche de type ${job.type} pour le projet ${job.projectPath}`,
+        `Statut: ${job.status}`,
+        job.error ? `Erreur: ${job.error.message}` : 'Aucune erreur',
+        duration ? `Durée: ${Math.round(duration / 1000)}s` : 'Pas encore démarré',
+    ];
+    const allowed_actions = ['get_status'];
+    if (job.status === 'pending' || job.status === 'running') {
+        allowed_actions.push('cancel_task');
+    }
+    return {
+        status: job.status === 'failed' ? 'error' : 'ok',
+        scope: 'task',
+        task_id: job.id,
+        action: job.type,
+        state,
+        progress: {
+            phase: job.type,
+            percent,
+            eta_seconds,
+            details: {
+                project_path: job.projectPath,
+                started_at: startedAt.toISOString(),
+                completed_at: job.completedAt?.toISOString(),
+                duration_ms: duration,
+                priority: job.priority,
+                depends_on: job.dependsOn,
+            },
+        },
+        project_locked: job.status === 'running' && isMutatorJob(job),
+        notes_for_ai,
+        allowed_actions,
+        required_action: job.status === 'failed' ? 'retry_task' : undefined,
+    };
+}
 //# sourceMappingURL=job-types.js.map

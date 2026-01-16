@@ -284,6 +284,39 @@ export class RagQueue {
         };
     }
     /**
+     * Récupère le statut global du système RAG
+     */
+    getGlobalStatus() {
+        const stats = this.getStats();
+        const projects = Array.from(new Set(Array.from(this.jobs.values()).map(job => job.projectPath)));
+        // Pour l'instant, on retourne un statut simplifié
+        // Dans une implémentation réelle, on récupérerait l'état des projets depuis le StateManager
+        const projectStatuses = projects.map(projectPath => ({
+            project_id: projectPath,
+            current_phase: 'unknown', // À remplacer par l'état réel
+            locked: this.hasRunningMutatorsForProject(projectPath),
+            last_updated: new Date(),
+        }));
+        return {
+            status: 'ok',
+            scope: 'global',
+            rag_state: {
+                initialized: true, // À vérifier
+                active_jobs: stats.runningMutators + stats.runningReadOnly,
+                queued_jobs: stats.totalJobs,
+                total_projects: stats.totalProjects,
+            },
+            projects: projectStatuses,
+            notes_for_ai: [
+                'Le système RAG est opérationnel',
+                'Utilisez get_status avec scope=project pour voir l\'état détaillé d\'un projet',
+                'Utilisez get_status avec scope=task pour suivre une tâche spécifique',
+            ],
+            allowed_actions: ['init_rag', 'scan_rag', 'prepare_rag', 'embed_rag', 'index_rag', 'query_rag'],
+            required_action: undefined,
+        };
+    }
+    /**
      * Nettoie les jobs terminés (succès ou échec) plus anciens qu'une certaine date
      */
     cleanupOldJobs(maxAgeHours = 24) {

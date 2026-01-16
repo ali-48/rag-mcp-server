@@ -49,21 +49,16 @@ export class LlmService {
             throw new Error('No LLM provider configured');
         }
         const endpoint = this.llmProviderConfig.endpoint || 'http://localhost:11434';
-        const timeout = this.llmProviderConfig.timeout_ms || 30000;
         // S'assurer que stream est false pour éviter les réponses streaming
         const requestWithStream = { ...request, stream: false };
         // Pas de logs sur stderr pour compatibilité MCP
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), timeout);
         try {
             const startTime = Date.now();
             const response = await fetch(`${endpoint}/api/generate`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(requestWithStream),
-                signal: controller.signal
+                body: JSON.stringify(requestWithStream)
             });
-            clearTimeout(timeoutId);
             if (!response.ok) {
                 const errorText = await response.text();
                 throw new Error(`Ollama API error (${response.status}): ${errorText}`);
@@ -81,7 +76,6 @@ export class LlmService {
             return data.response;
         }
         catch (error) {
-            clearTimeout(timeoutId);
             // Pas de logs sur stderr pour compatibilité MCP
             throw error;
         }
@@ -109,15 +103,10 @@ export class LlmService {
             return false;
         }
         const endpoint = this.llmProviderConfig.endpoint || 'http://localhost:11434';
-        const timeout = 5000; // 5 secondes pour la vérification
         try {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), timeout);
             const response = await fetch(`${endpoint}/api/tags`, {
-                method: 'GET',
-                signal: controller.signal
+                method: 'GET'
             });
-            clearTimeout(timeoutId);
             return response.ok;
         }
         catch (error) {
@@ -131,15 +120,10 @@ export class LlmService {
             return [];
         }
         const endpoint = this.llmProviderConfig.endpoint || 'http://localhost:11434';
-        const timeout = 10000; // 10 secondes
         try {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), timeout);
             const response = await fetch(`${endpoint}/api/tags`, {
-                method: 'GET',
-                signal: controller.signal
+                method: 'GET'
             });
-            clearTimeout(timeoutId);
             if (!response.ok) {
                 throw new Error(`API error (${response.status})`);
             }

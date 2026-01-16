@@ -10,53 +10,13 @@ import {
   VectorStoreLogger
 } from './vector-store-interface.js';
 
-// ========== CONFIGURATION MULTI-MODÈLES ==========
-
-// Configuration des modèles par type de contenu
-interface EmbeddingModelConfig {
-  code: string;      // nomic-embed-code
-  text: string;      // nomic-embed-text  
-  config: string;    // bge-small
-  fallback: string;  // qwen3-embedding:8b
-}
-
 // Configuration des embeddings
 let embeddingProvider: string = "fake";
-let embeddingModels: EmbeddingModelConfig = {
-  code: 'nomic-embed-code',
-  text: 'nomic-embed-text',
-  config: 'bge-small',
-  fallback: 'qwen3-embedding:8b'
-};
+let embeddingModel: string = "nomic-embed-text";
 
-// Dimensions par type (pour référence)
-const embeddingDimensions: Record<keyof EmbeddingModelConfig, number> = {
-  code: 768,
-  text: 768,
-  config: 384,
-  fallback: 1024
-};
-
-// Cache pour embeddings avec métadonnées
-interface CacheEntry {
-  vector: number[];
-  model: string;
-  timestamp: number;
-  contentType: string;
-  language?: string;
-}
-
-const embeddingCache = new Map<string, CacheEntry>();
+// Cache pour embeddings (évite de regénérer les mêmes embeddings)
+const embeddingCache = new Map<string, number[]>();
 const CACHE_MAX_SIZE = 1000;
-const CACHE_TTL = 3600 * 1000; // 1 heure en millisecondes
-
-// Statistiques de cache
-let cacheStats = {
-  hits: 0,
-  misses: 0,
-  evictions: 0,
-  byModel: {} as Record<string, number>
-};
 
 // File d'attente pour batching Ollama
 let ollamaBatchQueue: Array<{
@@ -99,92 +59,15 @@ export function configureVectorStore(config: VectorStoreConfig): void {
 }
 
 /**
- * Configure le fournisseur d'embeddings avec support multi-modèles
+ * Configure le fournisseur d'embeddings
  */
-export function setEmbeddingProvider(
-  provider: string,
-  defaultModel: string = 'qwen3-embedding:8b',
-  modelConfig?: Partial<EmbeddingModelConfig>
-): void {
+export function setEmbeddingProvider(provider: string, model: string = "nomic-embed-text"): void {
   embeddingProvider = provider;
-
-  // Configuration par défaut
-  const defaultModels: EmbeddingModelConfig = {
-    code: 'nomic-embed-code',
-    text: 'nomic-embed-text',
-    config: 'bge-small',
-    fallback: defaultModel
-  };
-
-  // Fusionner avec la configuration fournie
-  embeddingModels = { ...defaultModels, ...modelConfig };
-
+  embeddingModel = model;
   VectorStoreLogger.info('embedding.provider.configured', `Embedding provider configured`, {
     provider,
-    models: embeddingModels
+    model
   });
-}
-
-/**
- * Configure uniquement les modèles (sans changer le provider)
- */
-export function setEmbeddingModels(models: Partial<EmbeddingModelConfig>): void {
-  embeddingModels = { ...embeddingModels, ...models };
-  VectorStoreLogger.info('embedding.models.updated', `Embedding models updated`, {
-    models: embeddingModels
-  });
-}
-
-/**
- * Détermine le modèle approprié pour un type de contenu
- */
-export function getEmbeddingModelForContentType(
-  contentType: string,
-  language?: string
-): string {
-  // Normaliser le type de contenu
-  const normalizedType = contentType.toLowerCase();
-
-  // Routage basé sur le type
-  switch (normalizedType) {
-    case 'code':
-    case 'source':
-    case 'program':
-      return embeddingModels.code;
-
-    case 'doc':
-    case 'text':
-    case 'documentation':
-    case 'markdown':
-    case 'readme':
-      return embeddingModels.text;
-
-    case 'config':
-    case 'configuration':
-    case 'json':
-    case 'yaml':
-    case 'toml':
-    case 'ini':
-      return embeddingModels.config;
-
-    default:
-      return embeddingModels.fallback;
-  }
-}
-
-/**
- * Obtient la dimension attendue pour un modèle
- */
-export function getEmbeddingDimensionForModel(model: string): number {
-  // Chercher dans la configuration
-  for (const [type, modelName] of Object.entries(embeddingModels)) {
-    if (modelName === model) {
-      return embeddingDimensions[type as keyof EmbeddingModelConfig];
-    }
-  }
-
-  // Fallback
-  return embeddingDimensions.fallback;
 }
 
 /**
@@ -199,17 +82,15 @@ function normalizeL2(vector: number[]): number[] {
 /**
  * Génère des embeddings factices améliorés
  */
-function generateFakeEmbedding(text: string, model: string = embeddingModels.fallback): number[] {
-  // Déterminer la dimension basée sur le modèle
-  const dimension = getEmbeddingDimensionForModel(model);
+function generateFakeEmbedding(text: string): number[] {
+  const seed = text.length;
+  const hash = simpleHash(text);
 
-  // Seed basée sur le texte et le modèle
-  const seed = simpleHash(text + model);
-
-  return Array(dimension).fill(0).map((_, i) => {
-    const base = Math.sin(seed * 0.01 + i * 0.017) * 0.3;
-    const variation = Math.cos(seed * 0.007 + i * 0.023) * 0.2;
+  return Array(768).fill(0).map((_, i) => {
+    const base = Math.sin(hash * 0.01 + i * 0.017) * 0.3;
+    const variation = Math.cos(hash * 0.007 + i * 0.023) * 0.2;
     const noise = (Math.random() - 0.5) * 0.1;
+
     return base + variation + noise;
   });
 }
@@ -228,71 +109,38 @@ function simpleHash(text: string): number {
 }
 
 /**
- * Génère une clé de cache unique
+ * Fonction de hachage pour le cache
  */
-function getCacheKey(text: string, model: string): string {
-  // Hash simple du texte
+function hashText(text: string): string {
   let hash = 0;
   for (let i = 0; i < Math.min(text.length, 1000); i++) {
     const char = text.charCodeAt(i);
     hash = ((hash << 5) - hash) + char;
     hash = hash & hash;
   }
-  return `${model}:${hash}:${text.length}`;
+  return `${embeddingModel}:${hash}:${text.length}`;
 }
 
 /**
  * Récupère un embedding depuis le cache
  */
-function getCachedEmbedding(text: string, model: string): number[] | null {
-  const key = getCacheKey(text, model);
-  const entry = embeddingCache.get(key);
-
-  if (!entry) {
-    cacheStats.misses++;
-    return null;
-  }
-
-  // Vérifier la validité du cache
-  if (Date.now() - entry.timestamp > CACHE_TTL) {
-    embeddingCache.delete(key);
-    cacheStats.misses++;
-    return null;
-  }
-
-  // Mettre à jour les statistiques
-  cacheStats.hits++;
-  cacheStats.byModel[model] = (cacheStats.byModel[model] || 0) + 1;
-
-  return entry.vector;
+function getCachedEmbedding(text: string): number[] | null {
+  const key = hashText(text);
+  return embeddingCache.get(key) || null;
 }
 
 /**
- * Met un embedding en cache
+ * Met en cache un embedding
  */
-function cacheEmbedding(
-  text: string,
-  vector: number[],
-  model: string,
-  contentType: string,
-  language?: string
-): void {
-  const key = getCacheKey(text, model);
-
-  embeddingCache.set(key, {
-    vector,
-    model,
-    timestamp: Date.now(),
-    contentType,
-    language
-  });
+function cacheEmbedding(text: string, embedding: number[]): void {
+  const key = hashText(text);
+  embeddingCache.set(key, embedding);
 
   // Gérer la taille du cache (LRU simple)
   if (embeddingCache.size > CACHE_MAX_SIZE) {
     const firstKey = embeddingCache.keys().next().value;
     if (firstKey) {
       embeddingCache.delete(firstKey);
-      cacheStats.evictions++;
     }
   }
 }
@@ -300,12 +148,11 @@ function cacheEmbedding(
 /**
  * Génère un embedding avec Ollama
  */
-async function generateOllamaEmbedding(text: string, model: string = embeddingModels.fallback): Promise<number[]> {
+async function generateOllamaEmbedding(text: string): Promise<number[]> {
   // Vérifier le cache d'abord
-  const cached = getCachedEmbedding(text, model);
+  const cached = getCachedEmbedding(text);
   if (cached) {
     VectorStoreLogger.debug('embedding.cache.hit', `Using cached embedding`, {
-      model,
       textPreview: text.substring(0, 50)
     });
     return cached;
@@ -313,11 +160,11 @@ async function generateOllamaEmbedding(text: string, model: string = embeddingMo
 
   // Si le provider n'est pas Ollama, utiliser les embeddings factices
   if (embeddingProvider !== "ollama") {
-    return generateFakeEmbedding(text, model);
+    return generateFakeEmbedding(text);
   }
 
   VectorStoreLogger.debug('embedding.ollama.queueing', `Queueing embedding for Ollama`, {
-    model,
+    model: embeddingModel,
     textPreview: text.substring(0, 50)
   });
 
@@ -368,7 +215,7 @@ async function processOllamaBatch(): Promise<void> {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: embeddingModels.fallback,
+        model: embeddingModel,
         input: texts,
       }),
     });
@@ -400,7 +247,7 @@ async function processOllamaBatch(): Promise<void> {
         resolve(generateFakeEmbedding(text));
       } else {
         // Mettre en cache et retourner
-        cacheEmbedding(text, embedding, embeddingModels.fallback, 'other');
+        cacheEmbedding(text, embedding);
         resolve(embedding);
       }
     }
@@ -424,7 +271,7 @@ async function processIndividualOllamaRequests(batch: Array<{ text: string; reso
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: embeddingModels.fallback,
+          model: embeddingModel,
           prompt: item.text,
         }),
       });
@@ -440,14 +287,14 @@ async function processIndividualOllamaRequests(batch: Array<{ text: string; reso
       }
 
       // Mettre en cache et résoudre
-      cacheEmbedding(item.text, data.embedding, embeddingModels.fallback, 'other');
+      cacheEmbedding(item.text, data.embedding);
       item.resolve(data.embedding);
 
     } catch (error) {
       VectorStoreLogger.error('embedding.ollama.individual.error', `Failed to get embedding from Ollama for individual request`, error as Error);
       // Fallback sur les embeddings factices
       const fakeEmbedding = generateFakeEmbedding(item.text);
-      cacheEmbedding(item.text, fakeEmbedding, embeddingModels.fallback, 'other');
+      cacheEmbedding(item.text, fakeEmbedding);
       item.resolve(fakeEmbedding);
     }
   }
@@ -461,68 +308,28 @@ async function generateSentenceTransformerEmbedding(text: string): Promise<numbe
     textPreview: text.substring(0, 50)
   });
   // TODO: Implémenter avec @xenova/transformers
-  return generateFakeEmbedding(text, embeddingModels.fallback);
+  return generateFakeEmbedding(text);
 }
 
 /**
- * Génère un embedding avec routage automatique par type de contenu
- */
-async function generateEmbeddingForContent(
-  text: string,
-  contentType: string = 'other',
-  language?: string
-): Promise<number[]> {
-  // 1. Déterminer le modèle approprié
-  const model = getEmbeddingModelForContentType(contentType, language);
-
-  // 2. Vérifier le cache
-  const cached = getCachedEmbedding(text, model);
-  if (cached) {
-    VectorStoreLogger.debug('embedding.cache.hit', `Using cached embedding (${model})`, {
-      model,
-      textPreview: text.substring(0, 50)
-    });
-    return cached;
-  }
-
-  // 3. Générer l'embedding avec le modèle approprié
-  VectorStoreLogger.debug('embedding.generating', `Generating embedding with ${model} for ${contentType}`, {
-    model,
-    contentType,
-    textPreview: text.substring(0, 50)
-  });
-  const vector = await generateEmbeddingWithModel(text, model);
-
-  // 4. Normaliser
-  const normalizedVector = normalizeL2(vector);
-
-  // 5. Mettre en cache
-  cacheEmbedding(text, normalizedVector, model, contentType, language);
-
-  return normalizedVector;
-}
-
-/**
- * Génère un embedding avec un modèle spécifique (compatibilité)
- */
-async function generateEmbeddingWithModel(text: string, model: string): Promise<number[]> {
-  switch (embeddingProvider) {
-    case "ollama":
-      return await generateOllamaEmbedding(text, model);
-    case "sentence-transformers":
-      return await generateSentenceTransformerEmbedding(text);
-    case "fake":
-    default:
-      return generateFakeEmbedding(text, model);
-  }
-}
-
-/**
- * Génère un embedding selon le fournisseur configuré (compatibilité)
+ * Génère un embedding selon le fournisseur configuré
  */
 async function generateEmbedding(text: string): Promise<number[]> {
-  // Utiliser le modèle par défaut pour la compatibilité
-  return await generateEmbeddingWithModel(text, embeddingModels.fallback);
+  let embedding: number[];
+  switch (embeddingProvider) {
+    case "ollama":
+      embedding = await generateOllamaEmbedding(text);
+      break;
+    case "sentence-transformers":
+      embedding = await generateSentenceTransformerEmbedding(text);
+      break;
+    case "fake":
+    default:
+      embedding = generateFakeEmbedding(text);
+      break;
+  }
+  // Normaliser l'embedding
+  return normalizeL2(embedding);
 }
 
 export interface EmbedAndStoreOptions {
@@ -556,8 +363,8 @@ export async function embedAndStore(
     isCompressed = false
   } = options;
 
-  // Générer l'embedding avec routage automatique par type de contenu
-  const vector = await generateEmbeddingForContent(content, contentType, language || undefined);
+  // Générer l'embedding
+  const vector = await generateEmbedding(content);
 
   try {
     // Utiliser le vector store abstrait
@@ -633,7 +440,7 @@ export async function semanticSearch(
   } = options;
 
   // Générer l'embedding pour la requête
-  const queryVector = await generateEmbeddingForContent(query, 'other');
+  const queryVector = await generateEmbedding(query);
 
   try {
     // Utiliser le vector store abstrait
@@ -902,12 +709,6 @@ export async function initialize(): Promise<void> {
  */
 export function clearEmbeddingCache(): void {
   embeddingCache.clear();
-  cacheStats = {
-    hits: 0,
-    misses: 0,
-    evictions: 0,
-    byModel: {}
-  };
   VectorStoreLogger.info('embedding.cache.cleared', 'Cache des embeddings vidé');
 }
 
@@ -916,22 +717,17 @@ export function clearEmbeddingCache(): void {
  */
 export function getEmbeddingCacheStats(): {
   totalEntries: number;
-  byModel: Record<string, number>;
   hitRate: number;
   hits: number;
   misses: number;
-  evictions: number;
 } {
-  const totalRequests = cacheStats.hits + cacheStats.misses;
-  const hitRate = totalRequests > 0 ? (cacheStats.hits / totalRequests) * 100 : 0;
-
+  // Note: Cette implémentation simplifiée ne suit pas les hits/misses
+  // Une implémentation complète nécessiterait un compteur
   return {
     totalEntries: embeddingCache.size,
-    byModel: { ...cacheStats.byModel },
-    hitRate,
-    hits: cacheStats.hits,
-    misses: cacheStats.misses,
-    evictions: cacheStats.evictions
+    hitRate: 0,
+    hits: 0,
+    misses: 0
   };
 }
 

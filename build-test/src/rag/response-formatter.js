@@ -1,31 +1,15 @@
 // src/rag/response-formatter.ts
 // Formateur de réponse standardisé pour les outils RAG
 // Responsabilités: Formatage cohérent des réponses asynchrones, erreurs, statuts
-
-import { AsyncRagResponse, GetStatusResponse, GlobalStatus, ProjectStatus, TaskStatus } from "./types.js";
-
 /**
  * Formate une réponse asynchrone standard pour les outils RAG
  * Utilisé par scan_rag, prepare_rag, embed_rag, index_rag
  */
-export function formatAsyncResponse(
-    action: string,
-    taskId: string,
-    message: string,
-    options: {
-        execution?: 'background' | 'immediate';
-        notesForAI?: string[];
-    } = {}
-): AsyncRagResponse {
-    const {
-        execution = 'background',
-        notesForAI = []
-    } = options;
-
+export function formatAsyncResponse(action, taskId, message, options = {}) {
+    const { execution = 'background', notesForAI = [] } = options;
     // Notes par défaut basées sur l'action
     const defaultNotes = getDefaultNotesForAction(action, taskId);
     const allNotes = [...defaultNotes, ...notesForAI];
-
     return {
         status: "accepted",
         action,
@@ -36,17 +20,15 @@ export function formatAsyncResponse(
         notes_for_ai: allNotes
     };
 }
-
 /**
  * Génère des notes par défaut pour l'IA basées sur l'action
  */
-function getDefaultNotesForAction(action: string, taskId: string): string[] {
+function getDefaultNotesForAction(action, taskId) {
     const baseNotes = [
         `L'action '${action}' s'exécute de manière asynchrone`,
         `Utilisez get_status avec scope=task et task_id=${taskId} pour suivre la progression`,
         "Le projet sera verrouillé pour les autres opérations mutatrices pendant l'exécution"
     ];
-
     switch (action) {
         case 'scan_rag':
             return [
@@ -76,39 +58,18 @@ function getDefaultNotesForAction(action: string, taskId: string): string[] {
             return baseNotes;
     }
 }
-
 /**
  * Formate une réponse d'erreur standardisée
  */
-export function formatErrorResponse(
-    errorCode: string,
-    errorMessage: string,
-    options: {
-        requiredAction?: string;
-        details?: Record<string, any>;
-        stackTrace?: string;
-        notesForAI?: string[];
-        allowedActions?: string[];
-        nextSteps?: string[];
-    } = {}
-): any {
-    const {
-        requiredAction,
-        details = {},
-        stackTrace,
-        notesForAI = [],
-        allowedActions,
-        nextSteps
-    } = options;
-
+export function formatErrorResponse(errorCode, errorMessage, options = {}) {
+    const { requiredAction, details = {}, stackTrace, notesForAI = [], allowedActions, nextSteps } = options;
     // Notes par défaut pour les erreurs
     const defaultNotes = [
         "Une erreur s'est produite lors de l'exécution",
         "Vérifiez les paramètres d'entrée et les conditions préalables",
         "Consultez les détails de l'erreur pour plus d'informations"
     ];
-
-    const response: any = {
+    const response = {
         status: "error",
         error: errorCode,
         message: errorMessage,
@@ -116,43 +77,25 @@ export function formatErrorResponse(
         details,
         notes_for_ai: [...defaultNotes, ...notesForAI]
     };
-
     if (requiredAction) {
         response.required_action = requiredAction;
     }
-
     if (stackTrace) {
         response.stack_trace = stackTrace;
     }
-
     if (allowedActions) {
         response.allowed_actions = allowedActions;
     }
-
     if (nextSteps) {
         response.next_steps = nextSteps;
     }
-
     return response;
 }
-
 /**
  * Formate une réponse de statut global
  */
-export function formatGlobalStatus(
-    status: GlobalStatus,
-    options: {
-        notesForAI?: string[];
-        allowedActions?: string[];
-        requiredAction?: string;
-    } = {}
-): GetStatusResponse {
-    const {
-        notesForAI = [],
-        allowedActions,
-        requiredAction
-    } = options;
-
+export function formatGlobalStatus(status, options = {}) {
+    const { notesForAI = [], allowedActions, requiredAction } = options;
     const allNotes = [
         "Statut global du système RAG",
         `Projets actifs: ${status.rag_state.total_projects}`,
@@ -160,7 +103,6 @@ export function formatGlobalStatus(
         `Jobs en attente: ${status.rag_state.queued_jobs}`,
         ...notesForAI
     ];
-
     return {
         status: status.status,
         scope: 'global',
@@ -170,36 +112,21 @@ export function formatGlobalStatus(
         required_action: requiredAction
     };
 }
-
 /**
  * Formate une réponse de statut de projet
  */
-export function formatProjectStatus(
-    status: ProjectStatus,
-    options: {
-        notesForAI?: string[];
-        allowedActions?: string[];
-        requiredAction?: string;
-    } = {}
-): GetStatusResponse {
-    const {
-        notesForAI = [],
-        allowedActions,
-        requiredAction
-    } = options;
-
+export function formatProjectStatus(status, options = {}) {
+    const { notesForAI = [], allowedActions, requiredAction } = options;
     // Détecter la phase actuelle et la prochaine action recommandée
     const pipeline = status.pipeline;
     const currentPhase = getCurrentPhase(pipeline);
     const nextPhase = getNextPhase(pipeline);
-
     const allNotes = [
         `Statut du projet: ${status.project_id}`,
         `Phase actuelle: ${currentPhase}`,
         nextPhase ? `Phase suivante recommandée: ${nextPhase}` : "Pipeline complet",
         ...notesForAI
     ];
-
     return {
         status: status.status,
         scope: 'project',
@@ -209,24 +136,11 @@ export function formatProjectStatus(
         required_action: requiredAction || status.required_action
     };
 }
-
 /**
  * Formate une réponse de statut de tâche
  */
-export function formatTaskStatus(
-    status: TaskStatus,
-    options: {
-        notesForAI?: string[];
-        allowedActions?: string[];
-        requiredAction?: string;
-    } = {}
-): GetStatusResponse {
-    const {
-        notesForAI = [],
-        allowedActions,
-        requiredAction
-    } = options;
-
+export function formatTaskStatus(status, options = {}) {
+    const { notesForAI = [], allowedActions, requiredAction } = options;
     const allNotes = [
         `Statut de la tâche: ${status.task_id}`,
         `Action: ${status.action}`,
@@ -236,7 +150,6 @@ export function formatTaskStatus(
         ...status.notes_for_ai,
         ...notesForAI
     ];
-
     return {
         status: status.status,
         scope: 'task',
@@ -246,11 +159,10 @@ export function formatTaskStatus(
         required_action: requiredAction || status.required_action
     };
 }
-
 /**
  * Détecte la phase actuelle du pipeline
  */
-function getCurrentPhase(pipeline: ProjectStatus['pipeline']): string {
+function getCurrentPhase(pipeline) {
     const phases = [
         { key: 'init_rag', name: 'Initialisation' },
         { key: 'scan_rag', name: 'Scan' },
@@ -258,27 +170,23 @@ function getCurrentPhase(pipeline: ProjectStatus['pipeline']): string {
         { key: 'embed_rag', name: 'Embedding' },
         { key: 'index_rag', name: 'Indexation' }
     ];
-
     for (const phase of phases) {
-        if (pipeline[phase.key as keyof typeof pipeline] === 'running') {
+        if (pipeline[phase.key] === 'running') {
             return phase.name;
         }
     }
-
     // Si aucune phase en cours, retourner la dernière phase terminée
     for (let i = phases.length - 1; i >= 0; i--) {
-        if (pipeline[phases[i].key as keyof typeof pipeline] === 'done') {
+        if (pipeline[phases[i].key] === 'done') {
             return phases[i].name;
         }
     }
-
     return 'init_rag';
 }
-
 /**
  * Détecte la prochaine phase à exécuter
  */
-function getNextPhase(pipeline: ProjectStatus['pipeline']): string | null {
+function getNextPhase(pipeline) {
     const phases = [
         { key: 'init_rag', name: 'init_rag' },
         { key: 'scan_rag', name: 'scan_rag' },
@@ -286,33 +194,19 @@ function getNextPhase(pipeline: ProjectStatus['pipeline']): string | null {
         { key: 'embed_rag', name: 'embed_rag' },
         { key: 'index_rag', name: 'index_rag' }
     ];
-
     for (const phase of phases) {
-        const status = pipeline[phase.key as keyof typeof pipeline];
+        const status = pipeline[phase.key];
         if (status === 'pending' || status === 'error') {
             return phase.name;
         }
     }
-
     return null; // Toutes les phases sont terminées
 }
-
 /**
  * Formate une réponse de succès pour les opérations synchrones
  */
-export function formatSuccessResponse(
-    message: string,
-    data: any = {},
-    options: {
-        nextSteps?: string[];
-        notesForAI?: string[];
-    } = {}
-): any {
-    const {
-        nextSteps = [],
-        notesForAI = []
-    } = options;
-
+export function formatSuccessResponse(message, data = {}, options = {}) {
+    const { nextSteps = [], notesForAI = [] } = options;
     return {
         status: "ok",
         message,
@@ -322,32 +216,17 @@ export function formatSuccessResponse(
         timestamp: new Date().toISOString()
     };
 }
-
 /**
  * Formate une réponse de validation d'erreur pour les schémas MCP
  */
-export function formatValidationError(
-    errors: string[],
-    received: any,
-    options: {
-        notesForAI?: string[];
-        allowedActions?: string[];
-        nextSteps?: string[];
-    } = {}
-): any {
-    const {
-        notesForAI = [],
-        allowedActions,
-        nextSteps
-    } = options;
-
+export function formatValidationError(errors, received, options = {}) {
+    const { notesForAI = [], allowedActions, nextSteps } = options;
     const defaultNotes = [
         "Les paramètres fournis ne respectent pas le schéma attendu",
         "Vérifiez la documentation de l'outil pour connaître les paramètres requis",
         "Utilisez des valeurs valides pour chaque paramètre"
     ];
-
-    const response: any = {
+    const response = {
         status: "error",
         error: "VALIDATION_ERROR",
         message: "Erreur de validation des paramètres d'entrée",
@@ -358,14 +237,12 @@ export function formatValidationError(
         timestamp: new Date().toISOString(),
         notes_for_ai: [...defaultNotes, ...notesForAI]
     };
-
     if (allowedActions) {
         response.allowed_actions = allowedActions;
     }
-
     if (nextSteps) {
         response.next_steps = nextSteps;
     }
-
     return response;
 }
+//# sourceMappingURL=response-formatter.js.map

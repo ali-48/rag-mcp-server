@@ -4,6 +4,27 @@ import { logger } from "../../core/logger.js";
 import { RagUsageError } from "../errors/rag-usage-error.js";
 import { getRagState } from "../phase0/rag-state.js";
 /**
+ * Crée un format MCP à partir d'une erreur RagUsageError
+ */
+function createMCPFormatFromError(error, recommendations = []) {
+    const notesForAI = [
+        `Erreur de guard: ${error.code || 'RAG_PHASE_REQUIREMENTS_NOT_MET'}`,
+        error.message,
+        ...recommendations.map(rec => `Recommandation: ${rec}`)
+    ];
+    if (error.requiredAction) {
+        notesForAI.push(`Action requise: ${error.requiredAction}`);
+    }
+    return {
+        status: 'error',
+        error: error.code || 'RAG_PHASE_REQUIREMENTS_NOT_MET',
+        message: error.message,
+        required_action: error.requiredAction,
+        notes_for_ai: notesForAI,
+        details: error.details
+    };
+}
+/**
  * Vérifie les prérequis pour une phase RAG
  */
 export async function checkRagPhase(projectPath, requirements) {
@@ -58,11 +79,14 @@ export async function checkRagPhase(projectPath, requirements) {
                     recommendations,
                 }
             });
+            // Format MCP pour l'erreur
+            const mcpFormat = createMCPFormatFromError(error, recommendations);
             return {
                 passed: false,
                 error,
                 state,
                 recommendations,
+                mcpFormat
             };
         }
         return {
@@ -80,9 +104,14 @@ export async function checkRagPhase(projectPath, requirements) {
                 originalError: error instanceof Error ? error.message : String(error)
             }
         });
+        const mcpFormat = createMCPFormatFromError(guardError, [
+            "Vérifiez que le projet existe et est accessible",
+            "Assurez-vous que la base de données RAG est initialisée"
+        ]);
         return {
             passed: false,
             error: guardError,
+            mcpFormat
         };
     }
 }
@@ -280,31 +309,106 @@ export async function isPhaseReady(projectPath, phase) {
     return result.passed;
 }
 /**
- * Obtient la prochaine phase à exécuter pour un projet
+ * Obtient une analyse détaillée des phases pour un projet
  */
-export async function getNextPhase(projectPath) {
+export async function getPhaseAnalysis(projectPath) {
     try {
         const state = await getRagState(projectPath);
+        const phases = [
+            { name: 'init', tool_name: 'init_rag', description: 'Initialisation du projet RAG' },
+            { name: 'scan', tool_name: 'scan_rag', description: 'Scan des fichiers du projet' },
+            { name: 'prepare', tool_name: 'prepare_rag', description: 'Préparation et chunking des fichiers' },
+            { name: 'embed', tool_name: 'embed_rag', description: 'Génération des embeddings' },
+            { name: 'index', tool_name: 'index_rag', description: 'Indexation dans la base vectorielle' },
+            { name: 'query', tool_name: 'query_rag', description: 'Recherche sémantique' }
+        ];
+        // Déterminer le statut de chaque phase
+        const phaseStatuses = [];
+        let currentPhase = 'init';
+        let currentStatus = 'pending';
+        let nextPhase = null;
+        const recommendedActions = [];
+        const notesForAI = [];
+        // Pour l'instant, on utilise une logique simplifiée basée sur l'initialisation
+        // À améliorer avec l'état réel du pipeline
         if (!state.initialized) {
-            return 'init';
+            currentPhase = 'init';
+            currentStatus = 'pending';
+            nextPhase = 'init';
+            recommendedActions.push('Exécutez init_rag pour initialiser le projet');
+            notesForAI.push('Le projet n\'est pas encore initialisé pour RAG');
         }
-        // Vérifier chaque phase dans l'ordre
-        const phases = ['scan', 'prepare', 'embed', 'index', 'query'];
-        for (const phase of phases) {
-            const isReady = await isPhaseReady(projectPath, phase);
-            if (!isReady) {
-                return phase;
+        else {
+            currentPhase = 'init';
+            currentStatus = 'done';
+            // Chercher la première phase non terminée
+            for (const phase of phases.slice(1)) {
+                const isReady = await isPhaseReady(projectPath, phase.name);
+                if (!isReady) {
+                    nextPhase = phase.name;
+                    recommendedActions.push(`Exécutez ${phase.tool_name} pour ${phase.description}`);
+                    notesForAI.push(`La phase ${phase.name} est en attente`);
+                    break;
+                }
+            }
+            if (!nextPhase) {
+                nextPhase = null;
+                recommendedActions.push('Toutes les phases sont terminées, vous pouvez exécuter query_rag pour effectuer des recherches');
+                notesForAI.push('Pipeline RAG complet et prêt pour les requêtes');
             }
         }
-        // Toutes les phases sont terminées
-        return null;
+        // Construire le tableau des phases avec leur statut
+        for (const phase of phases) {
+            let status = 'pending';
+            if (phase.name === 'init') {
+                status = state.initialized ? 'done' : 'pending';
+            }
+            else {
+                const isReady = await isPhaseReady(projectPath, phase.name);
+                status = isReady ? 'done' : 'pending';
+            }
+            phaseStatuses.push({
+                name: phase.name,
+                status,
+                tool_name: phase.tool_name,
+                description: phase.description
+            });
+        }
+        return {
+            current_phase: currentPhase,
+            current_status: currentStatus,
+            next_phase: nextPhase,
+            phases: phaseStatuses,
+            recommended_actions: recommendedActions,
+            notes_for_ai: notesForAI
+        };
     }
     catch (error) {
-        logger.error("rag.guards.next_phase.error", "Erreur lors de la détermination de la prochaine phase", {
+        logger.error("rag.guards.phase_analysis.error", "Erreur lors de l'analyse des phases", {
             projectPath,
             error: error instanceof Error ? error.message : String(error),
         });
-        return null;
+        // Retourner une analyse d'erreur
+        return {
+            current_phase: 'unknown',
+            current_status: 'error',
+            next_phase: null,
+            phases: [],
+            recommended_actions: [
+                "Vérifiez que le projet existe et est accessible",
+                "Assurez-vous que la base de données RAG est initialisée"
+            ],
+            notes_for_ai: [
+                `Erreur lors de l'analyse des phases: ${error instanceof Error ? error.message : String(error)}`
+            ]
+        };
     }
+}
+/**
+ * Obtient la prochaine phase à exécuter pour un projet (version simplifiée)
+ */
+export async function getNextPhase(projectPath) {
+    const analysis = await getPhaseAnalysis(projectPath);
+    return analysis.next_phase;
 }
 //# sourceMappingURL=rag-guards.js.map

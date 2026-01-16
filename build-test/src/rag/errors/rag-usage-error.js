@@ -82,9 +82,111 @@ export class RagUsageError extends Error {
         return formatted;
     }
     /**
+     * Génère des notes pour l'IA basées sur l'erreur
+     */
+    generateNotesForAI() {
+        const notes = [
+            `Erreur RAG: ${this.code}`,
+            this.message,
+        ];
+        if (this.requiredAction) {
+            notes.push(`Action requise: ${this.requiredAction}`);
+        }
+        if (this.help) {
+            notes.push(`Aide: ${this.help}`);
+        }
+        if (this.details?.recommendations) {
+            if (Array.isArray(this.details.recommendations)) {
+                this.details.recommendations.forEach((rec, index) => {
+                    notes.push(`Recommandation ${index + 1}: ${rec}`);
+                });
+            }
+        }
+        // Ajouter des notes spécifiques selon le code d'erreur
+        switch (this.code) {
+            case 'RAG_PROJECT_NOT_INITIALIZED':
+                notes.push('Le projet doit être initialisé avec init_rag avant toute opération RAG');
+                notes.push('Vérifiez que le chemin du projet est correct et accessible');
+                break;
+            case 'RAG_PHASE_REQUIREMENTS_NOT_MET':
+                notes.push('Les phases RAG doivent être exécutées dans l\'ordre: init → scan → prepare → embed → index → query');
+                notes.push('Utilisez get_status pour vérifier l\'état actuel du pipeline');
+                break;
+            case 'RAG_JOB_ALREADY_RUNNING':
+                notes.push('Un seul job mutateur peut s\'exécuter à la fois');
+                notes.push('Utilisez get_status pour vérifier les jobs en cours');
+                break;
+            case 'RAG_QUEUE_FULL':
+                notes.push('La file d\'attente RAG a une taille limitée pour éviter la surcharge mémoire');
+                notes.push('Attendez que des jobs se terminent ou annulez des jobs en attente');
+                break;
+        }
+        return notes;
+    }
+    /**
+     * Génère les actions autorisées basées sur le code d'erreur
+     */
+    generateAllowedActions() {
+        const baseActions = ['get_status']; // Toujours autorisé
+        switch (this.code) {
+            case 'RAG_PROJECT_NOT_INITIALIZED':
+                return [...baseActions, 'init_rag'];
+            case 'RAG_PHASE_REQUIREMENTS_NOT_MET':
+            case 'RAG_PHASE_MISSING':
+                return [...baseActions, 'init_rag', 'scan_rag', 'prepare_rag', 'embed_rag', 'index_rag'];
+            case 'RAG_JOB_ALREADY_RUNNING':
+                return [...baseActions, 'cancel_task'];
+            case 'RAG_QUEUE_FULL':
+                return [...baseActions, 'cancel_task'];
+            case 'RAG_PIPELINE_REQUIRED':
+                return [...baseActions, 'init_rag', 'scan_rag', 'prepare_rag', 'embed_rag', 'index_rag'];
+            default:
+                return baseActions;
+        }
+    }
+    /**
+     * Génère les étapes suivantes recommandées
+     */
+    generateNextSteps() {
+        const steps = [];
+        switch (this.code) {
+            case 'RAG_PROJECT_NOT_INITIALIZED':
+                steps.push('Exécutez init_rag pour initialiser le projet');
+                steps.push('Vérifiez les permissions d\'accès au chemin du projet');
+                break;
+            case 'RAG_PHASE_REQUIREMENTS_NOT_MET':
+            case 'RAG_PHASE_MISSING':
+                steps.push('Utilisez get_status pour vérifier l\'état actuel du pipeline');
+                steps.push('Exécutez les phases manquantes dans l\'ordre requis');
+                break;
+            case 'RAG_JOB_ALREADY_RUNNING':
+                steps.push('Attendez la fin du job en cours');
+                steps.push('Ou annulez le job avec cancel_task si nécessaire');
+                break;
+            case 'RAG_QUEUE_FULL':
+                steps.push('Vérifiez les jobs en cours avec get_status');
+                steps.push('Annulez les jobs non essentiels avec cancel_task');
+                break;
+            case 'RAG_PIPELINE_REQUIRED':
+                steps.push('Exécutez init_rag pour initialiser le projet');
+                steps.push('Puis scan_rag pour analyser les fichiers');
+                steps.push('Puis prepare_rag pour préparer les données');
+                steps.push('Puis embed_rag pour générer les embeddings');
+                steps.push('Puis index_rag pour indexer les données');
+                break;
+            default:
+                steps.push('Consultez les notes pour l\'IA pour plus d\'informations');
+                steps.push('Vérifiez les paramètres d\'entrée et les conditions préalables');
+        }
+        return steps;
+    }
+    /**
      * Formate l'erreur pour MCP (JSON strict)
      */
     formatForMCP() {
+        // Générer les actions autorisées basées sur le code d'erreur
+        const allowed_actions = this.generateAllowedActions();
+        const next_steps = this.generateNextSteps();
         const response = {
             success: false,
             error: {
@@ -92,6 +194,7 @@ export class RagUsageError extends Error {
                 message: this.message,
                 code: this.code,
                 timestamp: this.timestamp.toISOString(),
+                notes_for_ai: this.generateNotesForAI(),
             },
         };
         if (this.requiredAction) {
@@ -102,6 +205,12 @@ export class RagUsageError extends Error {
         }
         if (this.details) {
             response.error.details = this.details;
+        }
+        if (allowed_actions.length > 0) {
+            response.error.allowed_actions = allowed_actions;
+        }
+        if (next_steps.length > 0) {
+            response.error.next_steps = next_steps;
         }
         return response;
     }
@@ -209,7 +318,7 @@ export class RagUsageError extends Error {
             details: {
                 maxQueueSize: maxSize,
                 recommendations: [
-                    "Vérifiez les jobs en cours avec `get_task_status`",
+                    "Vérifiez les jobs en cours avec `get_status`",
                     "Annulez les jobs non essentiels avec `cancel_task`",
                     "Attendez la fin des jobs en cours",
                 ],

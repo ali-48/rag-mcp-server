@@ -787,16 +787,16 @@ export async function testFileStreamerModule(): Promise<boolean> {
 if (typeof require !== 'undefined' && require.main === module) {
     testFileStreamerModule().then(success => {
         if (success) {
-            console.log(JSON.stringify({
+            logger.info('file.streamer.test.cli', 'FileStreamer testé avec succès', {
                 success: true,
                 message: 'FileStreamer testé avec succès'
-            }, null, 2));
+            });
             process.exit(0);
         } else {
-            console.error(JSON.stringify({
+            logger.error('file.streamer.test.cli', 'Échec du test FileStreamer', {
                 success: false,
                 message: 'Échec du test FileStreamer'
-            }, null, 2));
+            });
             process.exit(1);
         }
     });

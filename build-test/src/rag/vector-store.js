@@ -5,10 +5,29 @@ import { createVectorStore, createVectorStoreForProject } from './vector-store-f
 import { VectorStoreLogger } from './vector-store-interface.js';
 // Configuration des embeddings
 let embeddingProvider = "fake";
-let embeddingModel = "nomic-embed-text";
-// Cache pour embeddings (évite de regénérer les mêmes embeddings)
+let embeddingModels = {
+    code: 'nomic-embed-code',
+    text: 'nomic-embed-text',
+    config: 'bge-small',
+    fallback: 'qwen3-embedding:8b'
+};
+// Dimensions par type (pour référence)
+const embeddingDimensions = {
+    code: 768,
+    text: 768,
+    config: 384,
+    fallback: 1024
+};
 const embeddingCache = new Map();
 const CACHE_MAX_SIZE = 1000;
+const CACHE_TTL = 3600 * 1000; // 1 heure en millisecondes
+// Statistiques de cache
+let cacheStats = {
+    hits: 0,
+    misses: 0,
+    evictions: 0,
+    byModel: {}
+};
 // File d'attente pour batching Ollama
 let ollamaBatchQueue = [];
 let batchTimeout = null;
@@ -42,15 +61,74 @@ export function configureVectorStore(config) {
     });
 }
 /**
- * Configure le fournisseur d'embeddings
+ * Configure le fournisseur d'embeddings avec support multi-modèles
  */
-export function setEmbeddingProvider(provider, model = "nomic-embed-text") {
+export function setEmbeddingProvider(provider, defaultModel = 'qwen3-embedding:8b', modelConfig) {
     embeddingProvider = provider;
-    embeddingModel = model;
+    // Configuration par défaut
+    const defaultModels = {
+        code: 'nomic-embed-code',
+        text: 'nomic-embed-text',
+        config: 'bge-small',
+        fallback: defaultModel
+    };
+    // Fusionner avec la configuration fournie
+    embeddingModels = { ...defaultModels, ...modelConfig };
     VectorStoreLogger.info('embedding.provider.configured', `Embedding provider configured`, {
         provider,
-        model
+        models: embeddingModels
     });
+}
+/**
+ * Configure uniquement les modèles (sans changer le provider)
+ */
+export function setEmbeddingModels(models) {
+    embeddingModels = { ...embeddingModels, ...models };
+    VectorStoreLogger.info('embedding.models.updated', `Embedding models updated`, {
+        models: embeddingModels
+    });
+}
+/**
+ * Détermine le modèle approprié pour un type de contenu
+ */
+export function getEmbeddingModelForContentType(contentType, language) {
+    // Normaliser le type de contenu
+    const normalizedType = contentType.toLowerCase();
+    // Routage basé sur le type
+    switch (normalizedType) {
+        case 'code':
+        case 'source':
+        case 'program':
+            return embeddingModels.code;
+        case 'doc':
+        case 'text':
+        case 'documentation':
+        case 'markdown':
+        case 'readme':
+            return embeddingModels.text;
+        case 'config':
+        case 'configuration':
+        case 'json':
+        case 'yaml':
+        case 'toml':
+        case 'ini':
+            return embeddingModels.config;
+        default:
+            return embeddingModels.fallback;
+    }
+}
+/**
+ * Obtient la dimension attendue pour un modèle
+ */
+export function getEmbeddingDimensionForModel(model) {
+    // Chercher dans la configuration
+    for (const [type, modelName] of Object.entries(embeddingModels)) {
+        if (modelName === model) {
+            return embeddingDimensions[type];
+        }
+    }
+    // Fallback
+    return embeddingDimensions.fallback;
 }
 /**
  * Normalise un vecteur selon la norme L2
@@ -64,12 +142,14 @@ function normalizeL2(vector) {
 /**
  * Génère des embeddings factices améliorés
  */
-function generateFakeEmbedding(text) {
-    const seed = text.length;
-    const hash = simpleHash(text);
-    return Array(768).fill(0).map((_, i) => {
-        const base = Math.sin(hash * 0.01 + i * 0.017) * 0.3;
-        const variation = Math.cos(hash * 0.007 + i * 0.023) * 0.2;
+function generateFakeEmbedding(text, model = embeddingModels.fallback) {
+    // Déterminer la dimension basée sur le modèle
+    const dimension = getEmbeddingDimensionForModel(model);
+    // Seed basée sur le texte et le modèle
+    const seed = simpleHash(text + model);
+    return Array(dimension).fill(0).map((_, i) => {
+        const base = Math.sin(seed * 0.01 + i * 0.017) * 0.3;
+        const variation = Math.cos(seed * 0.007 + i * 0.023) * 0.2;
         const noise = (Math.random() - 0.5) * 0.1;
         return base + variation + noise;
     });
@@ -87,56 +167,79 @@ function simpleHash(text) {
     return Math.abs(hash);
 }
 /**
- * Fonction de hachage pour le cache
+ * Génère une clé de cache unique
  */
-function hashText(text) {
+function getCacheKey(text, model) {
+    // Hash simple du texte
     let hash = 0;
     for (let i = 0; i < Math.min(text.length, 1000); i++) {
         const char = text.charCodeAt(i);
         hash = ((hash << 5) - hash) + char;
         hash = hash & hash;
     }
-    return `${embeddingModel}:${hash}:${text.length}`;
+    return `${model}:${hash}:${text.length}`;
 }
 /**
  * Récupère un embedding depuis le cache
  */
-function getCachedEmbedding(text) {
-    const key = hashText(text);
-    return embeddingCache.get(key) || null;
+function getCachedEmbedding(text, model) {
+    const key = getCacheKey(text, model);
+    const entry = embeddingCache.get(key);
+    if (!entry) {
+        cacheStats.misses++;
+        return null;
+    }
+    // Vérifier la validité du cache
+    if (Date.now() - entry.timestamp > CACHE_TTL) {
+        embeddingCache.delete(key);
+        cacheStats.misses++;
+        return null;
+    }
+    // Mettre à jour les statistiques
+    cacheStats.hits++;
+    cacheStats.byModel[model] = (cacheStats.byModel[model] || 0) + 1;
+    return entry.vector;
 }
 /**
- * Met en cache un embedding
+ * Met un embedding en cache
  */
-function cacheEmbedding(text, embedding) {
-    const key = hashText(text);
-    embeddingCache.set(key, embedding);
+function cacheEmbedding(text, vector, model, contentType, language) {
+    const key = getCacheKey(text, model);
+    embeddingCache.set(key, {
+        vector,
+        model,
+        timestamp: Date.now(),
+        contentType,
+        language
+    });
     // Gérer la taille du cache (LRU simple)
     if (embeddingCache.size > CACHE_MAX_SIZE) {
         const firstKey = embeddingCache.keys().next().value;
         if (firstKey) {
             embeddingCache.delete(firstKey);
+            cacheStats.evictions++;
         }
     }
 }
 /**
  * Génère un embedding avec Ollama
  */
-async function generateOllamaEmbedding(text) {
+async function generateOllamaEmbedding(text, model = embeddingModels.fallback) {
     // Vérifier le cache d'abord
-    const cached = getCachedEmbedding(text);
+    const cached = getCachedEmbedding(text, model);
     if (cached) {
         VectorStoreLogger.debug('embedding.cache.hit', `Using cached embedding`, {
+            model,
             textPreview: text.substring(0, 50)
         });
         return cached;
     }
     // Si le provider n'est pas Ollama, utiliser les embeddings factices
     if (embeddingProvider !== "ollama") {
-        return generateFakeEmbedding(text);
+        return generateFakeEmbedding(text, model);
     }
     VectorStoreLogger.debug('embedding.ollama.queueing', `Queueing embedding for Ollama`, {
-        model: embeddingModel,
+        model,
         textPreview: text.substring(0, 50)
     });
     // Retourner une promesse qui sera résolue par le batch
@@ -179,7 +282,7 @@ async function processOllamaBatch() {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                model: embeddingModel,
+                model: embeddingModels.fallback,
                 input: texts,
             }),
         });
@@ -206,7 +309,7 @@ async function processOllamaBatch() {
             }
             else {
                 // Mettre en cache et retourner
-                cacheEmbedding(text, embedding);
+                cacheEmbedding(text, embedding, embeddingModels.fallback, 'other');
                 resolve(embedding);
             }
         }
@@ -229,7 +332,7 @@ async function processIndividualOllamaRequests(batch) {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    model: embeddingModel,
+                    model: embeddingModels.fallback,
                     prompt: item.text,
                 }),
             });
@@ -241,14 +344,14 @@ async function processIndividualOllamaRequests(batch) {
                 throw new Error('Invalid response from Ollama API: missing embedding array');
             }
             // Mettre en cache et résoudre
-            cacheEmbedding(item.text, data.embedding);
+            cacheEmbedding(item.text, data.embedding, embeddingModels.fallback, 'other');
             item.resolve(data.embedding);
         }
         catch (error) {
             VectorStoreLogger.error('embedding.ollama.individual.error', `Failed to get embedding from Ollama for individual request`, error);
             // Fallback sur les embeddings factices
             const fakeEmbedding = generateFakeEmbedding(item.text);
-            cacheEmbedding(item.text, fakeEmbedding);
+            cacheEmbedding(item.text, fakeEmbedding, embeddingModels.fallback, 'other');
             item.resolve(fakeEmbedding);
         }
     }
@@ -261,35 +364,64 @@ async function generateSentenceTransformerEmbedding(text) {
         textPreview: text.substring(0, 50)
     });
     // TODO: Implémenter avec @xenova/transformers
-    return generateFakeEmbedding(text);
+    return generateFakeEmbedding(text, embeddingModels.fallback);
 }
 /**
- * Génère un embedding selon le fournisseur configuré
+ * Génère un embedding avec routage automatique par type de contenu
  */
-async function generateEmbedding(text) {
-    let embedding;
+async function generateEmbeddingForContent(text, contentType = 'other', language) {
+    // 1. Déterminer le modèle approprié
+    const model = getEmbeddingModelForContentType(contentType, language);
+    // 2. Vérifier le cache
+    const cached = getCachedEmbedding(text, model);
+    if (cached) {
+        VectorStoreLogger.debug('embedding.cache.hit', `Using cached embedding (${model})`, {
+            model,
+            textPreview: text.substring(0, 50)
+        });
+        return cached;
+    }
+    // 3. Générer l'embedding avec le modèle approprié
+    VectorStoreLogger.debug('embedding.generating', `Generating embedding with ${model} for ${contentType}`, {
+        model,
+        contentType,
+        textPreview: text.substring(0, 50)
+    });
+    const vector = await generateEmbeddingWithModel(text, model);
+    // 4. Normaliser
+    const normalizedVector = normalizeL2(vector);
+    // 5. Mettre en cache
+    cacheEmbedding(text, normalizedVector, model, contentType, language);
+    return normalizedVector;
+}
+/**
+ * Génère un embedding avec un modèle spécifique (compatibilité)
+ */
+async function generateEmbeddingWithModel(text, model) {
     switch (embeddingProvider) {
         case "ollama":
-            embedding = await generateOllamaEmbedding(text);
-            break;
+            return await generateOllamaEmbedding(text, model);
         case "sentence-transformers":
-            embedding = await generateSentenceTransformerEmbedding(text);
-            break;
+            return await generateSentenceTransformerEmbedding(text);
         case "fake":
         default:
-            embedding = generateFakeEmbedding(text);
-            break;
+            return generateFakeEmbedding(text, model);
     }
-    // Normaliser l'embedding
-    return normalizeL2(embedding);
+}
+/**
+ * Génère un embedding selon le fournisseur configuré (compatibilité)
+ */
+async function generateEmbedding(text) {
+    // Utiliser le modèle par défaut pour la compatibilité
+    return await generateEmbeddingWithModel(text, embeddingModels.fallback);
 }
 /**
  * Stocke un document avec son embedding
  */
 export async function embedAndStore(projectPath, filePath, content, options = {}) {
     const { chunkIndex = 0, totalChunks = 1, contentType = 'other', role = null, fileExtension = null, language = null, linesCount = null, isCompressed = false } = options;
-    // Générer l'embedding
-    const vector = await generateEmbedding(content);
+    // Générer l'embedding avec routage automatique par type de contenu
+    const vector = await generateEmbeddingForContent(content, contentType, language || undefined);
     try {
         // Utiliser le vector store abstrait
         const store = getVectorStore();
@@ -325,7 +457,7 @@ export async function embedAndStore(projectPath, filePath, content, options = {}
 export async function semanticSearch(query, options = {}) {
     const { projectFilter, limit = 10, threshold = 0.3, dynamicThreshold = false, contentTypeFilter, roleFilter, languageFilter, minFileSizeBytes, maxFileSizeBytes, minLinesCount, maxLinesCount, dateFrom, dateTo } = options;
     // Générer l'embedding pour la requête
-    const queryVector = await generateEmbedding(query);
+    const queryVector = await generateEmbeddingForContent(query, 'other');
     try {
         // Utiliser le vector store abstrait
         const store = getVectorStore();
@@ -549,19 +681,27 @@ export async function initialize() {
  */
 export function clearEmbeddingCache() {
     embeddingCache.clear();
+    cacheStats = {
+        hits: 0,
+        misses: 0,
+        evictions: 0,
+        byModel: {}
+    };
     VectorStoreLogger.info('embedding.cache.cleared', 'Cache des embeddings vidé');
 }
 /**
  * Obtient les statistiques du cache des embeddings
  */
 export function getEmbeddingCacheStats() {
-    // Note: Cette implémentation simplifiée ne suit pas les hits/misses
-    // Une implémentation complète nécessiterait un compteur
+    const totalRequests = cacheStats.hits + cacheStats.misses;
+    const hitRate = totalRequests > 0 ? (cacheStats.hits / totalRequests) * 100 : 0;
     return {
         totalEntries: embeddingCache.size,
-        hitRate: 0,
-        hits: 0,
-        misses: 0
+        byModel: { ...cacheStats.byModel },
+        hitRate,
+        hits: cacheStats.hits,
+        misses: cacheStats.misses,
+        evictions: cacheStats.evictions
     };
 }
 /**

@@ -18,7 +18,7 @@ export class LLMEnricherService {
             model: config?.model ?? 'llama3.1:latest',
             temperature: config?.temperature ?? 0.1,
             maxTokens: config?.maxTokens ?? 1000,
-            timeoutMs: config?.timeoutMs ?? 30000,
+            timeoutMs: config?.timeoutMs ?? null,
             batchSize: config?.batchSize ?? 5,
             features: config?.features ?? ['summary', 'keywords', 'entities'],
             cacheEnabled: config?.cacheEnabled ?? true,

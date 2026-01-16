@@ -389,17 +389,17 @@ export async function testTaskQueue() {
 if (typeof require !== 'undefined' && require.main === module) {
     testTaskQueue().then(success => {
         if (success) {
-            console.log(JSON.stringify({
+            logger.info('task.queue.test.cli', 'TaskQueue testé avec succès', {
                 success: true,
                 message: 'TaskQueue testé avec succès'
-            }, null, 2));
+            });
             process.exit(0);
         }
         else {
-            console.error(JSON.stringify({
+            logger.error('task.queue.test.cli', 'Échec du test TaskQueue', {
                 success: false,
                 message: 'Échec du test TaskQueue'
-            }, null, 2));
+            });
             process.exit(1);
         }
     });

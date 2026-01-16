@@ -1,202 +1,11 @@
 // src/tools/rag/task-status.ts
 // Outils MCP pour la gestion des tâches asynchrones
 // Version: v1.0.0
-// Responsabilités: Consultation de progression, annulation de tâches
+// Responsabilités: Annulation de tâches, liste des tâches
+// NOTE: get_task_status a été supprimé - utilisez get_status à la place
 import { logger } from "../../core/logger.js";
 import { getProgressTracker } from "../../core/progress-tracker.js";
 import { getTaskQueue } from "../../core/task-queue.js";
-/**
- * Définition de l'outil get_task_status
- */
-export const getTaskStatusTool = {
-    name: "get_task_status",
-    description: "Consulte le statut et la progression d'une tâche RAG asynchrone",
-    inputSchema: {
-        type: "object",
-        properties: {
-            task_id: {
-                type: "string",
-                description: "ID de la tâche à consulter (obtenu via index_rag ou activated_rag)"
-            },
-            include_queue_info: {
-                type: "boolean",
-                description: "Inclure les informations de file d'attente",
-                default: true
-            },
-            include_metadata: {
-                type: "boolean",
-                description: "Inclure les métadonnées complètes",
-                default: false
-            }
-        },
-        required: ["task_id"]
-    },
-};
-/**
- * Handler pour l'outil get_task_status
- */
-export const getTaskStatusHandler = async (args) => {
-    const startTime = Date.now();
-    try {
-        const taskId = args.task_id;
-        const includeQueueInfo = args.include_queue_info !== false;
-        const includeMetadata = args.include_metadata === true;
-        logger.info("task.status.request", "Consultation du statut de tâche", {
-            taskId,
-            includeQueueInfo,
-            includeMetadata
-        });
-        // Récupérer le statut de progression
-        const progressTracker = getProgressTracker();
-        const status = progressTracker.get(taskId);
-        if (!status) {
-            logger.warn("task.status.not_found", "Tâche non trouvée", { taskId });
-            return {
-                content: [{
-                        type: "text",
-                        text: JSON.stringify({
-                            success: false,
-                            error: "TASK_NOT_FOUND",
-                            message: `Tâche non trouvée: ${taskId}`,
-                            task_id: taskId,
-                            timestamp: new Date().toISOString()
-                        }, null, 2)
-                    }]
-            };
-        }
-        // Récupérer les informations de file d'attente si demandé
-        let queueInfo = null;
-        if (includeQueueInfo) {
-            const taskQueue = getTaskQueue();
-            const queuePosition = taskQueue.getQueuePosition(taskId);
-            const isRunning = taskQueue.isTaskRunning(taskId);
-            queueInfo = {
-                queue_position: queuePosition?.position || null,
-                queue_total: queuePosition?.total || null,
-                is_running: isRunning,
-                project_path: queuePosition?.projectPath || status.projectPath
-            };
-        }
-        // Préparer la réponse
-        const response = {
-            success: true,
-            task_id: taskId,
-            status: {
-                state: status.state,
-                step: status.step,
-                progress: status.progress,
-                files_processed: status.filesProcessed,
-                files_total: status.filesTotal,
-                eta_seconds: status.etaSeconds,
-                started_at: status.startedAt,
-                updated_at: status.updatedAt,
-                completed_at: status.completedAt,
-                current_file: status.currentFile,
-                current_operation: status.currentOperation,
-                project_path: status.projectPath
-            },
-            timestamp: new Date().toISOString()
-        };
-        // Ajouter les informations de file d'attente
-        if (queueInfo) {
-            response.queue_info = queueInfo;
-        }
-        // Ajouter les erreurs si présentes
-        if (status.error) {
-            response.status.error = {
-                message: status.error.message,
-                step: status.error.step,
-                timestamp: status.error.timestamp
-            };
-        }
-        // Ajouter les avertissements si présents
-        if (status.warnings && status.warnings.length > 0) {
-            response.status.warnings = status.warnings;
-        }
-        // Ajouter l'estimation des coûts d'embeddings si présente
-        if (status.estimatedEmbeddingCost) {
-            response.status.estimated_embedding_cost = {
-                tokens: status.estimatedEmbeddingCost.tokens,
-                model: status.estimatedEmbeddingCost.model,
-                approx_seconds: status.estimatedEmbeddingCost.approxSeconds,
-                estimated_at: status.estimatedEmbeddingCost.estimatedAt
-            };
-        }
-        // Ajouter les métadonnées si demandées
-        if (includeMetadata && status.metadata) {
-            response.status.metadata = status.metadata;
-        }
-        // Ajouter des recommandations basées sur l'état
-        if (status.state === 'queued') {
-            response.recommendations = [
-                "La tâche est en attente dans la file d'attente",
-                "Utilisez cancel_task pour annuler si nécessaire"
-            ];
-        }
-        else if (status.state === 'running') {
-            response.recommendations = [
-                "La tâche est en cours d'exécution",
-                `Progression: ${status.progress}%`,
-                `Temps estimé restant: ${Math.ceil(status.etaSeconds / 60)} minutes`
-            ];
-        }
-        else if (status.state === 'completed') {
-            response.recommendations = [
-                "La tâche est terminée avec succès",
-                `Fichiers traités: ${status.filesProcessed}/${status.filesTotal}`,
-                "Utilisez query_rag pour rechercher dans les documents indexés"
-            ];
-        }
-        else if (status.state === 'failed') {
-            response.recommendations = [
-                "La tâche a échoué",
-                "Vérifiez les logs pour plus de détails",
-                "Vous pouvez relancer l'indexation avec les mêmes paramètres"
-            ];
-        }
-        else if (status.state === 'cancelled') {
-            response.recommendations = [
-                "La tâche a été annulée",
-                "Vous pouvez relancer l'indexation si nécessaire"
-            ];
-        }
-        const endTime = Date.now();
-        response.duration_ms = endTime - startTime;
-        logger.info("task.status.success", "Statut de tâche récupéré", {
-            taskId,
-            state: status.state,
-            progress: status.progress,
-            duration_ms: response.duration_ms
-        });
-        return {
-            content: [{
-                    type: "text",
-                    text: JSON.stringify(response, null, 2)
-                }]
-        };
-    }
-    catch (error) {
-        const endTime = Date.now();
-        const duration = endTime - startTime;
-        logger.error("task.status.error", "Erreur lors de la consultation du statut", {
-            error: error.message,
-            stack: error.stack,
-            duration_ms: duration
-        });
-        return {
-            content: [{
-                    type: "text",
-                    text: JSON.stringify({
-                        success: false,
-                        error: "STATUS_ERROR",
-                        message: error.message,
-                        duration_ms: duration,
-                        timestamp: new Date().toISOString()
-                    }, null, 2)
-                }]
-        };
-    }
-};
 /**
  * Définition de l'outil cancel_task
  */
@@ -251,7 +60,12 @@ export const cancelTaskHandler = async (args) => {
                             error: "TASK_NOT_FOUND",
                             message: `Tâche non trouvée: ${taskId}`,
                             task_id: taskId,
-                            timestamp: new Date().toISOString()
+                            timestamp: new Date().toISOString(),
+                            notes_for_ai: [
+                                "Tâche non trouvée",
+                                "Vérifier l'ID de tâche",
+                                "Utiliser list_tasks pour voir les tâches disponibles"
+                            ]
                         }, null, 2)
                     }]
             };
@@ -268,10 +82,15 @@ export const cancelTaskHandler = async (args) => {
                         text: JSON.stringify({
                             success: false,
                             error: "TASK_ALREADY_COMPLETED",
-                            message: `La tâche est déjà terminée (état: ${currentStatus.state})`,
+                            message: `Tâche déjà terminée: ${taskId}`,
                             task_id: taskId,
                             current_state: currentStatus.state,
-                            timestamp: new Date().toISOString()
+                            timestamp: new Date().toISOString(),
+                            notes_for_ai: [
+                                "Tâche déjà terminée",
+                                "État: " + currentStatus.state,
+                                "Utiliser get_status pour voir les résultats"
+                            ]
                         }, null, 2)
                     }]
             };
@@ -287,10 +106,15 @@ export const cancelTaskHandler = async (args) => {
                         text: JSON.stringify({
                             success: false,
                             error: "TASK_ALREADY_FAILED",
-                            message: `La tâche a déjà échoué (état: ${currentStatus.state})`,
+                            message: `Tâche déjà échouée: ${taskId}`,
                             task_id: taskId,
                             current_state: currentStatus.state,
-                            timestamp: new Date().toISOString()
+                            timestamp: new Date().toISOString(),
+                            notes_for_ai: [
+                                "Tâche déjà échouée",
+                                "État: " + currentStatus.state,
+                                "Utiliser get_status pour voir les détails de l'erreur"
+                            ]
                         }, null, 2)
                     }]
             };
@@ -306,10 +130,15 @@ export const cancelTaskHandler = async (args) => {
                         text: JSON.stringify({
                             success: false,
                             error: "TASK_ALREADY_CANCELLED",
-                            message: `La tâche est déjà annulée (état: ${currentStatus.state})`,
+                            message: `Tâche déjà annulée: ${taskId}`,
                             task_id: taskId,
                             current_state: currentStatus.state,
-                            timestamp: new Date().toISOString()
+                            timestamp: new Date().toISOString(),
+                            notes_for_ai: [
+                                "Tâche déjà annulée",
+                                "État: " + currentStatus.state,
+                                "Utiliser get_status pour voir le statut final"
+                            ]
                         }, null, 2)
                     }]
             };
@@ -350,11 +179,16 @@ export const cancelTaskHandler = async (args) => {
                         text: JSON.stringify({
                             success: false,
                             error: "CANCELLATION_FAILED",
-                            message: "Impossible d'annuler la tâche. Elle pourrait être en cours d'exécution avancée.",
+                            message: `Annulation échouée: ${taskId}`,
                             task_id: taskId,
                             current_state: currentStatus.state,
-                            recommendation: force ? "La tâche est peut-être trop avancée pour être annulée" : "Essayez avec force=true",
-                            timestamp: new Date().toISOString()
+                            timestamp: new Date().toISOString(),
+                            notes_for_ai: [
+                                "Annulation échouée",
+                                "État actuel: " + currentStatus.state,
+                                "Force utilisée: " + force,
+                                "Recommandation: " + (force ? "Tâche trop avancée pour annulation" : "Essayer avec force=true")
+                            ]
                         }, null, 2)
                     }]
             };
@@ -379,10 +213,16 @@ export const cancelTaskHandler = async (args) => {
             previous_state: currentStatus.state,
             duration_ms: duration,
             timestamp: new Date().toISOString(),
+            notes_for_ai: [
+                "Annulation réussie",
+                "Méthode: " + cancellationMethod,
+                "État précédent: " + currentStatus.state,
+                "État final: " + (finalStatus?.state || 'cancelled'),
+                "Durée: " + duration + "ms"
+            ],
             recommendations: [
-                "La tâche a été annulée avec succès",
-                "Vous pouvez vérifier le statut avec get_task_status",
-                "Vous pouvez relancer l'indexation si nécessaire"
+                "Vérifier statut avec get_status",
+                "Relancer indexation si nécessaire"
             ]
         };
         logger.info("task.cancel.success", "Tâche annulée avec succès", {
@@ -519,7 +359,14 @@ export const listTasksHandler = async (args) => {
                 completed_at: task.completedAt
             })),
             total_tasks: tasks.length,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
+            notes_for_ai: [
+                "Liste des tâches récupérée",
+                "Filtre: " + (projectPath || "tous les projets"),
+                "État: " + stateFilter,
+                "Limite: " + limit,
+                "Total: " + tasks.length + " tâches"
+            ]
         };
         // Ajouter les statistiques si demandées
         if (includeStats) {
@@ -567,9 +414,14 @@ export const listTasksHandler = async (args) => {
                     text: JSON.stringify({
                         success: false,
                         error: "LIST_ERROR",
-                        message: error.message,
+                        message: `Erreur liste tâches: ${error.message}`,
                         duration_ms: duration,
-                        timestamp: new Date().toISOString()
+                        timestamp: new Date().toISOString(),
+                        notes_for_ai: [
+                            "Erreur lors de la liste des tâches",
+                            "Message: " + error.message,
+                            "Durée: " + duration + "ms"
+                        ]
                     }, null, 2)
                 }]
         };

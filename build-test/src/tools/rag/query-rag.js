@@ -5,6 +5,85 @@ import { logger } from "../../core/logger.js";
 import { isRagInitialized } from "../../rag/phase0/rag-state.js";
 import { searchCode } from "../../rag/searcher.js";
 /**
+ * Formatage pour une lecture humaine (inspiré de recherche-rag.ts)
+ */
+function formatHumanReadable(results, metadata, options) {
+    let output = `🔍 Recherche RAG - ${metadata.searchMode.toUpperCase()}\n`;
+    output += `════════════════════════════════════════\n\n`;
+    output += `📋 Requête: "${metadata.query}"\n`;
+    output += `📁 Scope: ${metadata.scope}${metadata.projectFilter ? ` (${metadata.projectFilter})` : ''}\n`;
+    output += `⚙️  Configuration: ${metadata.embeddingProvider}/${metadata.embeddingModel}\n`;
+    output += `📊 Résultats: ${metadata.totalResults} trouvés (limite: ${metadata.limit})\n`;
+    output += `⏱️  Temps d'exécution: ${metadata.executionTime}ms\n\n`;
+    if (results.length === 0) {
+        output += `❌ Aucun résultat trouvé pour cette requête.\n`;
+        output += `💡 Suggestions: Essayez avec des termes plus généraux ou vérifiez les filtres.\n`;
+        return output;
+    }
+    output += `📄 Résultats (triés par pertinence):\n`;
+    output += `════════════════════════════════════════\n\n`;
+    results.forEach((result, index) => {
+        output += `${index + 1}. 📍 ${result.filePath}\n`;
+        output += `   ⭐ Score: ${(result.score * 100).toFixed(2)}%\n`;
+        if (result.metadata) {
+            output += `   📂 Projet: ${result.metadata.projectPath || 'N/A'}\n`;
+            output += `   🏷️  Type: ${result.metadata.contentType || 'N/A'}`;
+            if (result.metadata.language)
+                output += ` (${result.metadata.language})`;
+            output += `\n`;
+            if (result.metadata.role) {
+                output += `   🎭 Rôle: ${result.metadata.role}\n`;
+            }
+            if (result.metadata.linesCount) {
+                output += `   📏 Lignes: ${result.metadata.linesCount}\n`;
+            }
+            if (result.metadata.updatedAt) {
+                const updatedDate = new Date(result.metadata.updatedAt);
+                output += `   📅 Mis à jour: ${updatedDate.toLocaleDateString()}\n`;
+            }
+        }
+        if (options.includeContent && result.content) {
+            const content = result.content.length > options.maxContentLength
+                ? result.content.substring(0, options.maxContentLength) + '...'
+                : result.content;
+            output += `   📝 Contenu:\n`;
+            output += `   ${'─'.repeat(40)}\n`;
+            output += `   ${content.split('\n').join('\n   ')}\n`;
+            output += `   ${'─'.repeat(40)}\n`;
+        }
+        if (options.includeMetadata && result.metadata) {
+            output += `   🔧 Métadonnées complètes:\n`;
+            Object.entries(result.metadata).forEach(([key, value]) => {
+                if (typeof value === 'object') {
+                    output += `      ${key}: ${JSON.stringify(value)}\n`;
+                }
+                else {
+                    output += `      ${key}: ${value}\n`;
+                }
+            });
+        }
+        output += `\n`;
+    });
+    output += `════════════════════════════════════════\n`;
+    return output;
+}
+/**
+ * Formatage rétrocompatible avec search_code
+ */
+function prepareLegacyResponse(searchResults, metadata) {
+    logger.info("rag.query.legacy_mode", "Formatage de la réponse en mode rétrocompatible");
+    const formatted = `Recherche RAG: "${metadata.query}"\n` +
+        `Configuration: provider=${metadata.embeddingProvider}, model=${metadata.embeddingModel}\n` +
+        `Résultats: ${metadata.totalResults}\n` +
+        `Temps d'exécution: ${metadata.executionTime}ms\n` +
+        `Projets scannés: 1\n` +
+        `Limite: ${metadata.limit}, Seuil: ${metadata.threshold}\n\n` +
+        searchResults.map((r, i) => `${i + 1}. ${r.filePath} (score: ${(r.score * 100).toFixed(2)}%)\n` +
+            `   Projet: ${r.metadata?.projectPath || 'N/A'}\n` +
+            `   Contenu: ${r.content?.substring(0, 100) || ''}...`).join('\n\n');
+    return formatted;
+}
+/**
  * Définition de l'outil query_rag
  */
 export const queryRagTool = {
@@ -136,6 +215,14 @@ export const queryRagTool = {
                 default: 500,
                 minimum: 0,
                 maximum: 10000
+            },
+            // Exception: query_rag conserve un timeout pour limiter la durée de recherche
+            timeout_seconds: {
+                type: "number",
+                description: "Timeout en secondes pour la recherche (exception - conservé pour query_rag)",
+                default: 30,
+                minimum: 1,
+                maximum: 300
             }
         },
         required: ["query"]
@@ -181,12 +268,17 @@ export const queryRagHandler = async (args) => {
                         text: JSON.stringify({
                             status: "error",
                             error: "RAG_NOT_INITIALIZED",
-                            message: errorMessage,
+                            message: `RAG non initialisé: ${projectPath}`,
                             required_action: "run_init_rag",
                             details: {
                                 project_path: projectPath,
                                 timestamp: new Date().toISOString()
-                            }
+                            },
+                            notes_for_ai: [
+                                "RAG non initialisé pour ce projet",
+                                "Action requise: init_rag",
+                                "Projet: " + projectPath
+                            ]
                         }, null, 2)
                     }]
             };
@@ -217,7 +309,8 @@ export const queryRagHandler = async (args) => {
             formatOutput: args.format_output !== false,
             includeMetadata: args.include_metadata === true,
             includeContent: args.include_content !== false,
-            maxContentLength: args.max_content_length || 500
+            maxContentLength: args.max_content_length || 500,
+            timeout: args.timeout_seconds || 30 // Exception: timeout conservé pour query_rag
         };
         // Exécution de la recherche
         const searchResult = await searchCode(args.query, searchOptions);
@@ -228,7 +321,31 @@ export const queryRagHandler = async (args) => {
             total_results: searchResult.results?.length || 0,
             query_length: args.query.length
         });
-        // Préparer la réponse
+        // Préparer les métadonnées pour le formatage
+        const metadata = {
+            query: args.query,
+            scope: args.scope || 'project',
+            projectFilter: projectPath,
+            searchMode: args.search_mode || 'semantic',
+            embeddingProvider: 'default', // À remplacer par la configuration réelle si disponible
+            embeddingModel: 'default',
+            limit: args.top_k || 10,
+            threshold: args.threshold || 0.3,
+            executionTime: parseInt(duration) * 1000,
+            totalResults: searchResult.results?.length || 0
+        };
+        // Formatage humain
+        if (args.format_output !== false) {
+            const humanReadableText = formatHumanReadable(searchResult.results || [], metadata, {
+                includeContent: args.include_content !== false,
+                maxContentLength: args.max_content_length || 500,
+                includeMetadata: args.include_metadata === true
+            });
+            return {
+                content: [{ type: "text", text: humanReadableText }]
+            };
+        }
+        // Format JSON structuré (par défaut)
         return {
             content: [{
                     type: "text",
@@ -251,6 +368,13 @@ export const queryRagHandler = async (args) => {
                             search_mode: args.search_mode || 'semantic',
                             enable_reranking: args.enable_reranking === true
                         },
+                        notes_for_ai: [
+                            "Recherche RAG réussie",
+                            "Résultats: " + (searchResult.results?.length || 0),
+                            "Durée: " + duration + "s",
+                            "Scope: " + (args.scope || 'project'),
+                            "Mode: " + (args.search_mode || 'semantic')
+                        ],
                         next_steps: [
                             "Affinez votre requête pour des résultats plus précis",
                             "Utilisez scan_rag pour analyser les changements dans le projet",
@@ -275,9 +399,14 @@ export const queryRagHandler = async (args) => {
                     text: JSON.stringify({
                         status: "error",
                         error: "QUERY_ERROR",
-                        message: error.message,
+                        message: `Erreur recherche: ${error.message}`,
                         duration_seconds: parseFloat(duration),
                         timestamp: new Date().toISOString(),
+                        notes_for_ai: [
+                            "Erreur lors de la recherche RAG",
+                            "Message: " + error.message,
+                            "Durée: " + duration + "s"
+                        ],
                         stack_trace: error.stack
                     }, null, 2)
                 }]

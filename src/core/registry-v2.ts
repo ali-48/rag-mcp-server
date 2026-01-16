@@ -40,15 +40,20 @@ const DEFAULT_CONFIG_V2: RegistryConfigV2 = {
     legacyMode: true, // Par défaut, activer le mode rétrocompatible
     exposedTools: [
         'init_rag',
-        'scan_rag',
-        'index_rag',
-        'query_rag',
-        'pipeline_validator',
         'activated_rag',
-        'recherche_rag',
-        'manage_projects'
+        'get_status',
+        'query_rag',
+        'cancel_task'
     ],
     hiddenTools: [
+        'scan_rag',
+        'index_rag',
+        'prepare_rag',
+        'embed_rag',
+        'list_tasks',
+        'manage_projects',
+        'pipeline_validator',
+        'recherche_rag',
         'injection_rag',
         'index_project',
         'update_project',
@@ -347,15 +352,20 @@ export function getExpectedToolsV2(): string[] {
     return [
         // Nouveaux outils principaux
         'init_rag',
-        'scan_rag',
-        'index_rag',
-        'query_rag',
-        'pipeline_validator',
         'activated_rag',
-        'recherche_rag',
-        'manage_projects',
+        'get_status',
+        'query_rag',
+        'cancel_task',
 
         // Outils legacy (masqués par défaut)
+        'scan_rag',
+        'index_rag',
+        'prepare_rag',
+        'embed_rag',
+        'list_tasks',
+        'manage_projects',
+        'pipeline_validator',
+        'recherche_rag',
         'injection_rag',
         'index_project',
         'update_project',

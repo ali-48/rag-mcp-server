@@ -9,7 +9,7 @@ export const DEFAULT_LLM_ENRICHER_CONFIG = {
     model: 'llama3.1:latest',
     temperature: 0.1,
     maxTokens: 1000,
-    timeoutMs: 30000,
+    timeoutMs: null,
     batchSize: 5,
     features: ['summary', 'keywords', 'entities'],
     cacheEnabled: true,
@@ -29,7 +29,7 @@ export function validateLLMEnricherConfig(config) {
     if (mergedConfig.maxTokens < 1 || mergedConfig.maxTokens > 10000) {
         errors.push(`maxTokens must be between 1 and 10000, got ${mergedConfig.maxTokens}`);
     }
-    if (mergedConfig.timeoutMs < 1000 || mergedConfig.timeoutMs > 120000) {
+    if (mergedConfig.timeoutMs !== null && (mergedConfig.timeoutMs < 1000 || mergedConfig.timeoutMs > 120000)) {
         errors.push(`timeoutMs must be between 1000 and 120000, got ${mergedConfig.timeoutMs}`);
     }
     if (mergedConfig.batchSize < 1 || mergedConfig.batchSize > 50) {
