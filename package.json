@@ -19,7 +19,6 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.9.0",
-    "chokidar": "^5.0.0",
     "fast-glob": "^3.3.3",
     "ignore": "^7.0.5",
     "pg": "^8.16.3",
@@ -31,9 +30,11 @@
     "tree-sitter-typescript": "^0.23.2"
   },
   "devDependencies": {
+    "@types/chokidar": "^1.7.5",
     "@types/node": "^20.11.0",
     "@types/pg": "^8.16.0",
     "@vitest/ui": "^4.0.17",
+    "chokidar": "^5.0.0",
     "eslint-plugin-import": "^2.32.0",
     "madge": "^8.0.0",
     "shx": "^0.3.4",

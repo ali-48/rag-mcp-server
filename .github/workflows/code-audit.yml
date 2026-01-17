@@ -1,0 +1,353 @@
+name: Code Audit
+on:
+  push:
+    branches: [main, master, develop]
+    paths:
+      - "src/**"
+      - "scripts/**"
+      - "package.json"
+      - "package-lock.json"
+      - "tsconfig.json"
+  pull_request:
+    branches: [main, master, develop]
+    paths:
+      - "src/**"
+      - "scripts/**"
+      - "package.json"
+      - "package-lock.json"
+      - "tsconfig.json"
+  workflow_dispatch: # Permet l'exécution manuelle
+    inputs:
+      audit_type:
+        description: "Type d audit à exécuter"
+        required: false
+        default: "full"
+        type: choice
+        options:
+          - full
+          - json-only
+          - fast
+      force:
+        description: "Forcer la ré-exécution même si aucun changement"
+        required: false
+        default: false
+        type: boolean
+
+# Empêche les exécutions concurrentes du même workflow
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    name: Code Quality Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Récupère tout l'historique pour analyse Git
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.x"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          # Installer tsx globalement pour l'exécution TypeScript
+          npm install -g tsx
+
+      - name: Verify TypeScript installation
+        run: |
+          npx tsc --version
+          which tsx
+
+      - name: Create audit directory
+        run: |
+          mkdir -p audit
+          mkdir -p audit/logs
+
+      - name: Run Code Mapper Audit
+        id: audit
+        run: |
+          echo "🚀 Starting code audit..."
+          echo "Event: ${{ github.event_name }}"
+          echo "Ref: ${{ github.ref }}"
+          echo "SHA: ${{ github.sha }}"
+
+          # Déterminer le type d'audit
+          AUDIT_TYPE="${{ github.event.inputs.audit_type || 'full' }}"
+          echo "Audit type: $AUDIT_TYPE"
+
+          # Exécuter l'audit selon le type
+          case "$AUDIT_TYPE" in
+            "json-only")
+              echo "Running JSON-only audit..."
+              npx tsx scripts/code-mapper.ts --output-json --verbose
+              ;;
+            "fast")
+              echo "Running fast audit..."
+              npx tsx scripts/code-mapper.ts --output-json --silent
+              ;;
+            *)
+              echo "Running full audit (3 formats)..."
+              npx tsx scripts/code-mapper.ts --output-all --verbose
+              ;;
+          esac
+
+          # Vérifier si l'audit a réussi
+          if [ $? -eq 0 ]; then
+            echo "✅ Audit completed successfully"
+            echo "success=true" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Audit failed"
+            echo "success=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+      - name: Analyze audit results
+        if: steps.audit.outputs.success == 'true'
+        run: |
+          echo "📊 Analyzing audit results..."
+
+          # Vérifier les fichiers générés
+          echo "Generated files:"
+          ls -la audit/ || echo "No audit directory"
+
+          # Analyser le fichier JSON si disponible
+          if [ -f "audit/code_map.json" ]; then
+            echo "📄 JSON file size: $(stat -c%s audit/code_map.json) bytes"
+
+            # Extraire les métriques principales avec jq
+            if command -v jq &> /dev/null; then
+              echo "📈 Key metrics:"
+              jq '.summary | {totalFiles, codeFiles, functions, classes, imports, calls}' audit/code_map.json
+
+              # Calculer la qualité moyenne
+              QUALITY=$(jq '[.files[].score.quality] | add / length' audit/code_map.json)
+              echo "📊 Average quality: $QUALITY"
+
+              # Identifier les fichiers avec qualité faible
+              LOW_QUALITY_COUNT=$(jq '[.files[] | select(.score.quality < 0.5)] | length' audit/code_map.json)
+              if [ "$LOW_QUALITY_COUNT" -gt 0 ]; then
+                echo "⚠️  Files with low quality (< 0.5): $LOW_QUALITY_COUNT"
+                jq -r '.files[] | select(.score.quality < 0.5) | "  - \(.path): \(.score.quality)"' audit/code_map.json | head -10
+              else
+                echo "✅ No files with low quality"
+              fi
+
+              # Enregistrer les métriques pour les étapes suivantes
+              echo "QUALITY=$QUALITY" >> $GITHUB_ENV
+              echo "LOW_QUALITY_COUNT=$LOW_QUALITY_COUNT" >> $GITHUB_ENV
+            else
+              echo "ℹ️  jq not available for detailed analysis"
+            fi
+          else
+            echo "⚠️  No JSON file generated"
+          fi
+
+      - name: Check quality threshold
+        if: steps.audit.outputs.success == 'true' && env.QUALITY != ''
+        run: |
+          echo "🔍 Checking quality threshold..."
+          QUALITY_THRESHOLD=0.6
+
+          # Comparer avec le seuil
+          if (( $(echo "$QUALITY < $QUALITY_THRESHOLD" | bc -l) )); then
+            echo "❌ Quality below threshold: $QUALITY < $QUALITY_THRESHOLD"
+            echo "QUALITY_CHECK=failed" >> $GITHUB_ENV
+          else
+            echo "✅ Quality meets threshold: $QUALITY >= $QUALITY_THRESHOLD"
+            echo "QUALITY_CHECK=passed" >> $GITHUB_ENV
+          fi
+
+      - name: Upload audit artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: code-audit-${{ github.run_id }}
+          path: |
+            audit/
+            !audit/logs/
+          retention-days: 30
+
+      - name: Upload audit logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: code-audit-logs-${{ github.run_id }}
+          path: audit/logs/
+          retention-days: 7
+
+      - name: Generate audit report
+        if: steps.audit.outputs.success == 'true'
+        run: |
+          echo "📋 Generating audit report..."
+
+          REPORT_FILE="audit/ci-report-${{ github.run_id }}.md"
+
+          cat > "$REPORT_FILE" << EOF
+          # Code Audit Report
+          - **Run ID**: ${{ github.run_id }}
+          - **Workflow**: ${{ github.workflow }}
+          - **Event**: ${{ github.event_name }}
+          - **Ref**: ${{ github.ref }}
+          - **SHA**: ${{ github.sha }}
+          - **Triggered by**: ${{ github.actor }}
+          - **Date**: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+
+          ## Audit Results
+          - **Status**: ${{ steps.audit.outputs.success == 'true' && '✅ Success' || '❌ Failed' }}
+          - **Type**: ${{ github.event.inputs.audit_type || 'full' }}
+
+          EOF
+
+          # Ajouter les métriques si disponibles
+          if [ -f "audit/code_map.json" ] && command -v jq &> /dev/null; then
+            cat >> "$REPORT_FILE" << EOF
+          ## Project Metrics
+          $(jq -r '.summary | "| Metric | Value |\n|--------|-------|\n| Total Files | \(.totalFiles) |\n| Code Files | \(.codeFiles) |\n| Functions | \(.functions) |\n| Classes | \(.classes) |\n| Imports | \(.imports) |\n| Calls | \(.calls) |"' audit/code_map.json)
+
+          ## Quality Analysis
+          - **Average Quality**: $QUALITY
+          - **Quality Threshold**: 0.6
+          - **Quality Check**: $QUALITY_CHECK
+          - **Files with Low Quality (< 0.5)**: $LOW_QUALITY_COUNT
+
+          EOF
+
+            # Ajouter la liste des fichiers avec qualité faible
+            if [ "$LOW_QUALITY_COUNT" -gt 0 ]; then
+              echo "### Files Needing Attention" >> "$REPORT_FILE"
+              jq -r '.files[] | select(.score.quality < 0.5) | "- \(.path): \(.score.quality)"' audit/code_map.json >> "$REPORT_FILE"
+              echo "" >> "$REPORT_FILE"
+            fi
+          fi
+
+          # Ajouter les informations sur les artefacts
+          cat >> "$REPORT_FILE" << EOF
+          ## Generated Artifacts
+          1. \`code_map.json\` - Complete code mapping
+          2. \`code_map.mm\` - FreeMind mind map
+          3. \`code_map.db\` - SQLite database
+          4. \`ci-report-*.md\` - This report
+
+          ## Download Artifacts
+          Artifacts are available for download from the GitHub Actions run.
+
+          ## Next Steps
+          1. Review low-quality files
+          2. Consider refactoring complex code
+          3. Update documentation if needed
+          4. Run tests to ensure functionality
+
+          ---
+          *Generated automatically by GitHub Actions*
+          EOF
+
+          echo "📄 Report generated: $REPORT_FILE"
+
+      - name: Upload audit report
+        if: steps.audit.outputs.success == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: code-audit-report-${{ github.run_id }}
+          path: audit/ci-report-*.md
+          retention-days: 30
+
+      - name: Comment on PR (if pull request)
+        if: github.event_name == 'pull_request' && steps.audit.outputs.success == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+
+            // Lire le rapport
+            let report = '## 📊 Code Audit Results\n\n';
+
+            // Ajouter le statut
+            report += '✅ **Audit completed successfully**\n\n';
+
+            // Ajouter les métriques si disponibles
+            if (process.env.QUALITY) {
+              report += `### Quality Metrics\n`;
+              report += `- **Average Quality**: ${process.env.QUALITY}\n`;
+              report += `- **Quality Check**: ${process.env.QUALITY_CHECK}\n`;
+              report += `- **Low Quality Files**: ${process.env.LOW_QUALITY_COUNT || 0}\n\n`;
+
+              if (process.env.QUALITY_CHECK === 'failed') {
+                report += '⚠️ **Warning**: Code quality below threshold (0.6)\n\n';
+              }
+            }
+
+            report += '### Generated Artifacts\n';
+            report += '1. `code_map.json` - Complete code mapping\n';
+            report += '2. `code_map.mm` - FreeMind mind map\n';
+            report += '3. `code_map.db` - SQLite database\n';
+            report += '4. CI Report - Detailed analysis\n\n';
+
+            report += '### Next Steps\n';
+            report += '1. Download artifacts for detailed analysis\n';
+            report += '2. Review any low-quality files\n';
+            report += '3. Ensure code meets quality standards\n\n';
+
+            report += '---\n';
+            report += '*Generated automatically by GitHub Actions*';
+
+            // Ajouter un commentaire à la PR
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: report
+            });
+
+      - name: Fail workflow if quality check failed
+        if: env.QUALITY_CHECK == 'failed'
+        run: |
+          echo "❌ Workflow failed due to low code quality"
+          echo "Average quality: $QUALITY (threshold: 0.6)"
+          exit 1
+
+  notify:
+    name: Notify Results
+    needs: audit
+    if: always()
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download audit artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: code-audit-report-${{ github.run_id }}
+
+      - name: Read report
+        id: read_report
+        run: |
+          REPORT_FILE=$(ls ci-report-*.md 2>/dev/null | head -1)
+          if [ -f "$REPORT_FILE" ]; then
+            echo "📄 Report found: $REPORT_FILE"
+            REPORT_CONTENT=$(cat "$REPORT_FILE" | head -50)
+            echo "report_content<<EOF" >> $GITHUB_OUTPUT
+            echo "$REPORT_CONTENT" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          else
+            echo "report_content=No report generated" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Summary
+        run: |
+          echo "📋 Code Audit Workflow Summary"
+          echo "=============================="
+          echo "Run ID: ${{ github.run_id }}"
+          echo "Workflow: ${{ github.workflow }}"
+          echo "Status: ${{ needs.audit.result }}"
+          echo "Event: ${{ github.event_name }}"
+          echo ""
+          echo "Report Preview:"
+          echo "${{ steps.read_report.outputs.report_content }}"
