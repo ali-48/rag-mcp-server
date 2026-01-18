@@ -124,14 +124,6 @@ export class LlmCache {
         return Array.from(this.cache.entries()).map(([key, entry]) => ({ key, entry }));
     }
 }
-function hashString(str) {
-    // Hash simple pour le cache (djb2)
-    let hash = 5381;
-    for (let i = 0; i < str.length; i++) {
-        hash = ((hash << 5) + hash) + str.charCodeAt(i);
-    }
-    return Math.abs(hash).toString(36);
-}
 // Instance singleton pour une utilisation globale
 let globalCache = null;
 export function getLlmCache(ttlSeconds, maxSize) {
@@ -142,6 +134,7 @@ export function getLlmCache(ttlSeconds, maxSize) {
 }
 // Fonction utilitaire pour créer un cache avec la configuration RAG
 import { getRagConfigManager } from "../config/rag-config.js";
+import { hashString } from '../core/utils/string-utils.js';
 export function createCacheFromConfig() {
     const configManager = getRagConfigManager();
     const preparationConfig = configManager.getPreparationConfig();

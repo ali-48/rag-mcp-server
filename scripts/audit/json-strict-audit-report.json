@@ -1,0 +1,1618 @@
+{
+  "report": {
+    "summary": {
+      "totalViolations": 188,
+      "byType": {
+        "ICON_IN_VALUE": 188
+      },
+      "byFile": {
+        "archived-tests/test-ast-structure.js": 1,
+        "archived-tests/test-chunker-debug.js": 2,
+        "archived-tests/test-chunker-rules.js": 6,
+        "archived-tests/test-config-integration.js": 2,
+        "archived-tests/test-debug-chunker.js": 1,
+        "archived-tests/test-pipeline-complet.js": 1,
+        "run-all-tests.js": 1,
+        "scripts/audit/json-strict-audit-report.json": 160,
+        "scripts/audit/project-tree.ts": 1,
+        "scripts/incremental-reindex.js": 2,
+        "scripts/migrate-v1-to-v2.js": 2,
+        "src/rag/phase0/parser/tree-sitter/parse-file.ts": 1,
+        "src/rag/progress/progress-cli.ts": 1,
+        "test/mcp-json.test.ts": 5,
+        "test/phase0-parser/test-parser.js": 1,
+        "test/phase0-parser/test-parser.ts": 1
+      },
+      "totalFilesScanned": 210
+    },
+    "violations": [
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 19,
+        "column": 56,
+        "match": ": '❌",
+        "context": "console.log(`   Parsing réussi: ${result.ast ? '✅' : '❌'}`);",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/archived-tests/test-ast-structure.js"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 28,
+        "column": 52,
+        "match": ": '❌",
+        "context": "console.log(`   AST généré: ${result.ast ? '✅' : '❌'}`);",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/archived-tests/test-chunker-debug.js"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 109,
+        "column": 67,
+        "match": ": '❌",
+        "context": "console.log(`   Validation manuelle: ${validation.valid ? '✅' : '❌'}`);",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/archived-tests/test-chunker-debug.js"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 47,
+        "column": 96,
+        "match": ": '❌",
+        "context": "console.log(`   Règle \"ne jamais couper une fonction\": ${functionChunks.length === 1 ? '✅' : '❌'}`);",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/archived-tests/test-chunker-rules.js"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 51,
+        "column": 98,
+        "match": ": '❌",
+        "context": "console.log(`   Règle \"ne jamais mélanger code et texte\": ${tsMixedChunks.length === 0 ? '✅' : '❌'}`);",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/archived-tests/test-chunker-rules.js"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 85,
+        "column": 91,
+        "match": ": '❌",
+        "context": "console.log(`   Règle \"ne jamais couper une classe\": ${classChunks.length === 1 ? '✅' : '❌'}`);",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/archived-tests/test-chunker-rules.js"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 91,
+        "column": 85,
+        "match": ": '❌",
+        "context": "console.log(`   Règle \"1 chunk = 1 intention logique\": ${validGranularity ? '✅' : '❌'}`);",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/archived-tests/test-chunker-rules.js"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 137,
+        "column": 75,
+        "match": ": '❌",
+        "context": "console.log(`   Chunks rejetés pour mélange: ${!hasMixedContent ? '✅' : '❌'}`);",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/archived-tests/test-chunker-rules.js"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 163,
+        "column": 78,
+        "match": ": '❌",
+        "context": "console.log(`   Fonction coupée détectée: ${!hasIncompleteFunction ? '✅' : '❌'}`);",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/archived-tests/test-chunker-rules.js"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 50,
+        "column": 67,
+        "match": ": '❌",
+        "context": "console.log(`📊 Validation chunk_size 500: ${validValue ? '✅' : '❌'}`);",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/archived-tests/test-config-integration.js"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 51,
+        "column": 71,
+        "match": ": '❌",
+        "context": "console.log(`📊 Validation chunk_size 50000: ${invalidValue ? '✅' : '❌'} (attendu: false)`);",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/archived-tests/test-config-integration.js"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 30,
+        "column": 56,
+        "match": ": '❌",
+        "context": "console.log(`   Parsing réussi: ${result.ast ? '✅' : '❌'}`);",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/archived-tests/test-debug-chunker.js"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 223,
+        "column": 63,
+        "match": ": '❌",
+        "context": "const statusIcon = test.status === 'passed' ? '✅' : '❌';",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/archived-tests/test-pipeline-complet.js"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 145,
+        "column": 39,
+        "match": ": '❌",
+        "context": "const icon = result.success ? '✅' : '❌';",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/run-all-tests.js"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 33,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 34,
+        "column": 72,
+        "match": ": '❌",
+        "context": "\"context\": \"console.log(`   Parsing réussi: ${result.ast ? '✅' : '❌'}`);\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 41,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 42,
+        "column": 68,
+        "match": ": '❌",
+        "context": "\"context\": \"console.log(`   AST généré: ${result.ast ? '✅' : '❌'}`);\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 49,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 50,
+        "column": 83,
+        "match": ": '❌",
+        "context": "\"context\": \"console.log(`   Validation manuelle: ${validation.valid ? '✅' : '❌'}`);\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 57,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 58,
+        "column": 114,
+        "match": ": '❌",
+        "context": "\"context\": \"console.log(`   Règle \\\"ne jamais couper une fonction\\\": ${functionChunks.length === 1 ? '✅' : '❌'}`);\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 65,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 66,
+        "column": 116,
+        "match": ": '❌",
+        "context": "\"context\": \"console.log(`   Règle \\\"ne jamais mélanger code et texte\\\": ${tsMixedChunks.length === 0 ? '✅' : '❌'}`);\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 73,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 74,
+        "column": 109,
+        "match": ": '❌",
+        "context": "\"context\": \"console.log(`   Règle \\\"ne jamais couper une classe\\\": ${classChunks.length === 1 ? '✅' : '❌'}`);\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 81,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 82,
+        "column": 103,
+        "match": ": '❌",
+        "context": "\"context\": \"console.log(`   Règle \\\"1 chunk = 1 intention logique\\\": ${validGranularity ? '✅' : '❌'}`);\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 89,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 90,
+        "column": 91,
+        "match": ": '❌",
+        "context": "\"context\": \"console.log(`   Chunks rejetés pour mélange: ${!hasMixedContent ? '✅' : '❌'}`);\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 97,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 98,
+        "column": 94,
+        "match": ": '❌",
+        "context": "\"context\": \"console.log(`   Fonction coupée détectée: ${!hasIncompleteFunction ? '✅' : '❌'}`);\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 105,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 106,
+        "column": 83,
+        "match": ": '❌",
+        "context": "\"context\": \"console.log(`📊 Validation chunk_size 500: ${validValue ? '✅' : '❌'}`);\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 113,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 114,
+        "column": 87,
+        "match": ": '❌",
+        "context": "\"context\": \"console.log(`📊 Validation chunk_size 50000: ${invalidValue ? '✅' : '❌'} (attendu: false)`);\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 121,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 122,
+        "column": 72,
+        "match": ": '❌",
+        "context": "\"context\": \"console.log(`   Parsing réussi: ${result.ast ? '✅' : '❌'}`);\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 129,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 130,
+        "column": 71,
+        "match": ": '❌",
+        "context": "\"context\": \"const statusIcon = test.status === 'passed' ? '✅' : '❌';\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 137,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 138,
+        "column": 55,
+        "match": ": '❌",
+        "context": "\"context\": \"const icon = result.success ? '✅' : '❌';\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 145,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 146,
+        "column": 34,
+        "match": ": '❌",
+        "context": "\"context\": \"\\\"match\\\": \\\": '❌\\\",\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 153,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 154,
+        "column": 87,
+        "match": ": '❌",
+        "context": "\"context\": \"\\\"context\\\": \\\"console.log(`   Parsing réussi: ${result.ast ? '✅' : '❌'}`);\\\",\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 161,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 162,
+        "column": 34,
+        "match": ": '❌",
+        "context": "\"context\": \"\\\"match\\\": \\\": '❌\\\",\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 169,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 170,
+        "column": 83,
+        "match": ": '❌",
+        "context": "\"context\": \"\\\"context\\\": \\\"console.log(`   AST généré: ${result.ast ? '✅' : '❌'}`);\\\",\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 177,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 178,
+        "column": 34,
+        "match": ": '❌",
+        "context": "\"context\": \"\\\"match\\\": \\\": '❌\\\",\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 185,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 186,
+        "column": 98,
+        "match": ": '❌",
+        "context": "\"context\": \"\\\"context\\\": \\\"console.log(`   Validation manuelle: ${validation.valid ? '✅' : '❌'}`);\\\",\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 193,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 194,
+        "column": 34,
+        "match": ": '❌",
+        "context": "\"context\": \"\\\"match\\\": \\\": '❌\\\",\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 201,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 202,
+        "column": 133,
+        "match": ": '❌",
+        "context": "\"context\": \"\\\"context\\\": \\\"console.log(`   Règle \\\\\\\"ne jamais couper une fonction\\\\\\\": ${functionChunks.length === 1 ? '✅' : '❌'}`);\\\",\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 209,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 210,
+        "column": 34,
+        "match": ": '❌",
+        "context": "\"context\": \"\\\"match\\\": \\\": '❌\\\",\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 217,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 218,
+        "column": 135,
+        "match": ": '❌",
+        "context": "\"context\": \"\\\"context\\\": \\\"console.log(`   Règle \\\\\\\"ne jamais mélanger code et texte\\\\\\\": ${tsMixedChunks.length === 0 ? '✅' : '❌'}`);\\\",\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 225,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 226,
+        "column": 34,
+        "match": ": '❌",
+        "context": "\"context\": \"\\\"match\\\": \\\": '❌\\\",\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 233,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 234,
+        "column": 128,
+        "match": ": '❌",
+        "context": "\"context\": \"\\\"context\\\": \\\"console.log(`   Règle \\\\\\\"ne jamais couper une classe\\\\\\\": ${classChunks.length === 1 ? '✅' : '❌'}`);\\\",\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 241,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 242,
+        "column": 34,
+        "match": ": '❌",
+        "context": "\"context\": \"\\\"match\\\": \\\": '❌\\\",\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 249,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 250,
+        "column": 122,
+        "match": ": '❌",
+        "context": "\"context\": \"\\\"context\\\": \\\"console.log(`   Règle \\\\\\\"1 chunk = 1 intention logique\\\\\\\": ${validGranularity ? '✅' : '❌'}`);\\\",\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 257,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 258,
+        "column": 34,
+        "match": ": '❌",
+        "context": "\"context\": \"\\\"match\\\": \\\": '❌\\\",\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 265,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 266,
+        "column": 106,
+        "match": ": '❌",
+        "context": "\"context\": \"\\\"context\\\": \\\"console.log(`   Chunks rejetés pour mélange: ${!hasMixedContent ? '✅' : '❌'}`);\\\",\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 273,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 274,
+        "column": 34,
+        "match": ": '❌",
+        "context": "\"context\": \"\\\"match\\\": \\\": '❌\\\",\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 281,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 282,
+        "column": 109,
+        "match": ": '❌",
+        "context": "\"context\": \"\\\"context\\\": \\\"console.log(`   Fonction coupée détectée: ${!hasIncompleteFunction ? '✅' : '❌'}`);\\\",\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 289,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 290,
+        "column": 34,
+        "match": ": '❌",
+        "context": "\"context\": \"\\\"match\\\": \\\": '❌\\\",\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 297,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 298,
+        "column": 98,
+        "match": ": '❌",
+        "context": "\"context\": \"\\\"context\\\": \\\"console.log(`📊 Validation chunk_size 500: ${validValue ? '✅' : '❌'}`);\\\",\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 305,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 306,
+        "column": 34,
+        "match": ": '❌",
+        "context": "\"context\": \"\\\"match\\\": \\\": '❌\\\",\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 313,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 314,
+        "column": 102,
+        "match": ": '❌",
+        "context": "\"context\": \"\\\"context\\\": \\\"console.log(`📊 Validation chunk_size 50000: ${invalidValue ? '✅' : '❌'} (attendu: false)`);\\\",\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 321,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 322,
+        "column": 34,
+        "match": ": '❌",
+        "context": "\"context\": \"\\\"match\\\": \\\": '❌\\\",\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 329,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 330,
+        "column": 87,
+        "match": ": '❌",
+        "context": "\"context\": \"\\\"context\\\": \\\"console.log(`   Parsing réussi: ${result.ast ? '✅' : '❌'}`);\\\",\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 337,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 338,
+        "column": 34,
+        "match": ": '❌",
+        "context": "\"context\": \"\\\"match\\\": \\\": '❌\\\",\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 345,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 346,
+        "column": 86,
+        "match": ": '❌",
+        "context": "\"context\": \"\\\"context\\\": \\\"const statusIcon = test.status === 'passed' ? '✅' : '❌';\\\",\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 353,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 354,
+        "column": 34,
+        "match": ": '❌",
+        "context": "\"context\": \"\\\"match\\\": \\\": '❌\\\",\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 361,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 362,
+        "column": 70,
+        "match": ": '❌",
+        "context": "\"context\": \"\\\"context\\\": \\\"const icon = result.success ? '✅' : '❌';\\\",\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 370,
+        "column": 85,
+        "match": ": '\ud83d",
+        "context": "\"context\": \"\\\"context\\\": \\\"const prefix = file.type === 'directory' ? '📁 ' : '📄 ';\\\",\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 377,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 378,
+        "column": 34,
+        "match": ": '❌",
+        "context": "\"context\": \"\\\"match\\\": \\\": '❌\\\",\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 385,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 386,
+        "column": 86,
+        "match": ": '❌",
+        "context": "\"context\": \"\\\"context\\\": \\\"console.log(`  • Dry run: ${args.dryRun ? '✅ Oui' : '❌ Non'}`);\\\",\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 393,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 394,
+        "column": 34,
+        "match": ": '❌",
+        "context": "\"context\": \"\\\"match\\\": \\\": '❌\\\",\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 401,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 402,
+        "column": 87,
+        "match": ": '❌",
+        "context": "\"context\": \"\\\"context\\\": \\\"console.log(`  • Verbose: ${args.verbose ? '✅ Oui' : '❌ Non'}`);\\\",\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 409,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 410,
+        "column": 34,
+        "match": ": '❌",
+        "context": "\"context\": \"\\\"match\\\": \\\": '❌\\\",\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 417,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 418,
+        "column": 88,
+        "match": ": '❌",
+        "context": "\"context\": \"\\\"context\\\": \\\"console.log(`   Validation: ${isValid ? '✅ Réussie' : '❌ Échouée'}`);\\\",\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 425,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 426,
+        "column": 34,
+        "match": ": '❌",
+        "context": "\"context\": \"\\\"match\\\": \\\": '❌\\\",\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 433,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 434,
+        "column": 100,
+        "match": ": '❌",
+        "context": "\"context\": \"\\\"context\\\": \\\"console.log(`   Sauvegarde: ${CONFIG.backup_enabled ? '✅ Créée' : '❌ Désactivée'}`);\\\",\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 441,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 442,
+        "column": 34,
+        "match": ": '❌",
+        "context": "\"context\": \"\\\"match\\\": \\\": '❌\\\",\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 449,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 450,
+        "column": 75,
+        "match": ": '❌",
+        "context": "\"context\": \"\\\"context\\\": \\\"const success = metadata.success ? '✅' : '❌';\\\",\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 458,
+        "column": 64,
+        "match": ": '\ud83d",
+        "context": "\"context\": \"\\\"context\\\": \\\"msg.level === 'info' ? 'ℹ️' : '🔍';\\\",\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 465,
+        "column": 19,
+        "match": ": '✅",
+        "context": "\"match\": \": '✅\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 466,
+        "column": 34,
+        "match": ": '✅",
+        "context": "\"context\": \"\\\"match\\\": \\\": '✅\\\",\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 473,
+        "column": 19,
+        "match": ": '✅",
+        "context": "\"match\": \": '✅\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 474,
+        "column": 40,
+        "match": ": '✅",
+        "context": "\"context\": \"\\\"context\\\": \\\"text: '✅ Operation completed successfully' // Emoji dans le texte\\\",\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 481,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 482,
+        "column": 34,
+        "match": ": '❌",
+        "context": "\"context\": \"\\\"match\\\": \\\": '❌\\\",\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 489,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 490,
+        "column": 96,
+        "match": ": '❌",
+        "context": "\"context\": \"\\\"context\\\": \\\"console.log('- rag_config:', results.rag_config.valid ? '✅' : '❌', results.rag_config.errors);\\\",\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 497,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 498,
+        "column": 34,
+        "match": ": '❌",
+        "context": "\"context\": \"\\\"match\\\": \\\": '❌\\\",\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 505,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 506,
+        "column": 94,
+        "match": ": '❌",
+        "context": "\"context\": \"\\\"context\\\": \\\"console.log('- db_config:', results.db_config.valid ? '✅' : '❌', results.db_config.errors);\\\",\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 513,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 514,
+        "column": 34,
+        "match": ": '❌",
+        "context": "\"context\": \"\\\"match\\\": \\\": '❌\\\",\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 521,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 522,
+        "column": 86,
+        "match": ": '❌",
+        "context": "\"context\": \"\\\"context\\\": \\\"console.log('- state:', results.state.valid ? '✅' : '❌', results.state.errors);\\\",\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 529,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 530,
+        "column": 34,
+        "match": ": '❌",
+        "context": "\"context\": \"\\\"match\\\": \\\": '❌\\\",\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 537,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 538,
+        "column": 92,
+        "match": ": '❌",
+        "context": "\"context\": \"\\\"context\\\": \\\"console.log('- pipeline:', results.pipeline.valid ? '✅' : '❌', results.pipeline.errors);\\\",\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 545,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 546,
+        "column": 34,
+        "match": ": '❌",
+        "context": "\"context\": \"\\\"match\\\": \\\": '❌\\\",\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 553,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 554,
+        "column": 88,
+        "match": ": '❌",
+        "context": "\"context\": \"\\\"context\\\": \\\"console.log(`   ${file}: ${detected ? detected.name : '❌ Non supporté'}`);\\\",\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 561,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 562,
+        "column": 34,
+        "match": ": '❌",
+        "context": "\"context\": \"\\\"match\\\": \\\": '❌\\\",\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 569,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 570,
+        "column": 88,
+        "match": ": '❌",
+        "context": "\"context\": \"\\\"context\\\": \\\"console.log(`   ${file}: ${detected ? detected.name : '❌ Non supporté'}`);\\\",\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 578,
+        "column": 70,
+        "match": ": '\ud83d",
+        "context": "\"context\": \"const prefix = file.type === 'directory' ? '📁 ' : '📄 ';\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 585,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 586,
+        "column": 71,
+        "match": ": '❌",
+        "context": "\"context\": \"console.log(`  • Dry run: ${args.dryRun ? '✅ Oui' : '❌ Non'}`);\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 593,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 594,
+        "column": 72,
+        "match": ": '❌",
+        "context": "\"context\": \"console.log(`  • Verbose: ${args.verbose ? '✅ Oui' : '❌ Non'}`);\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 601,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 602,
+        "column": 73,
+        "match": ": '❌",
+        "context": "\"context\": \"console.log(`   Validation: ${isValid ? '✅ Réussie' : '❌ Échouée'}`);\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 609,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 610,
+        "column": 85,
+        "match": ": '❌",
+        "context": "\"context\": \"console.log(`   Sauvegarde: ${CONFIG.backup_enabled ? '✅ Créée' : '❌ Désactivée'}`);\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 617,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 618,
+        "column": 60,
+        "match": ": '❌",
+        "context": "\"context\": \"const success = metadata.success ? '✅' : '❌';\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 626,
+        "column": 49,
+        "match": ": '\ud83d",
+        "context": "\"context\": \"msg.level === 'info' ? 'ℹ️' : '🔍';\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 633,
+        "column": 19,
+        "match": ": '✅",
+        "context": "\"match\": \": '✅\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 634,
+        "column": 33,
+        "match": ": '✅",
+        "context": "\"context\": \"notes_for_ai: '✅ Operation completed successfully' // Emoji déplacé vers notes_for_ai\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 641,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 642,
+        "column": 83,
+        "match": ": '❌",
+        "context": "\"context\": \"console.error(`- rag_config: ${results.rag_config.valid ? '✅' : '❌'} ${results.rag_config.errors?.length || 0} errors`);\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 649,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 650,
+        "column": 81,
+        "match": ": '❌",
+        "context": "\"context\": \"console.error(`- db_config: ${results.db_config.valid ? '✅' : '❌'} ${results.db_config.errors?.length || 0} errors`);\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 657,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 658,
+        "column": 73,
+        "match": ": '❌",
+        "context": "\"context\": \"console.error(`- state: ${results.state.valid ? '✅' : '❌'} ${results.state.errors?.length || 0} errors`);\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 665,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 666,
+        "column": 79,
+        "match": ": '❌",
+        "context": "\"context\": \"console.error(`- pipeline: ${results.pipeline.valid ? '✅' : '❌'} ${results.pipeline.errors?.length || 0} errors`);\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 673,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 674,
+        "column": 73,
+        "match": ": '❌",
+        "context": "\"context\": \"console.log(`   ${file}: ${detected ? detected.name : '❌ Non supporté'}`);\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 681,
+        "column": 19,
+        "match": ": '❌",
+        "context": "\"match\": \": '❌\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 682,
+        "column": 73,
+        "match": ": '❌",
+        "context": "\"context\": \"console.log(`   ${file}: ${detected ? detected.name : '❌ Non supporté'}`);\",",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/json-strict-audit-report.json"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 158,
+        "column": 54,
+        "match": ": '\ud83d",
+        "context": "const prefix = file.type === 'directory' ? '📁 ' : '📄 ';",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/audit/project-tree.ts"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 134,
+        "column": 55,
+        "match": ": '❌",
+        "context": "console.error(`  • Dry run: ${args.dryRun ? '✅ Oui' : '❌ Non'}`);",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/incremental-reindex.js"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 135,
+        "column": 56,
+        "match": ": '❌",
+        "context": "console.error(`  • Verbose: ${args.verbose ? '✅ Oui' : '❌ Non'}`);",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/incremental-reindex.js"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 527,
+        "column": 61,
+        "match": ": '❌",
+        "context": "console.log(`   Validation: ${isValid ? '✅ Réussie' : '❌ Échouée'}`);",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/migrate-v1-to-v2.js"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 528,
+        "column": 73,
+        "match": ": '❌",
+        "context": "console.log(`   Sauvegarde: ${CONFIG.backup_enabled ? '✅ Créée' : '❌ Désactivée'}`);",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/scripts/migrate-v1-to-v2.js"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 268,
+        "column": 44,
+        "match": ": '❌",
+        "context": "const success = metadata.success ? '✅' : '❌';",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/src/rag/phase0/parser/tree-sitter/parse-file.ts"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 594,
+        "column": 53,
+        "match": ": '\ud83d",
+        "context": "msg.level === 'info' ? 'ℹ️' : '🔍';",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/src/rag/progress/progress-cli.ts"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 391,
+        "column": 25,
+        "match": ": '✅",
+        "context": "notes_for_ai: '✅ Operation completed successfully' // Emoji déplacé vers notes_for_ai",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/test/mcp-json.test.ts"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 561,
+        "column": 67,
+        "match": ": '❌",
+        "context": "console.error(`- rag_config: ${results.rag_config.valid ? '✅' : '❌'} ${results.rag_config.errors?.length || 0} errors`);",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/test/mcp-json.test.ts"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 562,
+        "column": 65,
+        "match": ": '❌",
+        "context": "console.error(`- db_config: ${results.db_config.valid ? '✅' : '❌'} ${results.db_config.errors?.length || 0} errors`);",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/test/mcp-json.test.ts"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 563,
+        "column": 57,
+        "match": ": '❌",
+        "context": "console.error(`- state: ${results.state.valid ? '✅' : '❌'} ${results.state.errors?.length || 0} errors`);",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/test/mcp-json.test.ts"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 564,
+        "column": 63,
+        "match": ": '❌",
+        "context": "console.error(`- pipeline: ${results.pipeline.valid ? '✅' : '❌'} ${results.pipeline.errors?.length || 0} errors`);",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/test/mcp-json.test.ts"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 96,
+        "column": 65,
+        "match": ": '❌",
+        "context": "console.log(`   ${file}: ${detected ? detected.name : '❌ Non supporté'}`);",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/test/phase0-parser/test-parser.js"
+      },
+      {
+        "type": "ICON_IN_VALUE",
+        "line": 96,
+        "column": 65,
+        "match": ": '❌",
+        "context": "console.log(`   ${file}: ${detected ? detected.name : '❌ Non supporté'}`);",
+        "file": "/home/ali/Documents/Cline/MCP/rag-mcp-server/test/phase0-parser/test-parser.ts"
+      }
+    ],
+    "recommendations": [
+      "🚨 188 violations R3 détectées. Actions requises:",
+      "- 188 violations: Icônes dans valeurs JSON. Remplacer par texte",
+      "\n📋 Fichiers prioritaires:",
+      "- scripts/audit/json-strict-audit-report.json: 160 violations",
+      "- archived-tests/test-chunker-rules.js: 6 violations",
+      "- test/mcp-json.test.ts: 5 violations",
+      "- archived-tests/test-chunker-debug.js: 2 violations",
+      "- archived-tests/test-config-integration.js: 2 violations",
+      "- scripts/incremental-reindex.js: 2 violations",
+      "- scripts/migrate-v1-to-v2.js: 2 violations",
+      "- archived-tests/test-ast-structure.js: 1 violations",
+      "- archived-tests/test-debug-chunker.js: 1 violations",
+      "- archived-tests/test-pipeline-complet.js: 1 violations"
+    ]
+  },
+  "migrationPlan": {
+    "phases": [
+      {
+        "phase": 1,
+        "name": "Audit complet",
+        "description": "Scanner tous les fichiers, générer rapport détaillé",
+        "effort": "Faible",
+        "tasks": [
+          "Exécuter ce script sur codebase complète",
+          "Générer rapport JSON et Markdown",
+          "Identifier patterns récurrents"
+        ]
+      },
+      {
+        "phase": 2,
+        "name": "Correction fichiers prioritaires",
+        "description": "Corriger les 5 fichiers avec le plus de violations",
+        "effort": "Moyen",
+        "tasks": [
+          "Corriger scripts/audit/json-strict-audit-report.json",
+          "Corriger archived-tests/test-chunker-rules.js",
+          "Corriger test/mcp-json.test.ts",
+          "Corriger archived-tests/test-chunker-debug.js",
+          "Corriger archived-tests/test-config-integration.js"
+        ]
+      },
+      {
+        "phase": 3,
+        "name": "Correction fichiers restants",
+        "description": "Corriger toutes les violations restantes",
+        "effort": "Élevé",
+        "tasks": [
+          "Corriger violations par type",
+          "Valider chaque correction",
+          "Mettre à jour les tests"
+        ]
+      },
+      {
+        "phase": 4,
+        "name": "Validation et intégration",
+        "description": "Intégrer validation automatique dans CI/CD",
+        "effort": "Moyen",
+        "tasks": [
+          "Créer script validate-json-strict.js",
+          "Intégrer dans pipeline CI/CD",
+          "Configurer validation pré-commit",
+          "Documenter règles R3"
+        ]
+      }
+    ],
+    "estimatedEffort": "Moyen",
+    "priorityFiles": [
+      "scripts/audit/json-strict-audit-report.json",
+      "archived-tests/test-chunker-rules.js",
+      "test/mcp-json.test.ts",
+      "archived-tests/test-chunker-debug.js",
+      "archived-tests/test-config-integration.js"
+    ],
+    "migrationSteps": [
+      "1. Identifier toutes les violations avec ce script",
+      "2. Classer par priorité (fichiers MCP > autres)",
+      "3. Créer fonctions de nettoyage JSON",
+      "4. Appliquer corrections fichier par fichier",
+      "5. Tester chaque correction",
+      "6. Valider conformité complète",
+      "7. Intégrer validation automatique"
+    ]
+  }
+}

@@ -1,9 +1,4 @@
-/**
- * Détecteur de type de contenu pour le pipeline RAG Phase 0
- *
- * Ce module classe les fichiers en catégories (code, doc, config, other)
- * basé sur l'extension du fichier et l'analyse du contenu.
- */
+import { getFileExtension } from '../core/utils/string-utils.js';
 /**
  * Mappage des extensions de fichiers vers les types de contenu
  */
@@ -371,13 +366,6 @@ export function detectRole(content, contentType, filePath) {
     }
     // Par défaut
     return contentType === 'code' ? 'core' : 'other';
-}
-/**
- * Extrait l'extension d'un fichier
- */
-export function getFileExtension(filePath) {
-    const match = filePath.match(/\.[a-z0-9]+$/i);
-    return match ? match[0].toLowerCase() : '';
 }
 /**
  * Détecte le langage de programmation basé sur l'extension

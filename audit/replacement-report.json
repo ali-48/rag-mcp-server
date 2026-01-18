@@ -1,0 +1,59 @@
+{
+  "generated": "2026-01-17T06:44:08.475Z",
+  "summary": {
+    "filesScanned": 108,
+    "filesChanged": 5,
+    "functionsReplaced": 5,
+    "byModule": {
+      "json-utils": 1,
+      "string-utils": 4
+    }
+  },
+  "details": [
+    {
+      "file": "src/core/json-schema-validator.ts",
+      "functions": [
+        "validateJsonSchema"
+      ],
+      "imports": [
+        "import { validateJsonSchema } from '../core/utils/json-utils.js';"
+      ]
+    },
+    {
+      "file": "src/rag/content-detector.ts",
+      "functions": [
+        "getFileExtension"
+      ],
+      "imports": [
+        "import { getFileExtension } from '../core/utils/string-utils.js';"
+      ]
+    },
+    {
+      "file": "src/rag/llm-cache.ts",
+      "functions": [
+        "hashString"
+      ],
+      "imports": [
+        "import { hashString } from '../core/utils/string-utils.js';"
+      ]
+    },
+    {
+      "file": "src/rag/phase0/analyzer/symbol-extraction/symbol-name-extractor.ts",
+      "functions": [
+        "cleanComment"
+      ],
+      "imports": [
+        "import { cleanComment } from '../core/utils/string-utils.js';"
+      ]
+    },
+    {
+      "file": "src/rag/phase0/file-watcher.ts",
+      "functions": [
+        "formatFileSize"
+      ],
+      "imports": [
+        "import { formatFileSize } from '../core/utils/string-utils.js';"
+      ]
+    }
+  ]
+}

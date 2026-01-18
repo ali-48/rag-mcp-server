@@ -347,18 +347,23 @@ describe('JSON Strict Validation for MCP Tools', () => {
                 content: [
                     {
                         type: 'text',
-                        text: '✅ Operation completed successfully' // Emoji dans le texte
+                        text: 'Operation completed successfully',
+                        notes_for_ai: '✅ Operation completed successfully' // Emoji déplacé vers notes_for_ai
                     }
                 ]
             };
-            // Les emojis sont autorisés dans les chaînes JSON
-            // Ce test vérifie que le JSON est valide
+            // Les emojis ne sont pas autorisés dans les valeurs JSON métier
+            // Ils doivent être dans notes_for_ai ou stderr
             expect(() => JSON.stringify(responseWithEmoji)).not.toThrow();
+            // Vérifier que le texte métier n'a pas d'icônes
+            expect(responseWithEmoji.content[0].text).not.toMatch(/[🔴🟢🟡🔵⚫⚪🟣🟠🟤🧪✅❌⚠️🚨📊📈📉📋📁📂📄📑]/);
+            // Vérifier que notes_for_ai contient l'icône
+            expect(responseWithEmoji.content[0].notes_for_ai).toMatch(/✅/);
             // Mais nous voulons éviter les emojis dans les clés
             const responseWithEmojiInKey = {
-                '✅ status': 'success' // Emoji dans la clé - non autorisé
+                'status': 'success' // Clé sans emoji
             };
-            // Ce JSON est techniquement valide mais non recommandé
+            // Ce JSON est conforme R3
             expect(() => JSON.stringify(responseWithEmojiInKey)).not.toThrow();
         });
         it('should validate that all responses are valid JSON', () => {
@@ -482,11 +487,22 @@ describe('JSON Strict Validation for MCP Tools', () => {
 describe('Integration Tests', () => {
     it('should validate all configuration files together', async () => {
         const results = await configValidator.validateAllConfigs();
-        console.log('Configuration validation results:');
-        console.log('- rag_config:', results.rag_config.valid ? '✅' : '❌', results.rag_config.errors);
-        console.log('- db_config:', results.db_config.valid ? '✅' : '❌', results.db_config.errors);
-        console.log('- state:', results.state.valid ? '✅' : '❌', results.state.errors);
-        console.log('- pipeline:', results.pipeline.valid ? '✅' : '❌', results.pipeline.errors);
+        // stdout: JSON strict sans icônes
+        console.log(JSON.stringify({
+            message: 'Configuration validation results',
+            results: {
+                rag_config: { valid: results.rag_config.valid, error_count: results.rag_config.errors?.length || 0 },
+                db_config: { valid: results.db_config.valid, error_count: results.db_config.errors?.length || 0 },
+                state: { valid: results.state.valid, error_count: results.state.errors?.length || 0 },
+                pipeline: { valid: results.pipeline.valid, error_count: results.pipeline.errors?.length || 0 }
+            }
+        }));
+        // stderr: texte enrichi avec icônes (pour les logs humains)
+        console.error('Configuration validation results:');
+        console.error(`- rag_config: ${results.rag_config.valid ? '✅' : '❌'} ${results.rag_config.errors?.length || 0} errors`);
+        console.error(`- db_config: ${results.db_config.valid ? '✅' : '❌'} ${results.db_config.errors?.length || 0} errors`);
+        console.error(`- state: ${results.state.valid ? '✅' : '❌'} ${results.state.errors?.length || 0} errors`);
+        console.error(`- pipeline: ${results.pipeline.valid ? '✅' : '❌'} ${results.pipeline.errors?.length || 0} errors`);
         // Au moins une configuration doit être valide
         const anyValid = Object.values(results).some(r => r.valid);
         expect(anyValid).toBe(true);

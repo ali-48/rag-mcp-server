@@ -238,7 +238,9 @@ async function indexTask(taskId, projectPath, options, mode) {
         const chunkOverlap = options.chunk_overlap || defaults.chunk_overlap;
         // Configuration des embeddings
         const embeddingModel = options.embedding_model || defaults.embedding_model;
-        setEmbeddingProvider(defaults.embedding_provider, embeddingModel);
+        // Convertir le provider en type valide
+        const provider = defaults.embedding_provider;
+        setEmbeddingProvider(provider, embeddingModel);
         // Estimation du coût des embeddings
         const estimatedTokens = await estimateEmbeddingTokens(projectPath, options);
         progressTracker.updateEmbeddingCost(taskId, estimatedTokens, embeddingModel, Math.ceil(estimatedTokens / 1000) // Estimation: 1000 tokens/seconde

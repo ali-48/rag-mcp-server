@@ -1,6 +1,8 @@
+import { getFileExtension } from '../core/utils/string-utils.js';
+
 /**
  * Détecteur de type de contenu pour le pipeline RAG Phase 0
- * 
+ *
  * Ce module classe les fichiers en catégories (code, doc, config, other)
  * basé sur l'extension du fichier et l'analyse du contenu.
  */
@@ -57,7 +59,7 @@ const EXTENSION_TO_CONTENT_TYPE: Record<string, ContentType> = {
   '.lua': 'code',
   '.pl': 'code',
   '.pm': 'code',
-  
+
   // Documentation
   '.md': 'doc',
   '.txt': 'doc',
@@ -67,7 +69,7 @@ const EXTENSION_TO_CONTENT_TYPE: Record<string, ContentType> = {
   '.asciidoc': 'doc',
   '.wiki': 'doc',
   '.rtf': 'doc',
-  
+
   // Configuration
   '.json': 'config',
   '.yaml': 'config',
@@ -79,7 +81,7 @@ const EXTENSION_TO_CONTENT_TYPE: Record<string, ContentType> = {
   '.properties': 'config',
   '.env': 'config',
   '.xml': 'config',
-  
+
   // Autres (à classifier par contenu)
   '.csv': 'other',
   '.tsv': 'other',
@@ -119,7 +121,7 @@ const CONTENT_PATTERNS = {
     COMMENTS: /(\/\/|\/\*|\*\/|#)/,
     BRACES: /[{}()\[\]]/,
   },
-  
+
   // Patterns de documentation
   DOC: {
     MARKDOWN_HEADERS: /^#{1,6}\s+.+/m,
@@ -128,7 +130,7 @@ const CONTENT_PATTERNS = {
     SENTENCE_END: /[.!?]\s+/,
     PARAGRAPH_BREAK: /\n\s*\n/,
   },
-  
+
   // Patterns de configuration
   CONFIG: {
     JSON_START: /^\s*[\{\[]/,
@@ -143,7 +145,7 @@ const CONTENT_PATTERNS = {
  */
 function detectByExtension(filePath: string): { contentType: ContentType; language?: ProgrammingLanguage; confidence: number } {
   const extension = filePath.toLowerCase().match(/\.[a-z0-9]+$/)?.[0] || '';
-  
+
   if (EXTENSION_TO_CONTENT_TYPE[extension]) {
     return {
       contentType: EXTENSION_TO_CONTENT_TYPE[extension],
@@ -151,7 +153,7 @@ function detectByExtension(filePath: string): { contentType: ContentType; langua
       confidence: 0.9, // Haute confiance pour les extensions connues
     };
   }
-  
+
   return {
     contentType: 'other',
     confidence: 0.3, // Faible confiance pour extension inconnue
@@ -170,11 +172,11 @@ function analyzeContent(content: string): {
   const lines = content.split('\n');
   const lineCount = lines.length;
   const avgLineLength = content.length / Math.max(lineCount, 1);
-  
+
   let codeScore = 0;
   let docScore = 0;
   let configScore = 0;
-  
+
   const metadata: ContentDetectionResult['metadata'] = {
     lineCount,
     avgLineLength,
@@ -183,7 +185,7 @@ function analyzeContent(content: string): {
     hasJsonStructure: false,
     hasYamlStructure: false,
   };
-  
+
   // Vérifier les patterns de code
   if (CONTENT_PATTERNS.CODE.FUNCTION_DECLARATION.test(content)) {
     codeScore += 2;
@@ -203,7 +205,7 @@ function analyzeContent(content: string): {
   if (CONTENT_PATTERNS.CODE.BRACES.test(content)) {
     codeScore += 0.5;
   }
-  
+
   // Vérifier les patterns de documentation
   if (CONTENT_PATTERNS.DOC.MARKDOWN_HEADERS.test(content)) {
     docScore += 3;
@@ -221,7 +223,7 @@ function analyzeContent(content: string): {
   if (CONTENT_PATTERNS.DOC.PARAGRAPH_BREAK.test(content)) {
     docScore += 0.5;
   }
-  
+
   // Vérifier les patterns de configuration
   if (CONTENT_PATTERNS.CONFIG.JSON_START.test(content)) {
     configScore += 3;
@@ -237,13 +239,13 @@ function analyzeContent(content: string): {
   if (CONTENT_PATTERNS.CONFIG.ENV_VAR.test(content)) {
     configScore += 1;
   }
-  
+
   // Normaliser les scores par longueur de contenu
   const normalizationFactor = Math.min(100, lineCount) / 100;
   codeScore *= normalizationFactor;
   docScore *= normalizationFactor;
   configScore *= normalizationFactor;
-  
+
   return { codeScore, docScore, configScore, metadata };
 }
 
@@ -263,19 +265,19 @@ function detectLanguageByContent(content: string): ProgrammingLanguage | undefin
     { pattern: /^\s*\{|^\s*\[/, language: 'json' },
     { pattern: /^---$|^[a-z_]+:/m, language: 'yaml' },
   ];
-  
+
   for (const { pattern, language } of languagePatterns) {
     if (pattern.test(content)) {
       return language;
     }
   }
-  
+
   return undefined;
 }
 
 /**
  * Détecte le type de contenu d'un fichier
- * 
+ *
  * @param filePath Chemin du fichier
  * @param content Contenu du fichier (optionnel, pour analyse plus précise)
  * @returns Résultat de la détection
@@ -286,7 +288,7 @@ export function detectContentType(
 ): ContentDetectionResult {
   // Détection basée sur l'extension
   const extensionDetection = detectByExtension(filePath);
-  
+
   // Si pas de contenu fourni, retourner la détection par extension
   if (!content) {
     return {
@@ -297,15 +299,15 @@ export function detectContentType(
       metadata: {},
     };
   }
-  
+
   // Analyse du contenu
   const { codeScore, docScore, configScore, metadata } = analyzeContent(content);
   const languageFromContent = detectLanguageByContent(content);
-  
+
   // Détection par contenu
   let contentTypeByContent: ContentType = 'other';
   let confidenceByContent = 0.5;
-  
+
   const maxScore = Math.max(codeScore, docScore, configScore);
   if (maxScore > 1) {
     if (maxScore === codeScore) {
@@ -319,18 +321,18 @@ export function detectContentType(
       confidenceByContent = Math.min(0.9, maxScore / 5);
     }
   }
-  
+
   // Fusionner les résultats (extension + contenu)
   let finalContentType: ContentType;
   let finalConfidence: number;
   let detectedBy: 'extension' | 'content' | 'mixed' = 'mixed';
-  
+
   if (extensionDetection.confidence > 0.8) {
     // Haute confiance dans l'extension
     finalContentType = extensionDetection.contentType;
     finalConfidence = extensionDetection.confidence;
     detectedBy = 'extension';
-    
+
     // Vérifier si le contenu confirme
     if (contentTypeByContent === extensionDetection.contentType) {
       finalConfidence = Math.min(0.95, finalConfidence + 0.1);
@@ -352,16 +354,16 @@ export function detectContentType(
       detectedBy = 'extension';
     }
   }
-  
+
   // Déterminer le langage
   let language = extensionDetection.language || languageFromContent;
-  
+
   // Si c'est du code mais pas de langage détecté, essayer de deviner
   if (finalContentType === 'code' && !language) {
     const ext = filePath.toLowerCase().match(/\.[a-z0-9]+$/)?.[0];
     language = EXTENSION_TO_LANGUAGE[ext || ''] || 'unknown';
   }
-  
+
   return {
     contentType: finalContentType,
     language,
@@ -373,7 +375,7 @@ export function detectContentType(
 
 /**
  * Détecte le rôle d'un chunk de code
- * 
+ *
  * @param content Contenu du chunk
  * @param contentType Type de contenu
  * @param filePath Chemin du fichier
@@ -386,68 +388,60 @@ export function detectRole(
 ): 'core' | 'helper' | 'test' | 'example' | 'template' | 'other' {
   const lowerContent = content.toLowerCase();
   const lowerFilePath = filePath.toLowerCase();
-  
+
   // Détection basée sur le chemin du fichier
   if (lowerFilePath.includes('test') || lowerFilePath.includes('spec')) {
     return 'test';
   }
-  
+
   if (lowerFilePath.includes('example') || lowerFilePath.includes('demo')) {
     return 'example';
   }
-  
+
   if (lowerFilePath.includes('template') || lowerFilePath.includes('boilerplate')) {
     return 'template';
   }
-  
+
   if (lowerFilePath.includes('util') || lowerFilePath.includes('helper') || lowerFilePath.includes('common')) {
     return 'helper';
   }
-  
+
   // Détection basée sur le contenu
   if (contentType === 'code') {
     // Patterns pour les tests
-    if (lowerContent.includes('describe(') || lowerContent.includes('it(') || 
-        lowerContent.includes('test(') || lowerContent.includes('assert') ||
-        lowerContent.includes('expect(')) {
+    if (lowerContent.includes('describe(') || lowerContent.includes('it(') ||
+      lowerContent.includes('test(') || lowerContent.includes('assert') ||
+      lowerContent.includes('expect(')) {
       return 'test';
     }
-    
+
     // Patterns pour les exemples
     if (lowerContent.includes('example') || lowerContent.includes('demo') ||
-        lowerContent.includes('// example') || lowerContent.includes('# example')) {
+      lowerContent.includes('// example') || lowerContent.includes('# example')) {
       return 'example';
     }
-    
+
     // Patterns pour les utilitaires/helpers
     if (lowerContent.includes('export function') || lowerContent.includes('export const') ||
-        lowerContent.includes('export class') || lowerContent.includes('export default')) {
+      lowerContent.includes('export class') || lowerContent.includes('export default')) {
       // Vérifier si c'est une fonction utilitaire
       const utilityPatterns = [
         /\butils?\b/, /\bhelpers?\b/, /\bcommon\b/, /\btools?\b/,
         /\bformat\b/, /\bparse\b/, /\bvalidate\b/, /\bcalculate\b/,
       ];
-      
+
       for (const pattern of utilityPatterns) {
         if (pattern.test(lowerContent)) {
           return 'helper';
         }
       }
-      
+
       return 'core';
     }
   }
-  
+
   // Par défaut
   return contentType === 'code' ? 'core' : 'other';
-}
-
-/**
- * Extrait l'extension d'un fichier
- */
-export function getFileExtension(filePath: string): string {
-  const match = filePath.match(/\.[a-z0-9]+$/i);
-  return match ? match[0].toLowerCase() : '';
 }
 
 /**

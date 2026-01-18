@@ -1,6 +1,7 @@
 // src/rag/phase0/file-watcher.ts
 // Surveillance temps réel des changements de fichiers avec chokidar
 import { relative, resolve } from 'path';
+import { formatFileSize } from '../../core/utils/string-utils.js';
 /**
  * File watcher avec gestion avancée des événements
  */
@@ -361,17 +362,6 @@ export function createLoggingEventHandler(prefix = 'FILE_WATCHER') {
             console.log(`       IGNORED: ${event.metadata.ignoreReason}`);
         }
     };
-}
-/**
- * Utilitaire : Formate la taille d'un fichier
- */
-function formatFileSize(bytes) {
-    if (bytes === 0)
-        return '0 B';
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 /**
  * Utilitaire : Crée un handler qui déclenche l'indexation
