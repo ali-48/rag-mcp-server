@@ -2,9 +2,13 @@
 // Version: 1.0.0
 // Description: Module d'enrichissement des chunks via LLM avant embeddings
 
-import { getGlobalLogger } from '../event-logger.js';
-import { LLMEnricherConfig } from './config.js';
-import { validateEnrichmentInput, validateEnrichmentOutput } from './schemas.js';
+import { getDefaultOllamaService } from "../../../rag/ollama-service.js";
+import { getGlobalLogger } from "../event-logger.js";
+import { LLMEnricherConfig } from "./config.js";
+import {
+  validateEnrichmentInput,
+  validateEnrichmentOutput,
+} from "./schemas.js";
 
 const logger = getGlobalLogger();
 
@@ -12,303 +16,486 @@ const logger = getGlobalLogger();
  * Interface pour les chunks enrichis
  */
 export interface EnrichedChunk {
-    id: string;
-    originalContent: string;
-    enrichedContent: string;
-    metadata: {
-        summary?: string;
-        keywords?: string[];
-        entities?: string[];
-        complexity?: 'low' | 'medium' | 'high';
-        category?: string;
-        language?: string;
-        confidence: number;
-    };
-    enrichmentTimeMs: number;
-    modelUsed: string;
-    timestamp: Date;
+  id: string;
+  originalContent: string;
+  enrichedContent: string;
+  metadata: {
+    summary?: string;
+    keywords?: string[];
+    entities?: string[];
+    complexity?: "low" | "medium" | "high";
+    category?: string;
+    language?: string;
+    confidence: number;
+  };
+  enrichmentTimeMs: number;
+  modelUsed: string;
+  timestamp: Date;
 }
 
 /**
  * Interface pour les métriques d'enrichissement
  */
 export interface EnrichmentMetrics {
-    totalChunksProcessed: number;
-    totalChunksEnriched: number;
-    totalEnrichmentTimeMs: number;
-    averageEnrichmentTimeMs: number;
-    successRate: number;
-    errors: number;
-    byModel: Record<string, {
-        count: number;
-        totalTimeMs: number;
-        errors: number;
-    }>;
-    lastUpdated: Date;
+  totalChunksProcessed: number;
+  totalChunksEnriched: number;
+  totalEnrichmentTimeMs: number;
+  averageEnrichmentTimeMs: number;
+  successRate: number;
+  errors: number;
+  byModel: Record<
+    string,
+    {
+      count: number;
+      totalTimeMs: number;
+      errors: number;
+    }
+  >;
+  lastUpdated: Date;
 }
 
 /**
  * Service d'enrichissement LLM
  */
 export class LLMEnricherService {
-    private config: LLMEnricherConfig;
-    private isEnabled: boolean;
-    private metrics: EnrichmentMetrics;
+  private config: LLMEnricherConfig;
+  private isEnabled: boolean;
+  private metrics: EnrichmentMetrics;
 
-    constructor(config?: Partial<LLMEnricherConfig>) {
-        this.config = {
-            enabled: config?.enabled ?? false,
-            provider: config?.provider ?? 'ollama',
-            model: config?.model ?? 'llama3.1:latest',
-            temperature: config?.temperature ?? 0.1,
-            maxTokens: config?.maxTokens ?? 1000,
-            timeoutMs: config?.timeoutMs ?? null,
-            batchSize: config?.batchSize ?? 5,
-            features: config?.features ?? ['summary', 'keywords', 'entities'],
-            cacheEnabled: config?.cacheEnabled ?? true,
-            cacheTtlSeconds: config?.cacheTtlSeconds ?? 3600,
-        };
-        this.isEnabled = this.config.enabled;
+  constructor(config?: Partial<LLMEnricherConfig>) {
+    this.config = {
+      enabled: config?.enabled ?? false,
+      provider: config?.provider ?? "ollama",
+      model: config?.model ?? "llama3.1:latest",
+      temperature: config?.temperature ?? 0.1,
+      maxTokens: config?.maxTokens ?? 1000,
+      timeoutMs: config?.timeoutMs ?? null,
+      batchSize: config?.batchSize ?? 5,
+      features: config?.features ?? ["summary", "keywords", "entities"],
+      cacheEnabled: config?.cacheEnabled ?? true,
+      cacheTtlSeconds: config?.cacheTtlSeconds ?? 3600,
+    };
+    this.isEnabled = this.config.enabled;
 
-        // Initialisation des métriques
-        this.metrics = {
-            totalChunksProcessed: 0,
-            totalChunksEnriched: 0,
-            totalEnrichmentTimeMs: 0,
-            averageEnrichmentTimeMs: 0,
-            successRate: 1.0,
-            errors: 0,
-            byModel: {},
-            lastUpdated: new Date(),
-        };
+    // Initialisation des métriques
+    this.metrics = {
+      totalChunksProcessed: 0,
+      totalChunksEnriched: 0,
+      totalEnrichmentTimeMs: 0,
+      averageEnrichmentTimeMs: 0,
+      successRate: 1.0,
+      errors: 0,
+      byModel: {},
+      lastUpdated: new Date(),
+    };
 
-        logger.info(`Phase 0.3 - LLM Enricher initialisé: ${this.isEnabled ? 'ACTIVÉ' : 'DÉSACTIVÉ'}`, 'LLMEnricherService');
-        if (this.isEnabled) {
-            logger.info(`Configuration: ${this.config.provider}/${this.config.model}`, 'LLMEnricherService');
-        }
+    logger.info(
+      `Phase 0.3 - LLM Enricher initialisé: ${this.isEnabled ? "ACTIVÉ" : "DÉSACTIVÉ"}`,
+      "LLMEnricherService",
+    );
+    if (this.isEnabled) {
+      logger.info(
+        `Configuration: ${this.config.provider}/${this.config.model}`,
+        "LLMEnricherService",
+      );
+    }
+  }
+
+  /**
+   * Vérifie si l'enrichissement est activé
+   */
+  isEnrichmentEnabled(): boolean {
+    return this.isEnabled;
+  }
+
+  /**
+   * Enrichit un chunk unique
+   */
+  async enrichChunk(
+    chunkId: string,
+    content: string,
+    metadata: any,
+  ): Promise<EnrichedChunk | null> {
+    if (!this.isEnabled) {
+      logger.debug(
+        `Phase 0.3 désactivée, skip enrichissement pour chunk: ${chunkId}`,
+        "LLMEnricherService",
+      );
+      return null;
     }
 
-    /**
-     * Vérifie si l'enrichissement est activé
-     */
-    isEnrichmentEnabled(): boolean {
-        return this.isEnabled;
+    // Mise à jour des métriques: chunks traités
+    this.updateMetrics("processed", 0, false);
+
+    try {
+      // Validation de l'entrée
+      const inputValidation = validateEnrichmentInput({
+        chunkId,
+        content,
+        metadata,
+        config: this.config,
+      });
+
+      if (!inputValidation.success) {
+        logger.warn(
+          `Validation échouée pour chunk ${chunkId}: ${JSON.stringify(inputValidation.error)}`,
+          "LLMEnricherService",
+        );
+        this.updateMetrics("error", 0, false);
+        return null;
+      }
+
+      logger.debug(
+        `Enrichissement chunk ${chunkId} (${content.length} chars)`,
+        "LLMEnricherService",
+      );
+
+      // Appel LLM pour enrichissement
+      const startTime = Date.now();
+      const enrichedData = await this.callLLMForEnrichment(content, metadata);
+      const enrichmentTimeMs = Date.now() - startTime;
+
+      // Validation de la sortie
+      const outputValidation = validateEnrichmentOutput(enrichedData);
+      if (!outputValidation.success) {
+        logger.warn(
+          `Sortie LLM invalide pour chunk ${chunkId}: ${JSON.stringify(outputValidation.error)}`,
+          "LLMEnricherService",
+        );
+        this.updateMetrics("error", enrichmentTimeMs, false);
+        return null;
+      }
+
+      const enrichedChunk: EnrichedChunk = {
+        id: chunkId,
+        originalContent: content,
+        enrichedContent: enrichedData.enrichedContent,
+        metadata: {
+          ...enrichedData.metadata,
+          confidence: enrichedData.confidence,
+        },
+        enrichmentTimeMs,
+        modelUsed: this.config.model,
+        timestamp: new Date(),
+      };
+
+      // Mise à jour des métriques: succès
+      this.updateMetrics("success", enrichmentTimeMs, true);
+
+      logger.info(
+        `Chunk ${chunkId} enrichi avec succès (${enrichmentTimeMs}ms)`,
+        "LLMEnricherService",
+      );
+      return enrichedChunk;
+    } catch (error) {
+      logger.error(
+        `Erreur enrichissement chunk ${chunkId}: ${error instanceof Error ? error.message : String(error)}`,
+        "LLMEnricherService",
+      );
+      this.updateMetrics("error", 0, false);
+      return null;
+    }
+  }
+
+  /**
+   * Enrichit un batch de chunks
+   */
+  async enrichBatch(
+    chunks: Array<{ id: string; content: string; metadata: any }>,
+  ): Promise<Array<EnrichedChunk | null>> {
+    if (!this.isEnabled || chunks.length === 0) {
+      return chunks.map(() => null);
     }
 
-    /**
-     * Enrichit un chunk unique
-     */
-    async enrichChunk(chunkId: string, content: string, metadata: any): Promise<EnrichedChunk | null> {
-        if (!this.isEnabled) {
-            logger.debug(`Phase 0.3 désactivée, skip enrichissement pour chunk: ${chunkId}`, 'LLMEnricherService');
-            return null;
-        }
+    logger.info(
+      `Enrichissement batch de ${chunks.length} chunks`,
+      "LLMEnricherService",
+    );
 
-        // Mise à jour des métriques: chunks traités
-        this.updateMetrics('processed', 0, false);
+    // Traitement par batch selon config
+    const batchSize = this.config.batchSize;
+    const results: Array<EnrichedChunk | null> = [];
 
-        try {
-            // Validation de l'entrée
-            const inputValidation = validateEnrichmentInput({
-                chunkId,
-                content,
-                metadata,
-                config: this.config
-            });
+    for (let i = 0; i < chunks.length; i += batchSize) {
+      const batch = chunks.slice(i, i + batchSize);
+      const batchPromises = batch.map((chunk) =>
+        this.enrichChunk(chunk.id, chunk.content, chunk.metadata),
+      );
 
-            if (!inputValidation.success) {
-                logger.warn(`Validation échouée pour chunk ${chunkId}: ${JSON.stringify(inputValidation.error)}`, 'LLMEnricherService');
-                this.updateMetrics('error', 0, false);
-                return null;
-            }
+      const batchResults = await Promise.all(batchPromises);
+      results.push(...batchResults);
 
-            logger.debug(`Enrichissement chunk ${chunkId} (${content.length} chars)`, 'LLMEnricherService');
-
-            // Appel LLM pour enrichissement
-            const startTime = Date.now();
-            const enrichedData = await this.callLLMForEnrichment(content, metadata);
-            const enrichmentTimeMs = Date.now() - startTime;
-
-            // Validation de la sortie
-            const outputValidation = validateEnrichmentOutput(enrichedData);
-            if (!outputValidation.success) {
-                logger.warn(`Sortie LLM invalide pour chunk ${chunkId}: ${JSON.stringify(outputValidation.error)}`, 'LLMEnricherService');
-                this.updateMetrics('error', enrichmentTimeMs, false);
-                return null;
-            }
-
-            const enrichedChunk: EnrichedChunk = {
-                id: chunkId,
-                originalContent: content,
-                enrichedContent: enrichedData.enrichedContent,
-                metadata: {
-                    ...enrichedData.metadata,
-                    confidence: enrichedData.confidence,
-                },
-                enrichmentTimeMs,
-                modelUsed: this.config.model,
-                timestamp: new Date(),
-            };
-
-            // Mise à jour des métriques: succès
-            this.updateMetrics('success', enrichmentTimeMs, true);
-
-            logger.info(`Chunk ${chunkId} enrichi avec succès (${enrichmentTimeMs}ms)`, 'LLMEnricherService');
-            return enrichedChunk;
-
-        } catch (error) {
-            logger.error(`Erreur enrichissement chunk ${chunkId}: ${error instanceof Error ? error.message : String(error)}`, 'LLMEnricherService');
-            this.updateMetrics('error', 0, false);
-            return null;
-        }
+      logger.debug(
+        `Batch ${Math.floor(i / batchSize) + 1} traité: ${batchResults.filter((r) => r !== null).length}/${batch.length} succès`,
+        "LLMEnricherService",
+      );
     }
 
-    /**
-     * Enrichit un batch de chunks
-     */
-    async enrichBatch(chunks: Array<{ id: string, content: string, metadata: any }>): Promise<Array<EnrichedChunk | null>> {
-        if (!this.isEnabled || chunks.length === 0) {
-            return chunks.map(() => null);
-        }
+    const successCount = results.filter((r) => r !== null).length;
+    logger.info(
+      `Enrichissement batch terminé: ${successCount}/${chunks.length} succès`,
+      "LLMEnricherService",
+    );
 
-        logger.info(`Enrichissement batch de ${chunks.length} chunks`, 'LLMEnricherService');
+    return results;
+  }
 
-        // Traitement par batch selon config
-        const batchSize = this.config.batchSize;
-        const results: Array<EnrichedChunk | null> = [];
+  /**
+   * Appel LLM pour enrichissement
+   */
+  private async callLLMForEnrichment(
+    content: string,
+    metadata: any,
+  ): Promise<any> {
+    const ollamaService = getDefaultOllamaService();
+    const model = this.config.model;
+    const temperature = this.config.temperature;
+    const maxTokens = this.config.maxTokens;
 
-        for (let i = 0; i < chunks.length; i += batchSize) {
-            const batch = chunks.slice(i, i + batchSize);
-            const batchPromises = batch.map(chunk =>
-                this.enrichChunk(chunk.id, chunk.content, chunk.metadata)
-            );
+    // Construire le prompt pour l'enrichissement
+    const language = metadata?.language || "unknown";
+    const contentType = metadata?.contentType || "code";
 
-            const batchResults = await Promise.all(batchPromises);
-            results.push(...batchResults);
+    const prompt = this.buildEnrichmentPrompt(content, language, contentType);
 
-            logger.debug(`Batch ${Math.floor(i / batchSize) + 1} traité: ${batchResults.filter(r => r !== null).length}/${batch.length} succès`, 'LLMEnricherService');
-        }
+    try {
+      logger.debug(
+        `Appel LLM pour enrichissement avec modèle ${model}`,
+        "LLMEnricherService",
+      );
 
-        const successCount = results.filter(r => r !== null).length;
-        logger.info(`Enrichissement batch terminé: ${successCount}/${chunks.length} succès`, 'LLMEnricherService');
+      const llmResponse = await ollamaService.generateCompletion(
+        prompt,
+        model,
+        {
+          temperature,
+          maxTokens,
+          systemPrompt: this.buildSystemPrompt(language, contentType),
+        },
+      );
 
-        return results;
+      // Parser la réponse LLM pour extraire les informations structurées
+      const enrichedData = this.parseLLMResponse(llmResponse, content);
+
+      return {
+        enrichedContent: enrichedData.enrichedContent || content,
+        metadata: {
+          summary:
+            enrichedData.summary ||
+            `Résumé automatique de ${content.substring(0, 50)}...`,
+          keywords: enrichedData.keywords || [
+            "code",
+            "function",
+            "implementation",
+          ],
+          entities: enrichedData.entities || [],
+          complexity: enrichedData.complexity || "medium",
+          category: enrichedData.category || contentType,
+          language: language,
+        },
+        confidence: enrichedData.confidence || 0.7,
+      };
+    } catch (error) {
+      logger.warn(
+        `Échec de l'appel LLM: ${error instanceof Error ? error.message : String(error)}`,
+        "LLMEnricherService",
+      );
+
+      // Fallback sur les données simulées en cas d'erreur
+      return {
+        enrichedContent: content,
+        metadata: {
+          summary: `Résumé automatique de ${content.substring(0, 50)}...`,
+          keywords: ["fallback", "code", "example"],
+          entities: [],
+          complexity: "low" as const,
+          category: contentType,
+          language: language,
+        },
+        confidence: 0.5,
+      };
     }
+  }
 
-    /**
-     * Appel LLM pour enrichissement
-     */
-    private async callLLMForEnrichment(content: string, metadata: any): Promise<any> {
-        // TODO: Implémenter l'appel réel au LLM
-        // Pour l'instant, retourne des données simulées
+  /**
+   * Construit le prompt pour l'enrichissement
+   */
+  private buildEnrichmentPrompt(
+    content: string,
+    language: string,
+    contentType: string,
+  ): string {
+    return `Analyse le contenu suivant (langage: ${language}, type: ${contentType}) et fournis un enrichissement structuré:
+
+Contenu à analyser:
+"""
+${content}
+"""
+
+Fournis une réponse JSON avec les champs suivants:
+1. "summary": un résumé concis (1-2 phrases)
+2. "keywords": 3-5 mots-clés pertinents
+3. "entities": noms d'entités importantes (fonctions, classes, variables, concepts)
+4. "complexity": niveau de complexité ("low", "medium", "high")
+5. "category": catégorie principale ("code", "documentation", "configuration", "test")
+6. "enrichedContent": version enrichie du contenu (peut être identique si pas d'amélioration)
+7. "confidence": niveau de confiance de l'analyse (0.0 à 1.0)
+
+Réponse JSON uniquement, sans texte supplémentaire.`;
+  }
+
+  /**
+   * Construit le prompt système
+   */
+  private buildSystemPrompt(language: string, contentType: string): string {
+    return `Tu es un assistant spécialisé dans l'analyse de code et de texte.
+Tu analyses du contenu de type ${contentType} en ${language}.
+Ton rôle est d'extraire des informations structurées pour améliorer la recherche sémantique.
+Sois précis, concis et retourne uniquement du JSON valide.`;
+  }
+
+  /**
+   * Parse la réponse LLM pour extraire les données structurées
+   */
+  private parseLLMResponse(llmResponse: string, originalContent: string): any {
+    try {
+      // Essayer de parser la réponse comme JSON
+      const jsonMatch = llmResponse.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const parsed = JSON.parse(jsonMatch[0]);
         return {
-            enrichedContent: content, // Même contenu pour l'instant
-            metadata: {
-                summary: `Résumé automatique de ${content.substring(0, 50)}...`,
-                keywords: ['test', 'code', 'example'],
-                entities: ['Calculator', 'function'],
-                complexity: 'low' as const,
-                category: 'code',
-                language: metadata?.language || 'javascript',
-            },
-            confidence: 0.85,
+          enrichedContent: parsed.enrichedContent || originalContent,
+          summary: parsed.summary,
+          keywords: Array.isArray(parsed.keywords) ? parsed.keywords : [],
+          entities: Array.isArray(parsed.entities) ? parsed.entities : [],
+          complexity: parsed.complexity || "medium",
+          category: parsed.category || "code",
+          confidence:
+            typeof parsed.confidence === "number" ? parsed.confidence : 0.7,
         };
+      }
+    } catch (error) {
+      logger.warn(
+        `Échec du parsing de la réponse LLM: ${error instanceof Error ? error.message : String(error)}`,
+        "LLMEnricherService",
+      );
     }
 
-    /**
-     * Met à jour la configuration
-     */
-    updateConfig(newConfig: Partial<LLMEnricherConfig>): void {
-        this.config = { ...this.config, ...newConfig };
-        this.isEnabled = this.config.enabled;
-        logger.info(`Configuration Phase 0.3 mise à jour: enabled=${this.isEnabled}`, 'LLMEnricherService');
+    // Fallback: analyser la réponse textuelle
+    return {
+      enrichedContent: originalContent,
+      summary: llmResponse.substring(0, 100) + "...",
+      keywords: ["parsed", "from", "response"],
+      entities: [],
+      complexity: "medium",
+      category: "code",
+      confidence: 0.6,
+    };
+  }
+
+  /**
+   * Met à jour la configuration
+   */
+  updateConfig(newConfig: Partial<LLMEnricherConfig>): void {
+    this.config = { ...this.config, ...newConfig };
+    this.isEnabled = this.config.enabled;
+    logger.info(
+      `Configuration Phase 0.3 mise à jour: enabled=${this.isEnabled}`,
+      "LLMEnricherService",
+    );
+  }
+
+  /**
+   * Récupère la configuration actuelle
+   */
+  getConfig(): LLMEnricherConfig {
+    return { ...this.config };
+  }
+
+  /**
+   * Met à jour les métriques
+   */
+  private updateMetrics(
+    type: "processed" | "success" | "error",
+    timeMs: number,
+    isSuccess: boolean,
+  ): void {
+    this.metrics.totalChunksProcessed++;
+
+    if (type === "success") {
+      this.metrics.totalChunksEnriched++;
+      this.metrics.totalEnrichmentTimeMs += timeMs;
+
+      // Mise à jour des métriques par modèle
+      const model = this.config.model;
+      if (!this.metrics.byModel[model]) {
+        this.metrics.byModel[model] = { count: 0, totalTimeMs: 0, errors: 0 };
+      }
+      this.metrics.byModel[model].count++;
+      this.metrics.byModel[model].totalTimeMs += timeMs;
+    } else if (type === "error") {
+      this.metrics.errors++;
+
+      // Mise à jour des erreurs par modèle
+      const model = this.config.model;
+      if (!this.metrics.byModel[model]) {
+        this.metrics.byModel[model] = { count: 0, totalTimeMs: 0, errors: 0 };
+      }
+      this.metrics.byModel[model].errors++;
     }
 
-    /**
-     * Récupère la configuration actuelle
-     */
-    getConfig(): LLMEnricherConfig {
-        return { ...this.config };
-    }
+    // Calcul des moyennes et taux
+    this.metrics.averageEnrichmentTimeMs =
+      this.metrics.totalChunksEnriched > 0
+        ? this.metrics.totalEnrichmentTimeMs / this.metrics.totalChunksEnriched
+        : 0;
 
-    /**
-     * Met à jour les métriques
-     */
-    private updateMetrics(type: 'processed' | 'success' | 'error', timeMs: number, isSuccess: boolean): void {
-        this.metrics.totalChunksProcessed++;
+    this.metrics.successRate =
+      this.metrics.totalChunksProcessed > 0
+        ? this.metrics.totalChunksEnriched / this.metrics.totalChunksProcessed
+        : 1.0;
 
-        if (type === 'success') {
-            this.metrics.totalChunksEnriched++;
-            this.metrics.totalEnrichmentTimeMs += timeMs;
+    this.metrics.lastUpdated = new Date();
+  }
 
-            // Mise à jour des métriques par modèle
-            const model = this.config.model;
-            if (!this.metrics.byModel[model]) {
-                this.metrics.byModel[model] = { count: 0, totalTimeMs: 0, errors: 0 };
-            }
-            this.metrics.byModel[model].count++;
-            this.metrics.byModel[model].totalTimeMs += timeMs;
-        } else if (type === 'error') {
-            this.metrics.errors++;
+  /**
+   * Récupère les métriques d'enrichissement
+   */
+  getMetrics(): EnrichmentMetrics {
+    return { ...this.metrics };
+  }
 
-            // Mise à jour des erreurs par modèle
-            const model = this.config.model;
-            if (!this.metrics.byModel[model]) {
-                this.metrics.byModel[model] = { count: 0, totalTimeMs: 0, errors: 0 };
-            }
-            this.metrics.byModel[model].errors++;
-        }
+  /**
+   * Récupère les statistiques d'utilisation (alias pour compatibilité)
+   */
+  getStats(): any {
+    return {
+      enabled: this.isEnabled,
+      totalEnriched: this.metrics.totalChunksEnriched,
+      averageTimeMs: this.metrics.averageEnrichmentTimeMs,
+      successRate: this.metrics.successRate,
+      totalProcessed: this.metrics.totalChunksProcessed,
+      errors: this.metrics.errors,
+      lastUpdated: this.metrics.lastUpdated,
+    };
+  }
 
-        // Calcul des moyennes et taux
-        this.metrics.averageEnrichmentTimeMs = this.metrics.totalChunksEnriched > 0
-            ? this.metrics.totalEnrichmentTimeMs / this.metrics.totalChunksEnriched
-            : 0;
-
-        this.metrics.successRate = this.metrics.totalChunksProcessed > 0
-            ? this.metrics.totalChunksEnriched / this.metrics.totalChunksProcessed
-            : 1.0;
-
-        this.metrics.lastUpdated = new Date();
-    }
-
-    /**
-     * Récupère les métriques d'enrichissement
-     */
-    getMetrics(): EnrichmentMetrics {
-        return { ...this.metrics };
-    }
-
-    /**
-     * Récupère les statistiques d'utilisation (alias pour compatibilité)
-     */
-    getStats(): any {
-        return {
-            enabled: this.isEnabled,
-            totalEnriched: this.metrics.totalChunksEnriched,
-            averageTimeMs: this.metrics.averageEnrichmentTimeMs,
-            successRate: this.metrics.successRate,
-            totalProcessed: this.metrics.totalChunksProcessed,
-            errors: this.metrics.errors,
-            lastUpdated: this.metrics.lastUpdated,
-        };
-    }
-
-    /**
-     * Réinitialise les métriques
-     */
-    resetMetrics(): void {
-        this.metrics = {
-            totalChunksProcessed: 0,
-            totalChunksEnriched: 0,
-            totalEnrichmentTimeMs: 0,
-            averageEnrichmentTimeMs: 0,
-            successRate: 1.0,
-            errors: 0,
-            byModel: {},
-            lastUpdated: new Date(),
-        };
-        logger.info('Métriques Phase 0.3 réinitialisées', 'LLMEnricherService');
-    }
+  /**
+   * Réinitialise les métriques
+   */
+  resetMetrics(): void {
+    this.metrics = {
+      totalChunksProcessed: 0,
+      totalChunksEnriched: 0,
+      totalEnrichmentTimeMs: 0,
+      averageEnrichmentTimeMs: 0,
+      successRate: 1.0,
+      errors: 0,
+      byModel: {},
+      lastUpdated: new Date(),
+    };
+    logger.info("Métriques Phase 0.3 réinitialisées", "LLMEnricherService");
+  }
 }
 
 /**
@@ -319,25 +506,27 @@ let enricherInstance: LLMEnricherService | null = null;
 /**
  * Initialise le service d'enrichissement
  */
-export function initLLMEnricher(config?: Partial<LLMEnricherConfig>): LLMEnricherService {
-    if (!enricherInstance) {
-        enricherInstance = new LLMEnricherService(config);
-    }
-    return enricherInstance;
+export function initLLMEnricher(
+  config?: Partial<LLMEnricherConfig>,
+): LLMEnricherService {
+  if (!enricherInstance) {
+    enricherInstance = new LLMEnricherService(config);
+  }
+  return enricherInstance;
 }
 
 /**
  * Récupère l'instance du service
  */
 export function getLLMEnricher(): LLMEnricherService | null {
-    return enricherInstance;
+  return enricherInstance;
 }
 
 /**
  * Export par défaut
  */
 export default {
-    LLMEnricherService,
-    initLLMEnricher,
-    getLLMEnricher,
+  LLMEnricherService,
+  initLLMEnricher,
+  getLLMEnricher,
 };

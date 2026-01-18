@@ -2,7 +2,7 @@
 // Adaptateur pour l'interface IVectorStore avec injection de dépendances
 // Responsabilité unique : Adapter pattern entre les nouveaux modules et l'interface existante
 import { configureDefaultEmbeddingService, generateEmbedding, generateEmbeddingForContent, getDefaultEmbeddingService, setDefaultEmbeddingModels, } from "./embedding-service.js";
-import { createVectorStore, createVectorStoreForProject } from "./vector-store-factory.js";
+import { createVectorStore, createVectorStoreForProject, } from "./vector-store-factory.js";
 import { VectorStoreLogger, } from "./vector-store-interface.js";
 /**
  * Convertit un SearchResult de types.ts en SearchResult de vector-store-interface.ts
@@ -39,12 +39,32 @@ export class VectorStoreAdapter {
     /**
      * Crée un adaptateur avec injection de dépendances
      */
-    constructor(vectorStore, embeddingService = getDefaultEmbeddingService()) {
+    constructor(vectorStore, embeddingService) {
         this.vectorStore = vectorStore;
-        this.embeddingService = embeddingService;
+        // Si aucun service n'est fourni, utiliser le service par défaut
+        if (embeddingService) {
+            this.embeddingService = embeddingService;
+        }
+        else {
+            // Initialiser avec une promesse qui sera résolue plus tard
+            this.embeddingService = null;
+            this.initializeEmbeddingService();
+        }
         VectorStoreLogger.info("vectorstore.adapter.init", "Vector store adapter initialized", {
-            hasCustomEmbeddingService: embeddingService !== getDefaultEmbeddingService(),
+            hasCustomEmbeddingService: !!embeddingService,
         });
+    }
+    /**
+     * Initialise le service d'embeddings de manière asynchrone
+     */
+    async initializeEmbeddingService() {
+        try {
+            this.embeddingService = await getDefaultEmbeddingService();
+        }
+        catch (error) {
+            VectorStoreLogger.error("vectorstore.adapter.embedding.init.error", "Erreur lors de l'initialisation du service d'embeddings", error);
+            throw error;
+        }
     }
     /**
      * Stocke un document avec son embedding
@@ -266,7 +286,9 @@ export class VectorStoreAdapter {
             // Convertir les filtres en options de recherche sémantique
             const semanticOptions = {
                 projectFilter: filters.projectPath,
-                contentTypeFilter: filters.contentType ? [filters.contentType] : undefined,
+                contentTypeFilter: filters.contentType
+                    ? [filters.contentType]
+                    : undefined,
                 roleFilter: filters.role ? [filters.role] : undefined,
                 languageFilter: filters.language ? [filters.language] : undefined,
                 dateFrom: filters.dateRange?.from,
@@ -310,7 +332,7 @@ let adapterInstance = null;
 /**
  * Obtient l'instance de vector store (singleton)
  */
-function getVectorStore() {
+async function getVectorStore() {
     if (!adapterInstance) {
         // Créer le vector store basé sur la configuration du projet
         const vectorStore = createVectorStoreForProject(process.cwd());
@@ -319,6 +341,10 @@ function getVectorStore() {
             type: "dynamic",
             projectPath: process.cwd(),
         });
+    }
+    // S'assurer que le service d'embeddings est initialisé
+    if (!adapterInstance.getEmbeddingService()) {
+        await adapterInstance.initializeEmbeddingService();
     }
     return adapterInstance;
 }
@@ -371,10 +397,10 @@ export { generateEmbedding } from "./embedding-service.js";
  * Stocke un document avec son embedding (fonction exportée)
  */
 export async function embedAndStore(projectPath, filePath, content, options = {}) {
-    const { contentType = "other", language, } = options;
+    const { contentType = "other", language } = options;
     // Générer l'embedding avec routage automatique par type de contenu
     const vector = await generateEmbeddingForContent(content, contentType, language || undefined);
-    const store = getVectorStore();
+    const store = await getVectorStore();
     await store.embedAndStore(projectPath, filePath, content, vector, options);
 }
 /**
@@ -383,56 +409,56 @@ export async function embedAndStore(projectPath, filePath, content, options = {}
 export async function semanticSearch(query, options = {}) {
     // Générer l'embedding pour la requête
     const queryVector = await generateEmbeddingForContent(query, "other");
-    const store = getVectorStore();
+    const store = await getVectorStore();
     return await store.semanticSearch(queryVector, options);
 }
 /**
  * Obtient les statistiques d'un projet (fonction exportée)
  */
 export async function getProjectStats(projectPath) {
-    const store = getVectorStore();
+    const store = await getVectorStore();
     return await store.getProjectStats(projectPath);
 }
 /**
  * Liste tous les projets indexés (fonction exportée)
  */
 export async function listProjects() {
-    const store = getVectorStore();
+    const store = await getVectorStore();
     return await store.listProjects();
 }
 /**
  * Supprime un document par son ID (fonction exportée)
  */
 export async function deleteDocument(id) {
-    const store = getVectorStore();
+    const store = await getVectorStore();
     return await store.deleteDocument(id);
 }
 /**
  * Vide tous les documents (pour les tests) (fonction exportée)
  */
 export async function clearAll() {
-    const store = getVectorStore();
+    const store = await getVectorStore();
     await store.clearAll();
 }
 /**
  * Obtient les statistiques globales du store (fonction exportée)
  */
 export async function getStats() {
-    const store = getVectorStore();
+    const store = await getVectorStore();
     return await store.getStats();
 }
 /**
  * Teste la connectivité au vector store (fonction exportée)
  */
 export async function testConnection() {
-    const store = getVectorStore();
+    const store = await getVectorStore();
     return await store.testConnection();
 }
 /**
  * Met à jour un document existant (fonction exportée)
  */
 export async function updateDocument(id, updates) {
-    const store = getVectorStore();
+    const store = await getVectorStore();
     return await store.updateDocument(id, updates);
 }
 /**
@@ -440,7 +466,7 @@ export async function updateDocument(id, updates) {
  */
 export async function hybridSearch(query, options = {}) {
     const { semanticWeight = 0.7, textWeight = 0.3, textQuery, ...semanticOptions } = options;
-    const store = getVectorStore();
+    const store = await getVectorStore();
     const queryVector = await generateEmbedding(query);
     return await store.hybridSearch(queryVector, textQuery || query, {
         ...semanticOptions,
@@ -452,21 +478,21 @@ export async function hybridSearch(query, options = {}) {
  * Recherche par métadonnées (fonction exportée)
  */
 export async function searchByMetadata(filters) {
-    const store = getVectorStore();
+    const store = await getVectorStore();
     return await store.searchByMetadata(filters);
 }
 /**
  * Supprime les documents correspondant à un pattern (fonction exportée)
  */
 export async function deleteDocumentsByPattern(pattern) {
-    const store = getVectorStore();
+    const store = await getVectorStore();
     return await store.deleteDocumentsByPattern(pattern);
 }
 /**
  * Initialise le vector store (fonction exportée)
  */
 export async function initialize() {
-    const store = getVectorStore();
+    const store = await getVectorStore();
     await store.initialize();
 }
 /**

@@ -22,16 +22,16 @@ describe("embedding-service", () => {
     describe("EmbeddingService class", () => {
         it("should initialize with default configuration", () => {
             const service = new EmbeddingService({
-                provider: "fake",
+                provider: "fallback",
                 models: DEFAULT_MODEL_CONFIG,
             });
             expect(service).toBeInstanceOf(EmbeddingService);
-            expect(service.getConfig().provider).toBe("fake");
+            expect(service.getConfig().provider).toBe("fallback");
             expect(service.getConfig().models.code).toBe("nomic-embed-code");
         });
         it("should initialize with custom cache", () => {
             const service = new EmbeddingService({
-                provider: "fake",
+                provider: "fallback",
                 models: DEFAULT_MODEL_CONFIG,
                 cache: mockEmbeddingCache,
             });
@@ -47,14 +47,14 @@ describe("embedding-service", () => {
         });
         it("should not initialize Ollama service when provider is not ollama", () => {
             const service = new EmbeddingService({
-                provider: "fake",
+                provider: "fallback",
                 models: DEFAULT_MODEL_CONFIG,
             });
             expect(service.getOllamaService()).toBeNull();
         });
         describe("getModelForContentType", () => {
             const service = new EmbeddingService({
-                provider: "fake",
+                provider: "fallback",
                 models: DEFAULT_MODEL_CONFIG,
             });
             it("should return code model for code content type", () => {
@@ -85,7 +85,7 @@ describe("embedding-service", () => {
         });
         describe("getDimensionForModel", () => {
             const service = new EmbeddingService({
-                provider: "fake",
+                provider: "fallback",
                 models: DEFAULT_MODEL_CONFIG,
             });
             it("should return correct dimension for code model", () => {
@@ -103,7 +103,7 @@ describe("embedding-service", () => {
         });
         describe("normalizeL2", () => {
             const service = new EmbeddingService({
-                provider: "fake",
+                provider: "fallback",
                 models: DEFAULT_MODEL_CONFIG,
             });
             it("should normalize a vector", () => {
@@ -119,19 +119,19 @@ describe("embedding-service", () => {
                 expect(normalized).toEqual([0, 0, 0]);
             });
         });
-        describe("generateFakeEmbedding", () => {
+        describe("generateFallbackEmbedding", () => {
             const service = new EmbeddingService({
-                provider: "fake",
+                provider: "fallback",
                 models: DEFAULT_MODEL_CONFIG,
             });
             it("should generate embedding with correct dimension", () => {
-                const embedding = service.generateFakeEmbedding("test text", "nomic-embed-code");
+                const embedding = service.generateFallbackEmbedding("test text", "nomic-embed-code");
                 expect(Array.isArray(embedding)).toBe(true);
                 expect(embedding.length).toBe(768); // Dimension for code model
             });
             it("should generate different embeddings for different texts", () => {
-                const embedding1 = service.generateFakeEmbedding("text 1");
-                const embedding2 = service.generateFakeEmbedding("text 2");
+                const embedding1 = service.generateFallbackEmbedding("text 1");
+                const embedding2 = service.generateFallbackEmbedding("text 2");
                 // They should be different (very low probability of collision)
                 let different = false;
                 for (let i = 0; i < Math.min(embedding1.length, embedding2.length); i++) {
@@ -148,7 +148,7 @@ describe("embedding-service", () => {
                 const cachedEmbedding = [0.1, 0.2, 0.3];
                 mockEmbeddingCache.get.mockReturnValue(cachedEmbedding);
                 const service = new EmbeddingService({
-                    provider: "fake",
+                    provider: "fallback",
                     models: DEFAULT_MODEL_CONFIG,
                     cache: mockEmbeddingCache,
                 });
@@ -160,7 +160,7 @@ describe("embedding-service", () => {
                 mockEmbeddingCache.get.mockReturnValue(null);
                 const generatedEmbedding = [0.1, 0.2, 0.3];
                 const service = new EmbeddingService({
-                    provider: "fake",
+                    provider: "fallback",
                     models: DEFAULT_MODEL_CONFIG,
                     cache: mockEmbeddingCache,
                 });
@@ -188,9 +188,9 @@ describe("embedding-service", () => {
                 expect(mockOllamaService.generateEmbedding).toHaveBeenCalledWith("test text", "nomic-embed-code");
                 expect(result).toBe(ollamaEmbedding);
             });
-            it("should use fake provider by default", async () => {
+            it("should use fallback provider by default", async () => {
                 const service = new EmbeddingService({
-                    provider: "fake",
+                    provider: "fallback",
                     models: DEFAULT_MODEL_CONFIG,
                 });
                 const result = await service.generateWithModel("test text", "nomic-embed-code");
@@ -209,7 +209,7 @@ describe("embedding-service", () => {
         describe("updateConfig", () => {
             it("should update configuration", () => {
                 const service = new EmbeddingService({
-                    provider: "fake",
+                    provider: "fallback",
                     models: DEFAULT_MODEL_CONFIG,
                 });
                 const newConfig = {
@@ -224,7 +224,7 @@ describe("embedding-service", () => {
             it("should update cache when provided", () => {
                 const newCache = { ...mockEmbeddingCache };
                 const service = new EmbeddingService({
-                    provider: "fake",
+                    provider: "fallback",
                     models: DEFAULT_MODEL_CONFIG,
                     cache: mockEmbeddingCache,
                 });
@@ -245,9 +245,9 @@ describe("embedding-service", () => {
             });
         });
         describe("testConnection", () => {
-            it("should return true for fake provider", async () => {
+            it("should return true for fallback provider", async () => {
                 const service = new EmbeddingService({
-                    provider: "fake",
+                    provider: "fallback",
                     models: DEFAULT_MODEL_CONFIG,
                 });
                 const result = await service.testConnection();
@@ -276,23 +276,23 @@ describe("embedding-service", () => {
         });
     });
     describe("utility functions", () => {
-        beforeEach(() => {
+        beforeEach(async () => {
             // Reset default service
-            configureDefaultEmbeddingService("fake", "qwen3-embedding:8b");
+            configureDefaultEmbeddingService("fallback", "qwen3-embedding:8b");
         });
         describe("getDefaultEmbeddingService", () => {
-            it("should return singleton instance", () => {
-                const service1 = getDefaultEmbeddingService();
-                const service2 = getDefaultEmbeddingService();
+            it("should return singleton instance", async () => {
+                const service1 = await getDefaultEmbeddingService();
+                const service2 = await getDefaultEmbeddingService();
                 expect(service1).toBe(service2);
             });
         });
         describe("configureDefaultEmbeddingService", () => {
-            it("should configure default service", () => {
+            it("should configure default service", async () => {
                 configureDefaultEmbeddingService("ollama", "custom-model", {
                     code: "custom-code-model",
                 });
-                const service = getDefaultEmbeddingService();
+                const service = await getDefaultEmbeddingService();
                 const config = service.getConfig();
                 expect(config.provider).toBe("ollama");
                 expect(config.models.fallback).toBe("custom-model");
@@ -301,14 +301,14 @@ describe("embedding-service", () => {
             });
         });
         describe("getEmbeddingModelForContentType", () => {
-            it("should delegate to default service", () => {
-                const model = getEmbeddingModelForContentType("code");
+            it("should delegate to default service", async () => {
+                const model = await getEmbeddingModelForContentType("code");
                 expect(model).toBe("nomic-embed-code");
             });
         });
         describe("getEmbeddingDimensionForModel", () => {
-            it("should delegate to default service", () => {
-                const dimension = getEmbeddingDimensionForModel("nomic-embed-code");
+            it("should delegate to default service", async () => {
+                const dimension = await getEmbeddingDimensionForModel("nomic-embed-code");
                 expect(dimension).toBe(768);
             });
         });

@@ -2,7 +2,7 @@
 // Version refactorisée utilisant les nouveaux modules dédiés
 // Ce fichier sert maintenant de façade pour la compatibilité ascendante
 
-import { SearchResult } from './types.js';
+import { SearchResult } from "./types.js";
 import {
   // Interface et configuration
   IVectorStore,
@@ -10,7 +10,7 @@ import {
   SemanticSearchOptions as InterfaceSemanticSearchOptions,
   VectorStoreConfig,
   VectorStoreLogger,
-} from './vector-store-interface.js';
+} from "./vector-store-interface.js";
 
 // Import des nouveaux modules
 import {
@@ -40,7 +40,7 @@ import {
   getEmbeddingModelForContentType,
   setEmbeddingModels,
   setEmbeddingProvider,
-} from './vector-store-adapter.js';
+} from "./vector-store-adapter.js";
 
 // ========== COMPATIBILITÉ ASCENDANTE ==========
 
@@ -55,20 +55,30 @@ let vectorStoreInstance: IVectorStore | null = null;
  * Obtient l'instance de vector store (singleton)
  * Utilise l'adaptateur avec les nouveaux modules
  */
-function getVectorStore(): IVectorStore {
+async function getVectorStore(): Promise<IVectorStore> {
   if (!vectorStoreInstance) {
     // Créer l'adaptateur via la factory
-    const { createVectorStoreForProject } = require('./vector-store-factory.js');
+    const {
+      createVectorStoreForProject,
+    } = require("./vector-store-factory.js");
     const underlyingStore = createVectorStoreForProject(process.cwd());
 
     // Créer l'adaptateur avec injection de dépendances
-    const { getDefaultEmbeddingService } = require('./embedding-service.js');
-    vectorStoreInstance = new VectorStoreAdapter(underlyingStore, getDefaultEmbeddingService());
+    const { getDefaultEmbeddingService } = require("./embedding-service.js");
+    const embeddingService = await getDefaultEmbeddingService();
+    vectorStoreInstance = new VectorStoreAdapter(
+      underlyingStore,
+      embeddingService,
+    );
 
-    VectorStoreLogger.info('vectorstore.init', 'Vector store initialisé (via adaptateur)', {
-      type: 'adapter',
-      projectPath: process.cwd()
-    });
+    VectorStoreLogger.info(
+      "vectorstore.init",
+      "Vector store initialisé (via adaptateur)",
+      {
+        type: "adapter",
+        projectPath: process.cwd(),
+      },
+    );
   }
   return vectorStoreInstance;
 }
@@ -79,9 +89,13 @@ function getVectorStore(): IVectorStore {
  */
 export function configureVectorStore(config: VectorStoreConfig): void {
   configureVectorStoreAdapter(config);
-  VectorStoreLogger.info('vectorstore.configure', 'Vector store configuré (via adaptateur)', {
-    type: config.type
-  });
+  VectorStoreLogger.info(
+    "vectorstore.configure",
+    "Vector store configuré (via adaptateur)",
+    {
+      type: config.type,
+    },
+  );
 }
 
 // Ré-export des fonctions de configuration
@@ -102,7 +116,7 @@ export async function embedAndStore(
   projectPath: string,
   filePath: string,
   content: string,
-  options: EmbedAndStoreOptions = {}
+  options: EmbedAndStoreOptions = {},
 ): Promise<void> {
   return adapterEmbedAndStore(projectPath, filePath, content, options);
 }
@@ -112,7 +126,7 @@ export async function embedAndStore(
  */
 export async function semanticSearch(
   query: string,
-  options: SemanticSearchOptions = {}
+  options: SemanticSearchOptions = {},
 ): Promise<SearchResult[]> {
   return adapterSemanticSearch(query, options);
 }
@@ -180,7 +194,7 @@ export async function updateDocument(
     content: string;
     embedding: number[];
     metadata: Partial<EmbedAndStoreOptions>;
-  }>
+  }>,
 ): Promise<boolean> {
   return adapterUpdateDocument(id, updates);
 }
@@ -194,7 +208,7 @@ export async function hybridSearch(
     semanticWeight?: number;
     textWeight?: number;
     textQuery?: string;
-  } = {}
+  } = {},
 ): Promise<SearchResult[]> {
   return adapterHybridSearch(query, options);
 }
@@ -206,7 +220,7 @@ export async function searchByMetadata(
   filters: Partial<EmbedAndStoreOptions> & {
     projectPath?: string;
     dateRange?: { from?: Date; to?: Date };
-  }
+  },
 ): Promise<SearchResult[]> {
   return adapterSearchByMetadata(filters);
 }
@@ -214,7 +228,9 @@ export async function searchByMetadata(
 /**
  * Supprime les documents correspondant à un pattern
  */
-export async function deleteDocumentsByPattern(pattern: string): Promise<number> {
+export async function deleteDocumentsByPattern(
+  pattern: string,
+): Promise<number> {
   return adapterDeleteDocumentsByPattern(pattern);
 }
 
@@ -253,22 +269,28 @@ export type { IVectorStore, VectorStoreConfig };
 /**
  * @deprecated Utilisez getEmbeddingModelForContentType à la place
  */
-export function getModelForContentType(contentType: string, language?: string): string {
-  return getEmbeddingModelForContentType(contentType, language);
+export async function getModelForContentType(
+  contentType: string,
+  language?: string,
+): Promise<string> {
+  return await getEmbeddingModelForContentType(contentType, language);
 }
 
 /**
  * @deprecated Utilisez getEmbeddingDimensionForModel à la place
  */
-export function getDimensionForModel(model: string): number {
-  return getEmbeddingDimensionForModel(model);
+export async function getDimensionForModel(model: string): Promise<number> {
+  return await getEmbeddingDimensionForModel(model);
 }
 
 /**
  * @deprecated Utilisez generateEmbedding à la place
  */
-export async function generateEmbeddingWithModel(text: string, model: string): Promise<number[]> {
-  const { getDefaultEmbeddingService } = require('./embedding-service.js');
+export async function generateEmbeddingWithModel(
+  text: string,
+  model: string,
+): Promise<number[]> {
+  const { getDefaultEmbeddingService } = require("./embedding-service.js");
   const service = getDefaultEmbeddingService();
   return await service.generateWithModel(text, model);
 }
@@ -278,8 +300,8 @@ export async function generateEmbeddingWithModel(text: string, model: string): P
  */
 export async function generateEmbeddingForContentType(
   text: string,
-  contentType: string = 'other',
-  language?: string
+  contentType: string = "other",
+  language?: string,
 ): Promise<number[]> {
   return generateEmbeddingForContent(text, contentType, language);
 }
