@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/.bin/r.js",
+  "hash": "f370fb30dd54a3c697b5b438875e10c7699a7153103b119ad9362ea0854a2019",
+  "timestamp": 1768699409184,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.178Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 1189187,
+    "mtime": 1768595277409.5308,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

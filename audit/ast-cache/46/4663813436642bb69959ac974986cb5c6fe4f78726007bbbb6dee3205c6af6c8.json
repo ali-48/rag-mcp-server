@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/2019/ArrayCreate.js",
+  "hash": "4663813436642bb69959ac974986cb5c6fe4f78726007bbbb6dee3205c6af6c8",
+  "timestamp": 1768699409029,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.029Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 1429,
+    "mtime": 1768595306210.3264,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

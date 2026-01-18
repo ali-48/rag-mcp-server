@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/helpers/isNaN.js",
+  "hash": "bfd42c4dd1f4d1c33053146f041c4ac3f0da588c7b6a175c012ba5359daaf76b",
+  "timestamp": 1768699409070,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.069Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 88,
+    "mtime": 1768595306373.3262,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

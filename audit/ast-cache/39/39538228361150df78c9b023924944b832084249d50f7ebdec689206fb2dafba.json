@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/@vue/compiler-sfc/dist/compiler-sfc.cjs.js",
+  "hash": "39538228361150df78c9b023924944b832084249d50f7ebdec689206fb2dafba",
+  "timestamp": 1768699409140,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.135Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 846547,
+    "mtime": 1768595277390.407,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

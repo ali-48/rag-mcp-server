@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/2023/GetSubstitution.js",
+  "hash": "ef390a32570087dda3b3873ba4d3f4241bf878725c7f0dc2275faca1db374abf",
+  "timestamp": 1768699408995,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:28.995Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 5564,
+    "mtime": 1768595306322.3262,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

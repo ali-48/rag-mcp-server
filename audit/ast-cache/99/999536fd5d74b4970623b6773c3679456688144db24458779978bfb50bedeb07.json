@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/2018/GetValueFromBuffer.js",
+  "hash": "999536fd5d74b4970623b6773c3679456688144db24458779978bfb50bedeb07",
+  "timestamp": 1768699408997,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:28.997Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 4390,
+    "mtime": 1768595306331.3262,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/pg-protocol/dist/parser.js",
+  "hash": "dff10e15ac457e6ba1c522489e69ee1bed5aa7f2f416df219c673c979a099b22",
+  "timestamp": 1768699409091,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.090Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 13824,
+    "mtime": 1766870654328.9731,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

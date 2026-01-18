@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/2019/CompletePropertyDescriptor.js",
+  "hash": "d0f322880544718d6299c9a4c05569d5b52b2cfb8c6c8408cc45be52789630d2",
+  "timestamp": 1768699409038,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.038Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 1110,
+    "mtime": 1768595306270.3264,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/2023/IsStrictlyEqual.js",
+  "hash": "9f958cbd899697136f1fbea4db87c89c0facc01db2086d1a0ed0e5b37dd870f4",
+  "timestamp": 1768699409001,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.000Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 392,
+    "mtime": 1768595306379.3262,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

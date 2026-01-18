@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/helpers/getIteratorMethod.js",
+  "hash": "554b2d352137ba14bb429d807e0ba26f5a3b6a61713d07cc3aca75170795640f",
+  "timestamp": 1768699409079,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.078Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 1196,
+    "mtime": 1768595306315.3262,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

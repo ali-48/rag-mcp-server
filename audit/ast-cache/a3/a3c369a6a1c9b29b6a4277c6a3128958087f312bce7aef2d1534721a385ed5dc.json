@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/gonzales-pe/lib/gonzales.js",
+  "hash": "a3c369a6a1c9b29b6a4277c6a3128958087f312bce7aef2d1534721a385ed5dc",
+  "timestamp": 1768699409147,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.143Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 560803,
+    "mtime": 1768595277379.4595,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

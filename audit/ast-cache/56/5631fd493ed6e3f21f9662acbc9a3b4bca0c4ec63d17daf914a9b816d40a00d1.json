@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/2019/SplitMatch.js",
+  "hash": "5631fd493ed6e3f21f9662acbc9a3b4bca0c4ec63d17daf914a9b816d40a00d1",
+  "timestamp": 1768699409019,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.018Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 803,
+    "mtime": 1768595306548.3257,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

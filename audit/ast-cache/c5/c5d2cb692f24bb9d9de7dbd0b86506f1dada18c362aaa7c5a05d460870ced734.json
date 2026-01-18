@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/vite/dist/node/chunks/config.js",
+  "hash": "c5d2cb692f24bb9d9de7dbd0b86506f1dada18c362aaa7c5a05d460870ced734",
+  "timestamp": 1768699409177,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.170Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 1332878,
+    "mtime": 1768275120785.8843,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

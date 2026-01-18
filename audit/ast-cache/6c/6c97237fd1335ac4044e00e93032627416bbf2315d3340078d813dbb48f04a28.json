@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/operations/2020.js",
+  "hash": "6c97237fd1335ac4044e00e93032627416bbf2315d3340078d813dbb48f04a28",
+  "timestamp": 1768699409054,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.054Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 40870,
+    "mtime": 1768595306165.3267,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

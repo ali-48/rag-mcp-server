@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/2019/AddEntriesFromIterable.js",
+  "hash": "3a6a3ea0c905ad81fb52462c755639e785e7a802e42d68617046f2a547829247",
+  "timestamp": 1768699409011,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.011Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 1416,
+    "mtime": 1768595306206.3267,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

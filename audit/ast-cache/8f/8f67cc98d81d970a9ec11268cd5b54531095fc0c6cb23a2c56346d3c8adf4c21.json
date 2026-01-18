@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/2019/StringCreate.js",
+  "hash": "8f67cc98d81d970a9ec11268cd5b54531095fc0c6cb23a2c56346d3c8adf4c21",
+  "timestamp": 1768699409034,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.033Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 1075,
+    "mtime": 1768595306549.3257,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

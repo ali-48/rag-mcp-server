@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/2019/NormalCompletion.js",
+  "hash": "640951357d843090882b348f8e03ffd928771ae974185cb87995e5be9f74a9ea",
+  "timestamp": 1768699409039,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.039Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 237,
+    "mtime": 1768595306472.3257,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

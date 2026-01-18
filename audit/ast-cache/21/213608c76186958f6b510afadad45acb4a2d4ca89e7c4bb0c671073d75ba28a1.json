@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/2019/SameValueNonNumber.js",
+  "hash": "213608c76186958f6b510afadad45acb4a2d4ca89e7c4bb0c671073d75ba28a1",
+  "timestamp": 1768699409021,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.021Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 402,
+    "mtime": 1768595306514.3257,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

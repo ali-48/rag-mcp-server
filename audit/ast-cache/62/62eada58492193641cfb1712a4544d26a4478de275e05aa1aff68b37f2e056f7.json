@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/@ts-morph/common/dist/ts-morph-common.js",
+  "hash": "62eada58492193641cfb1712a4544d26a4478de275e05aa1aff68b37f2e056f7",
+  "timestamp": 1768699409221,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.205Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 2527608,
+    "mtime": 1768595291533.3674,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

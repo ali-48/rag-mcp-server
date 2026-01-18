@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/5/FromPropertyDescriptor.js",
+  "hash": "e9edea1dc26f4988281639b59592da9f4746f15d960d9e88a7f2cf56a4faa33c",
+  "timestamp": 1768699408979,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:28.978Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 1050,
+    "mtime": 1768595306310.3262,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

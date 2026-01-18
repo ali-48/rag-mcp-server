@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/2019/RegExpCreate.js",
+  "hash": "49da22ccbe85efb7620bfeb7877f2ef8678f1882ade81fcdc3f54567add7ab6b",
+  "timestamp": 1768699409046,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.046Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 643,
+    "mtime": 1768595306506.078,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/5/ToPrimitive.js",
+  "hash": "ef06aa5d35bf80c0271ecac0a5ed16b7dfeb66ae3c8f20f7ab3e6f6122b33a07",
+  "timestamp": 1768699408980,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:28.980Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 115,
+    "mtime": 1768595306586.3254,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

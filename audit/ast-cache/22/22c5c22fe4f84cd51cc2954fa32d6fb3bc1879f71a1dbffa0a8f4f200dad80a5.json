@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/2023/TimeZoneString.js",
+  "hash": "22c5c22fe4f84cd51cc2954fa32d6fb3bc1879f71a1dbffa0a8f4f200dad80a5",
+  "timestamp": 1768699409004,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.003Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 1961,
+    "mtime": 1768595306571.3254,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

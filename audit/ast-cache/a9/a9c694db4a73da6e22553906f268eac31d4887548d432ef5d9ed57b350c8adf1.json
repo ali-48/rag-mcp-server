@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/2016/EnumerableOwnNames.js",
+  "hash": "a9c694db4a73da6e22553906f268eac31d4887548d432ef5d9ed57b350c8adf1",
+  "timestamp": 1768699408985,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:28.985Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 377,
+    "mtime": 1768595306301.3262,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

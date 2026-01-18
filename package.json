@@ -36,6 +36,7 @@
     "@vitest/ui": "^4.0.17",
     "chokidar": "^5.0.0",
     "eslint-plugin-import": "^2.32.0",
+    "lodash.debounce": "^4.0.8",
     "madge": "^8.0.0",
     "shx": "^0.3.4",
     "ts-morph": "^27.0.2",

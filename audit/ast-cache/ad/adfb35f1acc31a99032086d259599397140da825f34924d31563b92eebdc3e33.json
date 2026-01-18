@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/pump/package.json",
+  "hash": "adfb35f1acc31a99032086d259599397140da825f34924d31563b92eebdc3e33",
+  "timestamp": 1768699409106,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.106Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 530,
+    "mtime": 1768347605460.8096,
+    "language": "config",
+    "fileType": "configuration"
+  }
+}

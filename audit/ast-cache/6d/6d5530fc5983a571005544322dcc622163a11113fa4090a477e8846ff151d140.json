@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/helpers/bytesAsFloat64.js",
+  "hash": "6d5530fc5983a571005544322dcc622163a11113fa4090a477e8846ff151d140",
+  "timestamp": 1768699409081,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.080Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 1510,
+    "mtime": 1768595306257.7192,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

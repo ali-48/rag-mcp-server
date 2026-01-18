@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/2023/ValidateIntegerTypedArray.js",
+  "hash": "655783a0ab1ac8f5df3cc38222241a37dadfa0bcc598d6adc064056c1422f2ab",
+  "timestamp": 1768699408998,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:28.998Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 1419,
+    "mtime": 1768595306620.3254,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

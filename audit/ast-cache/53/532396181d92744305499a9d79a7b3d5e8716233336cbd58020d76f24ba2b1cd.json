@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/helpers/isLineTerminator.js",
+  "hash": "532396181d92744305499a9d79a7b3d5e8716233336cbd58020d76f24ba2b1cd",
+  "timestamp": 1768699409068,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.067Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 188,
+    "mtime": 1768595306372.3262,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

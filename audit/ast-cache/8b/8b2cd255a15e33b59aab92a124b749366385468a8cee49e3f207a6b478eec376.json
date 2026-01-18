@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/helpers/sign.js",
+  "hash": "8b2cd255a15e33b59aab92a124b749366385468a8cee49e3f207a6b478eec376",
+  "timestamp": 1768699409064,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.063Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 95,
+    "mtime": 1768595306543.3257,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

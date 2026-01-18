@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/pg-protocol/src/serializer.ts",
+  "hash": "aa2dd58a140de1b6395a15a0d29060d33aab503a9e0c820faef62e8e38536a99",
+  "timestamp": 1768699409102,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.102Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 7193,
+    "mtime": 1766870654401.9731,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

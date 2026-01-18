@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/helpers/getProto.js",
+  "hash": "24308710099f5be5660bfe09c59863e1a2fe8e45da7011c50749f12b5a9367bc",
+  "timestamp": 1768699409075,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.075Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 84,
+    "mtime": 1768595306320.3262,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/2016/DetachArrayBuffer.js",
+  "hash": "e4679a8f1e9c3882f47c588bb6e26e7a73f1671a6ff25ffbdd77205842a0aaa8",
+  "timestamp": 1768699408988,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:28.988Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 1257,
+    "mtime": 1768595306298.3262,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

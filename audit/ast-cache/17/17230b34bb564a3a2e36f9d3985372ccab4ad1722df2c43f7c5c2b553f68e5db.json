@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/pg-protocol/dist/messages.d.ts",
+  "hash": "17230b34bb564a3a2e36f9d3985372ccab4ad1722df2c43f7c5c2b553f68e5db",
+  "timestamp": 1768699409093,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.092Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 6103,
+    "mtime": 1766870654385.9731,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

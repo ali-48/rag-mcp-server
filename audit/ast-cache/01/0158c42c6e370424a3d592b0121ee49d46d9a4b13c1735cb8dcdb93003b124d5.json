@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/helpers/isStringOrHole.js",
+  "hash": "0158c42c6e370424a3d592b0121ee49d46d9a4b13c1735cb8dcdb93003b124d5",
+  "timestamp": 1768699409074,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.074Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 338,
+    "mtime": 1768595306379.3262,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

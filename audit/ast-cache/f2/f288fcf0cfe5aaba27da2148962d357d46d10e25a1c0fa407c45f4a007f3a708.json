@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/helpers/DefineOwnProperty.js",
+  "hash": "f288fcf0cfe5aaba27da2148962d357d46d10e25a1c0fa407c45f4a007f3a708",
+  "timestamp": 1768699409084,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.084Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 1492,
+    "mtime": 1768595306296.3262,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

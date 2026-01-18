@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/pump/test-node.js",
+  "hash": "04b7b585e056fccea011f300815d9f19afb190b7c88f5bc575aeac8b5dd00ded",
+  "timestamp": 1768699409108,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.107Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 992,
+    "mtime": 1768347605458.8096,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

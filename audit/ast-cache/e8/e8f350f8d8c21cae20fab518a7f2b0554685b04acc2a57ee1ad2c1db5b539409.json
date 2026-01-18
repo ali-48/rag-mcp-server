@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/pg-protocol/src/buffer-writer.ts",
+  "hash": "e8f350f8d8c21cae20fab518a7f2b0554685b04acc2a57ee1ad2c1db5b539409",
+  "timestamp": 1768699409100,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.100Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 2503,
+    "mtime": 1766870654376.9731,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

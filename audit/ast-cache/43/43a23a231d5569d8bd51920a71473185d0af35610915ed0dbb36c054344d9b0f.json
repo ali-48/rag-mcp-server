@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/2019/IsInteger.js",
+  "hash": "43a23a231d5569d8bd51920a71473185d0af35610915ed0dbb36c054344d9b0f",
+  "timestamp": 1768699409010,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.009Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 208,
+    "mtime": 1768595306371.3262,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

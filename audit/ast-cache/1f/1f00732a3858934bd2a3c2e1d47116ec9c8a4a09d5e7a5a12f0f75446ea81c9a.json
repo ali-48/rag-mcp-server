@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/2019/StrictEqualityComparison.js",
+  "hash": "1f00732a3858934bd2a3c2e1d47116ec9c8a4a09d5e7a5a12f0f75446ea81c9a",
+  "timestamp": 1768699409016,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.016Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 318,
+    "mtime": 1768595306548.3257,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

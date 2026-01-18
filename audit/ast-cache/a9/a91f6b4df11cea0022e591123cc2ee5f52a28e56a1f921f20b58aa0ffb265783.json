@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/2019/thisTimeValue.js",
+  "hash": "a91f6b4df11cea0022e591123cc2ee5f52a28e56a1f921f20b58aa0ffb265783",
+  "timestamp": 1768699409047,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.047Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 231,
+    "mtime": 1768595306564.3254,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

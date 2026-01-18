@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/helpers/records/regexp-record.js",
+  "hash": "a53f4f7a22c7cee535fa001e4732d65892abbfb823b0620abbb14c9e98da8709",
+  "timestamp": 1768699409070,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.070Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 850,
+    "mtime": 1768595306504.3257,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

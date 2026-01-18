@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/helpers/reduce.js",
+  "hash": "f32b81afefa941782637a2da1992ee6d5033b8ce6f2caf893a54cb141c181261",
+  "timestamp": 1768699409084,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.084Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 172,
+    "mtime": 1768595306504.3257,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

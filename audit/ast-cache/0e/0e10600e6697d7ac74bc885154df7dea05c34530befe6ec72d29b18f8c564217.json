@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/2023/IteratorToList.js",
+  "hash": "0e10600e6697d7ac74bc885154df7dea05c34530befe6ec72d29b18f8c564217",
+  "timestamp": 1768699408999,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:28.999Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 789,
+    "mtime": 1768595306389.326,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

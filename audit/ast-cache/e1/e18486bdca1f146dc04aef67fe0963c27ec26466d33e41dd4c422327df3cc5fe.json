@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/2023/ValidateAtomicAccess.js",
+  "hash": "e18486bdca1f146dc04aef67fe0963c27ec26466d33e41dd4c422327df3cc5fe",
+  "timestamp": 1768699408999,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:28.999Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 1167,
+    "mtime": 1768595306619.3254,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

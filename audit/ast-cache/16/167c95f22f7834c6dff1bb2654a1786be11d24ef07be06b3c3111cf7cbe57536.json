@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/helpers/records/data-view-with-buffer-witness-record.js",
+  "hash": "167c95f22f7834c6dff1bb2654a1786be11d24ef07be06b3c3111cf7cbe57536",
+  "timestamp": 1768699409074,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.074Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 535,
+    "mtime": 1768595306286.3264,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

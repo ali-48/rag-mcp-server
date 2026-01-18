@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/2019/ArraySpeciesCreate.js",
+  "hash": "de890fdcc4e836ad06d6bf92f0555220975f582f7c352bfe3fb568409992c787",
+  "timestamp": 1768699409041,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.041Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 1368,
+    "mtime": 1768595306212.3264,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

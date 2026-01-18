@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/2023/FindViaPredicate.js",
+  "hash": "8f0ff51a82656a070a9c37c2a5805ab09a253bae947764e1b0aa7813e3fe4218",
+  "timestamp": 1768699408996,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:28.996Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 1415,
+    "mtime": 1768595306307.3262,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

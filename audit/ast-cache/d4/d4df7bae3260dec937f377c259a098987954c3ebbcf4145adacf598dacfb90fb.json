@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/minizlib/constants.js",
+  "hash": "d4df7bae3260dec937f377c259a098987954c3ebbcf4145adacf598dacfb90fb",
+  "timestamp": 1768699409108,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.108Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 3740,
+    "mtime": 1768347605670.2476,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

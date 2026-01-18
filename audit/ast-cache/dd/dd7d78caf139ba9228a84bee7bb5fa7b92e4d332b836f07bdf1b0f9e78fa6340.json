@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/minizlib/package.json",
+  "hash": "dd7d78caf139ba9228a84bee7bb5fa7b92e4d332b836f07bdf1b0f9e78fa6340",
+  "timestamp": 1768699409109,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.108Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 907,
+    "mtime": 1768347605674.8074,
+    "language": "config",
+    "fileType": "configuration"
+  }
+}

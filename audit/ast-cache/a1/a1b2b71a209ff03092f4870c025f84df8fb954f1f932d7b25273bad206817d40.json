@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/2019/ToInteger.js",
+  "hash": "a1b2b71a209ff03092f4870c025f84df8fb954f1f932d7b25273bad206817d40",
+  "timestamp": 1768699409014,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.014Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 268,
+    "mtime": 1768595306579.3254,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

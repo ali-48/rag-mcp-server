@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/2019/thisNumberValue.js",
+  "hash": "6029b609cd92219faf848dcf6f39aa6b7d5229b0004bcffabf20c6283c664c11",
+  "timestamp": 1768699409017,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.017Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 346,
+    "mtime": 1768595306561.3254,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

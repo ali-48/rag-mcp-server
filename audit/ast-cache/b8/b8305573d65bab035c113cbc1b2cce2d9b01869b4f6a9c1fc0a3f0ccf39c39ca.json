@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/2019/ObjectDefineProperties.js",
+  "hash": "b8305573d65bab035c113cbc1b2cce2d9b01869b4f6a9c1fc0a3f0ccf39c39ca",
+  "timestamp": 1768699409036,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.035Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 1435,
+    "mtime": 1768595306479.3257,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

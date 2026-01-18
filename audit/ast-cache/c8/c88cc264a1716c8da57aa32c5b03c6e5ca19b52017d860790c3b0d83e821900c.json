@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/2019/ToPropertyKey.js",
+  "hash": "c88cc264a1716c8da57aa32c5b03c6e5ca19b52017d860790c3b0d83e821900c",
+  "timestamp": 1768699409048,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.047Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 400,
+    "mtime": 1768595306587.3254,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

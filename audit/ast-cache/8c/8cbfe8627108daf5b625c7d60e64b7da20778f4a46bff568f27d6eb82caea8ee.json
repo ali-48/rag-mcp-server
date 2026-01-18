@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/2023/SetTypedArrayFromTypedArray.js",
+  "hash": "8cbfe8627108daf5b625c7d60e64b7da20778f4a46bff568f27d6eb82caea8ee",
+  "timestamp": 1768699408993,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:28.993Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 4981,
+    "mtime": 1768595306540.3257,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

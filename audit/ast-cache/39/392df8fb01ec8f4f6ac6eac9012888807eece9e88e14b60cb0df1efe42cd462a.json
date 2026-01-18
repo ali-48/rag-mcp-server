@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/2019/SetFunctionName.js",
+  "hash": "392df8fb01ec8f4f6ac6eac9012888807eece9e88e14b60cb0df1efe42cd462a",
+  "timestamp": 1768699409049,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.049Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 1288,
+    "mtime": 1768595306537.3257,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

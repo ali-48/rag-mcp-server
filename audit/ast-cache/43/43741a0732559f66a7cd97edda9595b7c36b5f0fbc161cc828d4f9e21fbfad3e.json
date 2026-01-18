@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/helpers/maxSafeInteger.js",
+  "hash": "43741a0732559f66a7cd97edda9595b7c36b5f0fbc161cc828d4f9e21fbfad3e",
+  "timestamp": 1768699409075,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.074Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 115,
+    "mtime": 1768595306431.326,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

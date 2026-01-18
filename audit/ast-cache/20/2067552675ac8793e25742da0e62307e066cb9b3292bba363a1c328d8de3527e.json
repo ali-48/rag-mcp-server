@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/.claude/settings.local.json",
+  "hash": "2067552675ac8793e25742da0e62307e066cb9b3292bba363a1c328d8de3527e",
+  "timestamp": 1768699408990,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:28.990Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 177,
+    "mtime": 1768595306624.3254,
+    "language": "config",
+    "fileType": "configuration"
+  }
+}

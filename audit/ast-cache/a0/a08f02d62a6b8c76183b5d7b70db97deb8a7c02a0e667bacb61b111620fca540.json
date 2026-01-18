@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/2019/ValidateAndApplyPropertyDescriptor.js",
+  "hash": "a08f02d62a6b8c76183b5d7b70db97deb8a7c02a0e667bacb61b111620fca540",
+  "timestamp": 1768699409047,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.046Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 5001,
+    "mtime": 1768595306618.3254,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

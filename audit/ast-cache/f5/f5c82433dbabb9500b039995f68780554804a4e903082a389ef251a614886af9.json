@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/2019/OrdinaryGetOwnProperty.js",
+  "hash": "f5c82433dbabb9500b039995f68780554804a4e903082a389ef251a614886af9",
+  "timestamp": 1768699409042,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.041Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 1194,
+    "mtime": 1768595306486.8013,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/@babel/types/lib/index.d.ts",
+  "hash": "511a5f4f77165dc1b73ceae1e28b4a8f78f3443d8e18a1fd43bfafd2b0133bbe",
+  "timestamp": 1768699409143,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.140Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 665888,
+    "mtime": 1768595277673.4062,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/2023/CanBeHeldWeakly.js",
+  "hash": "677326d11cbe12f52da3e7621b5ff16712f7f803a1362799871ec658d33d0c06",
+  "timestamp": 1768699409003,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.003Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 403,
+    "mtime": 1768595306259.6904,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

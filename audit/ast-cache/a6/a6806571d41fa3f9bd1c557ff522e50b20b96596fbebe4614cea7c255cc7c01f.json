@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/pg-protocol/dist/outbound-serializer.test.js",
+  "hash": "a6806571d41fa3f9bd1c557ff522e50b20b96596fbebe4614cea7c255cc7c01f",
+  "timestamp": 1768699409092,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.092Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 11065,
+    "mtime": 1766870654320.9731,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

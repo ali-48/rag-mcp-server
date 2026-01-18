@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/2019/TypedArrayCreate.js",
+  "hash": "814aa5ad580c6d81cf1b4a484311f721f8ea141b1a7a1bf2082f54df2e8db9bc",
+  "timestamp": 1768699409031,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.031Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 1686,
+    "mtime": 1768595306607.3254,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/2019/tables/typed-array-objects.js",
+  "hash": "18d4e30a029bfa5b0b5b84de479fd4e6f5c96327c52ddd775686fb6605864146",
+  "timestamp": 1768699409035,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.035Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 629,
+    "mtime": 1768595306605.5935,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

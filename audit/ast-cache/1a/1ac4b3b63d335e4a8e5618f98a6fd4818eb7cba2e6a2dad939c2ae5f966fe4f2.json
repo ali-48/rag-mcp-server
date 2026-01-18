@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/2019/StringGetOwnProperty.js",
+  "hash": "1ac4b3b63d335e4a8e5618f98a6fd4818eb7cba2e6a2dad939c2ae5f966fe4f2",
+  "timestamp": 1768699409033,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.032Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 1359,
+    "mtime": 1768595306549.3257,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

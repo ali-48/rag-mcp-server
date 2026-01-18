@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/2019/ToIndex.js",
+  "hash": "a0e0763fcde9ba96c907fe2a6c37c0982173a5b66deda538a51d62c7e031f0b3",
+  "timestamp": 1768699409044,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.044Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 620,
+    "mtime": 1768595306575.3254,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

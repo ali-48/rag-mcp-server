@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/helpers/isTrailingSurrogate.js",
+  "hash": "636e9a0b7cdbbaa4ad8585ba5391fee6aadc0d803dccc2eb24abbe915b2e4ae0",
+  "timestamp": 1768699409067,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.067Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 158,
+    "mtime": 1768595306381.3262,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

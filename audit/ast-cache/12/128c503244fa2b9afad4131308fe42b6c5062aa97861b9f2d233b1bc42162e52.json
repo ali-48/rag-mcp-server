@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/2016/QuoteJSONString.js",
+  "hash": "128c503244fa2b9afad4131308fe42b6c5062aa97861b9f2d233b1bc42162e52",
+  "timestamp": 1768699408987,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:28.987Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 1334,
+    "mtime": 1768595306500.3257,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

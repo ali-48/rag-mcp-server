@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/2019/WordCharacters.js",
+  "hash": "fee975564c8f7f14a5e88f7067c3f72d68069ce83e82d3f420b04d1b4035c017",
+  "timestamp": 1768699409039,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.039Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 1467,
+    "mtime": 1768595306622.3254,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

@@ -1,0 +1,756 @@
+// Orchestrateur principal pour l'audit de code
+// Unifie les 2 déclencheurs: file watcher, VSCode startup
+
+import { exec } from "child_process";
+import EventEmitter from "events";
+import { promises as fs } from "fs";
+import { createRequire } from "module";
+import path from "path";
+import { promisify } from "util";
+
+const execAsync = promisify(exec);
+const require = createRequire(import.meta.url);
+
+/**
+ * Configuration de l'orchestrateur
+ */
+const ORCHESTRATOR_CONFIG = {
+  // Chemins des scripts
+  scripts: {
+    auditIncremental: path.join(
+      path.dirname(new URL(import.meta.url).pathname),
+      "audit-incremental.ts",
+    ),
+    fileWatcherService: path.join(
+      path.dirname(new URL(import.meta.url).pathname),
+      "file-watcher-service.js",
+    ),
+    vscodeAuditTrigger: path.join(
+      path.dirname(new URL(import.meta.url).pathname),
+      "vscode-audit-trigger.js",
+    ),
+    commitMetricsRecorder: path.join(
+      path.dirname(new URL(import.meta.url).pathname),
+      "commit-metrics-recorder.js",
+    ),
+    codeMapper: path.join(
+      path.dirname(new URL(import.meta.url).pathname),
+      "code-mapper.ts",
+    ),
+  },
+
+  // Dossiers
+  directories: {
+    audit: path.join(process.cwd(), "audit"),
+    logs: path.join(process.cwd(), "audit", "logs", "orchestrator"),
+    astCache: path.join(process.cwd(), "audit", "ast-cache"),
+    metrics: path.join(process.cwd(), "audit", "metrics"),
+  },
+
+  // Configuration des déclencheurs
+  triggers: {
+    fileWatcher: {
+      enabled: true,
+      name: "file-watcher",
+      description: "Surveillance de fichiers en temps réel",
+      logFile: "file-watcher.log",
+      debounceMs: 3000,
+    },
+    vscodeStartup: {
+      enabled: true,
+      name: "vscode-startup",
+      description: "Démarrage de VSCode",
+      logFile: "vscode-startup.log",
+    },
+  },
+
+  // Options d'exécution
+  execution: {
+    maxConcurrentAudits: 1,
+    timeoutMs: 300000, // 5 minutes
+    retryAttempts: 3,
+    retryDelayMs: 5000,
+  },
+
+  // Logging
+  logging: {
+    verbose: true,
+    logToFile: true,
+    logToConsole: true,
+    maxLogFiles: 10,
+    maxLogSize: 10 * 1024 * 1024, // 10 MB
+  },
+};
+
+/**
+ * Classe principale de l'orchestrateur
+ */
+class AuditOrchestrator extends EventEmitter {
+  constructor(config = {}) {
+    super();
+    this.config = { ...ORCHESTRATOR_CONFIG, ...config };
+    this.state = {
+      isRunning: false,
+      currentAudit: null,
+      auditQueue: [],
+      auditHistory: [],
+      triggers: {},
+      metrics: {
+        totalAudits: 0,
+        successfulAudits: 0,
+        failedAudits: 0,
+        totalDuration: 0,
+        lastAuditTime: null,
+      },
+    };
+    this.logFile = null;
+    this.logStream = null;
+  }
+
+  /**
+   * Initialiser l'orchestrateur
+   */
+  async initialize() {
+    this.log("🔧 Initialisation de l'orchestrateur d'audit...");
+
+    // Créer les dossiers nécessaires
+    await this.createDirectories();
+
+    // Initialiser le logging
+    await this.initializeLogging();
+
+    // Vérifier les dépendances
+    await this.checkDependencies();
+
+    // Initialiser les déclencheurs
+    await this.initializeTriggers();
+
+    this.log("✅ Orchestrateur initialisé avec succès");
+    this.emit("initialized", this.state);
+    return this;
+  }
+
+  /**
+   * Créer les dossiers nécessaires
+   */
+  async createDirectories() {
+    const dirs = [
+      this.config.directories.logs,
+      this.config.directories.astCache,
+      this.config.directories.metrics,
+    ];
+
+    for (const dir of dirs) {
+      try {
+        await fs.mkdir(dir, { recursive: true });
+        this.log(`📁 Dossier créé: ${dir}`);
+      } catch (error) {
+        this.log(`⚠️  Impossible de créer le dossier ${dir}: ${error.message}`);
+      }
+    }
+  }
+
+  /**
+   * Initialiser le logging
+   */
+  async initializeLogging() {
+    if (this.config.logging.logToFile) {
+      const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+      this.logFile = path.join(
+        this.config.directories.logs,
+        `orchestrator_${timestamp}.log`,
+      );
+
+      try {
+        this.logStream = await fs.open(this.logFile, "a");
+        this.log(`📝 Logging vers fichier: ${this.logFile}`);
+      } catch (error) {
+        this.log(`❌ Impossible d'ouvrir le fichier de log: ${error.message}`);
+        this.config.logging.logToFile = false;
+      }
+    }
+  }
+
+  /**
+   * Vérifier les dépendances
+   */
+  async checkDependencies() {
+    this.log("🔍 Vérification des dépendances...");
+
+    const dependencies = [
+      { name: "Node.js", command: "node --version" },
+      { name: "npm", command: "npm --version" },
+      { name: "TypeScript", command: "npx tsc --version" },
+      { name: "tsx", command: "npx tsx --version" },
+      { name: "Git", command: "git --version" },
+    ];
+
+    for (const dep of dependencies) {
+      try {
+        const { stdout } = await execAsync(dep.command);
+        this.log(`✅ ${dep.name}: ${stdout.trim()}`);
+      } catch (error) {
+        this.log(`❌ ${dep.name} non disponible: ${error.message}`);
+      }
+    }
+
+    // Vérifier les scripts
+    for (const [name, scriptPath] of Object.entries(this.config.scripts)) {
+      try {
+        await fs.access(scriptPath);
+        this.log(`✅ Script ${name}: ${scriptPath}`);
+      } catch (error) {
+        this.log(`❌ Script ${name} non trouvé: ${scriptPath}`);
+      }
+    }
+  }
+
+  /**
+   * Initialiser les déclencheurs
+   */
+  async initializeTriggers() {
+    this.log("⚙️  Initialisation des déclencheurs...");
+
+    for (const [triggerName, triggerConfig] of Object.entries(
+      this.config.triggers,
+    )) {
+      if (triggerConfig.enabled) {
+        this.state.triggers[triggerName] = {
+          ...triggerConfig,
+          status: "ready",
+          lastExecution: null,
+          executionCount: 0,
+          successCount: 0,
+          errorCount: 0,
+        };
+        this.log(
+          `✅ Déclencheur ${triggerName} activé: ${triggerConfig.description}`,
+        );
+      } else {
+        this.log(`⏸️  Déclencheur ${triggerName} désactivé`);
+      }
+    }
+  }
+
+  /**
+   * Exécuter un audit
+   * @param {Object} options - Options de l'audit
+   */
+  async runAudit(options = {}) {
+    const auditId = `audit_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const auditStartTime = Date.now();
+
+    const auditOptions = {
+      trigger: options.trigger || "manual",
+      files: options.files || [],
+      incremental: options.incremental !== false,
+      fullAudit: options.fullAudit || false,
+      commitHash: options.commitHash,
+      metadata: options.metadata || {},
+    };
+
+    this.log(
+      `🚀 Début de l'audit ${auditId} (déclencheur: ${auditOptions.trigger})`,
+    );
+
+    // Mettre à jour l'état
+    this.state.isRunning = true;
+    this.state.currentAudit = {
+      id: auditId,
+      startTime: new Date().toISOString(),
+      options: auditOptions,
+      status: "running",
+    };
+
+    this.emit("auditStarted", this.state.currentAudit);
+
+    try {
+      let result;
+
+      if (auditOptions.fullAudit) {
+        // Audit complet
+        result = await this.runFullAudit(auditOptions);
+      } else if (auditOptions.files.length > 0) {
+        // Audit incrémental sur fichiers spécifiques
+        result = await this.runIncrementalAudit(auditOptions);
+      } else {
+        // Audit incrémental sur tous les fichiers modifiés
+        result = await this.runIncrementalAudit({
+          ...auditOptions,
+          files: await this.getModifiedFiles(),
+        });
+      }
+
+      // Enregistrer les métriques si un commit hash est fourni
+      if (auditOptions.commitHash) {
+        await this.recordCommitMetrics(auditOptions.commitHash, result);
+      }
+
+      const auditDuration = Date.now() - auditStartTime;
+
+      // Mettre à jour les métriques
+      this.state.metrics.totalAudits++;
+      this.state.metrics.successfulAudits++;
+      this.state.metrics.totalDuration += auditDuration;
+      this.state.metrics.lastAuditTime = new Date().toISOString();
+
+      // Mettre à jour le déclencheur
+      if (this.state.triggers[auditOptions.trigger]) {
+        const trigger = this.state.triggers[auditOptions.trigger];
+        trigger.lastExecution = new Date().toISOString();
+        trigger.executionCount++;
+        trigger.successCount++;
+        trigger.status = "success";
+      }
+
+      // Mettre à jour l'historique
+      const auditRecord = {
+        ...this.state.currentAudit,
+        endTime: new Date().toISOString(),
+        duration: auditDuration,
+        status: "success",
+        result: result,
+      };
+
+      this.state.auditHistory.unshift(auditRecord);
+      if (this.state.auditHistory.length > 100) {
+        this.state.auditHistory = this.state.auditHistory.slice(0, 100);
+      }
+
+      this.log(`✅ Audit ${auditId} réussi en ${auditDuration}ms`);
+      this.emit("auditCompleted", auditRecord);
+
+      return {
+        success: true,
+        auditId,
+        duration: auditDuration,
+        result,
+        auditRecord,
+      };
+    } catch (error) {
+      const auditDuration = Date.now() - auditStartTime;
+
+      // Mettre à jour les métriques
+      this.state.metrics.totalAudits++;
+      this.state.metrics.failedAudits++;
+
+      // Mettre à jour le déclencheur
+      if (this.state.triggers[auditOptions.trigger]) {
+        const trigger = this.state.triggers[auditOptions.trigger];
+        trigger.lastExecution = new Date().toISOString();
+        trigger.executionCount++;
+        trigger.errorCount++;
+        trigger.status = "error";
+      }
+
+      // Mettre à jour l'historique
+      const auditRecord = {
+        ...this.state.currentAudit,
+        endTime: new Date().toISOString(),
+        duration: auditDuration,
+        status: "error",
+        error: error.message,
+      };
+
+      this.state.auditHistory.unshift(auditRecord);
+      if (this.state.auditHistory.length > 100) {
+        this.state.auditHistory = this.state.auditHistory.slice(0, 100);
+      }
+
+      this.log(
+        `❌ Audit ${auditId} échoué après ${auditDuration}ms: ${error.message}`,
+      );
+      this.emit("auditFailed", auditRecord);
+
+      return {
+        success: false,
+        auditId,
+        duration: auditDuration,
+        error: error.message,
+        auditRecord,
+      };
+    } finally {
+      this.state.isRunning = false;
+      this.state.currentAudit = null;
+
+      // Traiter la file d'attente
+      if (this.state.auditQueue.length > 0) {
+        const nextAudit = this.state.auditQueue.shift();
+        this.log(`⏭️  Exécution de l'audit suivant dans la file d'attente`);
+        setTimeout(() => this.runAudit(nextAudit), 1000);
+      }
+    }
+  }
+
+  /**
+   * Exécuter un audit complet
+   */
+  async runFullAudit(options) {
+    this.log("🔍 Exécution d'un audit complet...");
+
+    const command = `npx tsx "${this.config.scripts.codeMapper}" --output-all --verbose`;
+
+    const { stdout, stderr } = await execAsync(command, {
+      cwd: process.cwd(),
+      timeout: this.config.execution.timeoutMs,
+    });
+
+    return {
+      type: "full",
+      command,
+      stdout: stdout.substring(0, 1000), // Limiter la taille
+      stderr: stderr.substring(0, 1000),
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  /**
+   * Exécuter un audit incrémental
+   */
+  async runIncrementalAudit(options) {
+    this.log(
+      `🔍 Exécution d'un audit incrémental sur ${options.files.length} fichiers...`,
+    );
+
+    if (options.files.length === 0) {
+      return {
+        type: "incremental",
+        files: [],
+        message: "Aucun fichier à auditer",
+        timestamp: new Date().toISOString(),
+      };
+    }
+
+    // Écrire la liste des fichiers dans un fichier temporaire
+    const tempFile = path.join(
+      this.config.directories.astCache,
+      `files_${Date.now()}.txt`,
+    );
+    await fs.writeFile(tempFile, options.files.join("\n"));
+
+    const command = `npx tsx "${this.config.scripts.auditIncremental}" --files "${tempFile}"`;
+
+    const { stdout, stderr } = await execAsync(command, {
+      cwd: process.cwd(),
+      timeout: this.config.execution.timeoutMs,
+    });
+
+    // Nettoyer le fichier temporaire
+    await fs.unlink(tempFile).catch(() => { });
+
+    return {
+      type: "incremental",
+      files: options.files,
+      command,
+      stdout: stdout.substring(0, 1000),
+      stderr: stderr.substring(0, 1000),
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  /**
+   * Obtenir la liste des fichiers modifiés
+   */
+  async getModifiedFiles() {
+    try {
+      const { stdout } = await execAsync("git status --porcelain", {
+        cwd: process.cwd(),
+      });
+
+      return stdout
+        .split("\n")
+        .filter((line) => line.trim())
+        .map((line) => line.substring(3).trim())
+        .filter((file) => file);
+    } catch (error) {
+      this.log(
+        `⚠️  Impossible d'obtenir les fichiers modifiés: ${error.message}`,
+      );
+      return [];
+    }
+  }
+
+  /**
+   * Enregistrer les métriques du commit
+   */
+  async recordCommitMetrics(commitHash, auditResult) {
+    try {
+      // commit-metrics-recorder.js est maintenant un ES module
+      const { recordCommitMetrics } = await import(
+        this.config.scripts.commitMetricsRecorder
+      );
+
+      const result = await recordCommitMetrics(commitHash, {
+        verbose: false,
+        dbPath: path.join(this.config.directories.audit, "code_map.db"),
+        auditJsonPath: path.join(
+          this.config.directories.audit,
+          "code_map.json",
+        ),
+        logsDir: path.join(
+          this.config.directories.audit,
+          "logs",
+          "commit-metrics",
+        ),
+      });
+
+      this.log(
+        `📊 Métriques du commit enregistrées: ${result.metricsRecorded} métriques`,
+      );
+      return result;
+    } catch (error) {
+      this.log(`⚠️  Échec de l'enregistrement des métriques: ${error.message}`);
+      return null;
+    }
+  }
+
+  /**
+   * Démarrer le service de surveillance de fichiers
+   */
+  async startFileWatcher() {
+    if (!this.config.triggers.fileWatcher.enabled) {
+      this.log("⏸️  Service de surveillance de fichiers désactivé");
+      return;
+    }
+
+    this.log("👁️  Démarrage du service de surveillance de fichiers...");
+
+    try {
+      // file-watcher-service.js est maintenant un ES module
+      const { FileWatcherService } = await import(
+        this.config.scripts.fileWatcherService
+      );
+      this.fileWatcher = new FileWatcherService({
+        debounceMs: this.config.triggers.fileWatcher.debounceMs,
+        logDir: this.config.directories.logs,
+      });
+
+      this.fileWatcher.on("change", async (files) => {
+        this.log(`📁 Fichiers modifiés détectés: ${files.length} fichiers`);
+        await this.runAudit({
+          trigger: "fileWatcher",
+          files,
+          incremental: true,
+        });
+      });
+
+      this.fileWatcher.on("error", (error) => {
+        this.log(`❌ Erreur du file watcher: ${error.message}`);
+      });
+
+      await this.fileWatcher.start();
+      this.log("✅ Service de surveillance de fichiers démarré");
+    } catch (error) {
+      this.log(`❌ Impossible de démarrer le file watcher: ${error.message}`);
+    }
+  }
+
+  /**
+   * Arrêter le service de surveillance de fichiers
+   */
+  async stopFileWatcher() {
+    if (this.fileWatcher) {
+      try {
+        await this.fileWatcher.stop();
+        this.log("✅ Service de surveillance de fichiers arrêté");
+      } catch (error) {
+        this.log(`❌ Erreur lors de l'arrêt du file watcher: ${error.message}`);
+      }
+    }
+  }
+
+  /**
+   * Exécuter le trigger VSCode startup
+   */
+  async runVSCodeStartupTrigger() {
+    if (!this.config.triggers.vscodeStartup.enabled) {
+      this.log("⏸️  Trigger VSCode startup désactivé");
+      return;
+    }
+
+    this.log("🚀 Exécution du trigger VSCode startup...");
+
+    try {
+      // vscode-audit-trigger.js est maintenant un ES module
+      const { checkAndRunInitialAudit } = await import(
+        this.config.scripts.vscodeAuditTrigger
+      );
+      await checkAndRunInitialAudit();
+
+      this.log("✅ Trigger VSCode startup exécuté avec succès");
+    } catch (error) {
+      this.log(`❌ Erreur du trigger VSCode startup: ${error.message}`);
+    }
+  }
+
+  /**
+   * Nettoyer les ressources
+   */
+  async cleanup() {
+    this.log("🧹 Nettoyage des ressources...");
+
+    // Arrêter le file watcher
+    await this.stopFileWatcher();
+
+    // Fermer le stream de log
+    if (this.logStream) {
+      try {
+        await this.logStream.close();
+      } catch (error) {
+        // Ignorer les erreurs de fermeture
+      }
+    }
+
+    this.log("✅ Nettoyage terminé");
+  }
+
+  /**
+   * Logger avec formatage
+   */
+  log(message) {
+    const timestamp = new Date().toISOString();
+    const formattedMessage = `[${timestamp}] ${message}`;
+
+    if (this.config.logging.logToConsole) {
+      console.log(formattedMessage);
+    }
+
+    if (this.config.logging.logToFile && this.logStream) {
+      this.logStream.write(formattedMessage + "\n").catch(() => { });
+    }
+
+    this.emit("log", formattedMessage);
+  }
+
+  /**
+   * Ajouter un audit à la file d'attente
+   */
+  queueAudit(options) {
+    this.state.auditQueue.push(options);
+    this.log(
+      `📋 Audit ajouté à la file d'attente (${this.state.auditQueue.length} en attente)`,
+    );
+  }
+
+  /**
+   * Traiter la file d'attente
+   */
+  async processQueue() {
+    if (this.state.isRunning || this.state.auditQueue.length === 0) {
+      return;
+    }
+
+    const nextAudit = this.state.auditQueue[0];
+    await this.runAudit(nextAudit);
+  }
+
+  /**
+   * Obtenir l'état de l'orchestrateur
+   */
+  getState() {
+    return {
+      ...this.state,
+      config: {
+        triggers: this.config.triggers,
+        execution: this.config.execution,
+        logging: this.config.logging,
+      },
+      uptime: process.uptime(),
+      memory: process.memoryUsage(),
+    };
+  }
+
+  /**
+   * Obtenir les statistiques
+   */
+  getStats() {
+    const stats = { ...this.state.metrics };
+
+    // Calculer les moyennes
+    stats.averageDuration =
+      stats.totalAudits > 0
+        ? Math.round(stats.totalDuration / stats.totalAudits)
+        : 0;
+
+    stats.successRate =
+      stats.totalAudits > 0
+        ? Math.round((stats.successfulAudits / stats.totalAudits) * 100)
+        : 0;
+
+    // Statistiques par déclencheur
+    stats.triggers = {};
+    for (const [triggerName, trigger] of Object.entries(this.state.triggers)) {
+      stats.triggers[triggerName] = {
+        executionCount: trigger.executionCount,
+        successCount: trigger.successCount,
+        errorCount: trigger.errorCount,
+        successRate:
+          trigger.executionCount > 0
+            ? Math.round((trigger.successCount / trigger.executionCount) * 100)
+            : 0,
+        lastExecution: trigger.lastExecution,
+        status: trigger.status,
+      };
+    }
+
+    return stats;
+  }
+}
+
+/**
+ * Fonction principale
+ */
+async function main() {
+  console.log("🎭 Orchestrateur d'audit - Démarrage...");
+
+  const orchestrator = new AuditOrchestrator();
+  await orchestrator.initialize();
+
+  try {
+    // Exécuter le trigger VSCode startup si demandé
+    if (process.argv.includes("--vscode-startup")) {
+      await orchestrator.runVSCodeStartupTrigger();
+    }
+
+    // Exécuter un audit manuel si des fichiers sont spécifiés
+    const fileIndex = process.argv.indexOf("--files");
+    if (fileIndex !== -1 && process.argv[fileIndex + 1]) {
+      const files = process.argv[fileIndex + 1].split(",");
+      await orchestrator.runAudit({
+        trigger: "manual",
+        files,
+        incremental: true,
+      });
+    }
+
+    // Mode démon si demandé
+    if (process.argv.includes("--daemon")) {
+      console.log(
+        "👁️  Orchestrateur démarré en mode démon. Ctrl+C pour arrêter.",
+      );
+      process.on("SIGINT", async () => {
+        console.log("\n🛑 Arrêt de l'orchestrateur...");
+        await orchestrator.cleanup();
+        process.exit(0);
+      });
+
+      // Garder le processus en vie
+      await new Promise(() => { });
+    }
+  } catch (error) {
+    console.error(`❌ Erreur de l'orchestrateur: ${error.message}`);
+    await orchestrator.cleanup();
+    process.exit(1);
+  }
+}
+
+// Exporter la classe et la fonction principale
+export { AuditOrchestrator, main, ORCHESTRATOR_CONFIG };
+
+// Exécuter le main si le script est appelé directement
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main().catch((error) => {
+    console.error(`❌ Erreur fatale: ${error.message}`);
+    process.exit(1);
+  });
+}

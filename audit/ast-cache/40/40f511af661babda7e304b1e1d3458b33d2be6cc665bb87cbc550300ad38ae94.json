@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/2019/IntegerIndexedElementSet.js",
+  "hash": "40f511af661babda7e304b1e1d3458b33d2be6cc665bb87cbc550300ad38ae94",
+  "timestamp": 1768699409008,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.008Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 1970,
+    "mtime": 1768595306341.3262,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

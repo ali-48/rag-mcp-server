@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/helpers/bytesAsInteger.js",
+  "hash": "b14258d99718a5084ee71283197c22ff0b1135a98fc1fd704df96e389bc676df",
+  "timestamp": 1768699409057,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.057Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 1000,
+    "mtime": 1768595306258.0867,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

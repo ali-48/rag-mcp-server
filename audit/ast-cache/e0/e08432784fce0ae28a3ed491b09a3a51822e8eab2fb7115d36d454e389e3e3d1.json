@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/2019/floor.js",
+  "hash": "e08432784fce0ae28a3ed491b09a3a51822e8eab2fb7115d36d454e389e3e3d1",
+  "timestamp": 1768699409051,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.051Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 239,
+    "mtime": 1768595306308.3262,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

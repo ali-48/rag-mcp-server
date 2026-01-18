@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/2019/ToString.js",
+  "hash": "de901eaf26e617589545ae2084481543781d5ba5efabf8f850c3f07a15bf5c4c",
+  "timestamp": 1768699409050,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.050Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 389,
+    "mtime": 1768595306587.3254,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

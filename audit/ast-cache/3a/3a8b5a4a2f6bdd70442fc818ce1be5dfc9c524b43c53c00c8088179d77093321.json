@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/helpers/maxValue.js",
+  "hash": "3a8b5a4a2f6bdd70442fc818ce1be5dfc9c524b43c53c00c8088179d77093321",
+  "timestamp": 1768699409085,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.084Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 77,
+    "mtime": 1768595306431.326,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

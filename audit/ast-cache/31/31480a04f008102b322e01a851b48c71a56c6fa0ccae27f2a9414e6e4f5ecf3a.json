@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/2023/IteratorStep.js",
+  "hash": "31480a04f008102b322e01a851b48c71a56c6fa0ccae27f2a9414e6e4f5ecf3a",
+  "timestamp": 1768699409000,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:28.999Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 660,
+    "mtime": 1768595306388.326,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

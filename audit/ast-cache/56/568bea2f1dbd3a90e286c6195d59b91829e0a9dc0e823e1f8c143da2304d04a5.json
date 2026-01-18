@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/2019/IteratorComplete.js",
+  "hash": "568bea2f1dbd3a90e286c6195d59b91829e0a9dc0e823e1f8c143da2304d04a5",
+  "timestamp": 1768699409050,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.050Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 459,
+    "mtime": 1768595306386.326,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

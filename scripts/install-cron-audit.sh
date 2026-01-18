@@ -88,17 +88,8 @@ CRON_CONFIG="# ============================================
 # Script: $CRON_SCRIPT
 # ============================================
 
-# Toutes les heures à la minute 0 (pour surveillance continue)
-0 * * * * cd '$SCRIPT_DIR' && '$CRON_SCRIPT' >> '$SCRIPT_DIR/audit/logs/cron-system.log' 2>&1
-
 # Tous les jours à 2h du matin (audit quotidien complet)
-0 2 * * * cd '$SCRIPT_DIR' && '$CRON_SCRIPT' >> '$SCRIPT_DIR/audit/logs/cron-daily.log' 2>&1
-
-# Tous les lundis à 3h du matin (audit hebdomadaire)
-0 3 * * 1 cd '$SCRIPT_DIR' && '$CRON_SCRIPT' >> '$SCRIPT_DIR/audit/logs/cron-weekly.log' 2>&1
-
-# Le premier jour de chaque mois à 4h (audit mensuel)
-0 4 1 * * cd '$SCRIPT_DIR' && '$CRON_SCRIPT' >> '$SCRIPT_DIR/audit/logs/cron-monthly.log' 2>&1"
+0 2 * * * cd '$SCRIPT_DIR' && '$CRON_SCRIPT' >> '$SCRIPT_DIR/audit/logs/cron-daily.log' 2>&1"
 
 # Sauvegarder l'ancienne configuration
 BACKUP_FILE="$HOME/crontab-backup-$(date +%Y%m%d_%H%M%S).bak"
@@ -142,16 +133,10 @@ echo "   - Script: $CRON_SCRIPT"
 echo "   - Backup: $BACKUP_FILE"
 echo ""
 echo "⏰ Planification configurée:"
-echo "   • Toutes les heures (minute 0)"
-echo "   • Tous les jours à 2h du matin"
-echo "   • Tous les lundis à 3h du matin"
-echo "   • Le 1er de chaque mois à 4h"
+echo "   • Tous les jours à 2h du matin (audit quotidien complet)"
 echo ""
 echo "📁 Structure des logs:"
-echo "   - audit/logs/cron-system.log    (exécutions horaires)"
 echo "   - audit/logs/cron-daily.log     (exécutions quotidiennes)"
-echo "   - audit/logs/cron-weekly.log    (exécutions hebdomadaires)"
-echo "   - audit/logs/cron-monthly.log   (exécutions mensuelles)"
 echo "   - audit/logs/cron_*.log         (logs détaillés par exécution)"
 echo "   - audit/logs/cron_summary_*.md  (rapports de synthèse)"
 echo ""
@@ -166,7 +151,7 @@ echo "   # Surveiller les logs système"
 echo "   tail -f /var/log/syslog | grep CRON"
 echo ""
 echo "   # Surveiller les logs d'audit"
-echo "   tail -f audit/logs/cron-system.log"
+echo "   tail -f audit/logs/cron-daily.log"
 echo ""
 echo "   # Tester manuellement"
 echo "   ./scripts/cron-audit.sh"
@@ -175,8 +160,8 @@ echo "   # Désinstaller"
 echo "   crontab -l | grep -v '$CRON_SCRIPT' | crontab -"
 echo ""
 echo "👀 Pour vérifier que tout fonctionne:"
-echo "   1. Attendez la prochaine minute 0 (ex: 10:00, 11:00, etc.)"
-echo "   2. Vérifiez les logs: tail -f audit/logs/cron-system.log"
+echo "   1. Attendez 2h du matin (ou testez manuellement)"
+echo "   2. Vérifiez les logs: tail -f audit/logs/cron-daily.log"
 echo "   3. Vérifiez les fichiers générés: ls -la audit/logs/cron_*.log"
 echo ""
 echo "📚 Documentation:"

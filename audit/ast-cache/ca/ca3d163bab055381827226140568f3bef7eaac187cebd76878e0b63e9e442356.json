@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/coverage/coverage-final.json",
+  "hash": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356",
+  "timestamp": 1768699409111,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.110Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 3,
+    "mtime": 1768599842393.7273,
+    "language": "config",
+    "fileType": "configuration"
+  }
+}

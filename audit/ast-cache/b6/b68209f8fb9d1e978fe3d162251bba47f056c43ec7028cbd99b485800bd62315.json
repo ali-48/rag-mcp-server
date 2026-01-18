@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/2019/ToUint32.js",
+  "hash": "b68209f8fb9d1e978fe3d162251bba47f056c43ec7028cbd99b485800bd62315",
+  "timestamp": 1768699409028,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.028Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 175,
+    "mtime": 1768595306594.3254,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

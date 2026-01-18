@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/2019/SetValueInBuffer.js",
+  "hash": "983dcd8d7623262cc3a43a89f94f6cd8d29a86a4c595c504b6d5eef4162eccfb",
+  "timestamp": 1768699409014,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.014Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 3695,
+    "mtime": 1768595306542.3257,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

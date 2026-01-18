@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/rollup/dist/es/shared/node-entry.js",
+  "hash": "dc84930790ba0cebfecb8a21c939867b752da0e561238165a502af92bdb297a4",
+  "timestamp": 1768699409129,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.123Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 932252,
+    "mtime": 1768275120718.579,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

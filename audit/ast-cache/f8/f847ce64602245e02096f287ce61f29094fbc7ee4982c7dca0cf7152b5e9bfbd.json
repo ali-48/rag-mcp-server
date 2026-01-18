@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/helpers/regexTester.js",
+  "hash": "f847ce64602245e02096f287ce61f29094fbc7ee4982c7dca0cf7152b5e9bfbd",
+  "timestamp": 1768699409086,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.085Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 91,
+    "mtime": 1768595306509.3257,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

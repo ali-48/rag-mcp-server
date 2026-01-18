@@ -1,0 +1,560 @@
+// Service de surveillance de fichiers avec chokidar
+// Surveille les changements de fichiers et déclenche des audits incrémentaux
+
+const chokidar = require("chokidar");
+const path = require("path");
+const fs = require("fs").promises;
+const debounce = require("lodash.debounce");
+const { auditFilesIncremental } = require("./audit-incremental.js");
+
+/**
+ * Événements de changement de fichier
+ */
+const FileChangeEvent = {
+  ADD: "add",
+  CHANGE: "change",
+  UNLINK: "unlink",
+  ADD_DIR: "addDir",
+  UNLINK_DIR: "unlinkDir",
+  READY: "ready",
+  ERROR: "error",
+};
+
+/**
+ * Configuration par défaut du watcher
+ */
+const DEFAULT_WATCHER_CONFIG = {
+  // Dossier à surveiller (par défaut: dossier courant)
+  watchPath: process.cwd(),
+
+  // Patterns de fichiers à inclure
+  includePatterns: ["**/*.ts", "**/*.js", "**/*.tsx", "**/*.jsx"],
+
+  // Patterns de fichiers à exclure
+  excludePatterns: [
+    "**/node_modules/**",
+    "**/.git/**",
+    "**/dist/**",
+    "**/build/**",
+    "**/coverage/**",
+    "**/*.test.ts",
+    "**/*.test.js",
+    "**/*.spec.ts",
+    "**/*.spec.js",
+  ],
+
+  // Ignorer les fichiers cachés (commençant par .)
+  ignoreDotFiles: true,
+
+  // Ignorer les changements initiaux (lors du démarrage)
+  ignoreInitial: true,
+
+  // Suivre les liens symboliques
+  followSymlinks: false,
+
+  // Utiliser polling (nécessaire pour certains systèmes de fichiers)
+  usePolling: false,
+
+  // Intervalle de polling (si usePolling est true)
+  interval: 100,
+
+  // Délai de débouncing (en ms)
+  debounceDelay: 3000,
+
+  // Activer le débouncing
+  enableDebouncing: true,
+
+  // Activer l'audit automatique sur changement
+  enableAutoAudit: true,
+
+  // Activer les logs
+  verbose: false,
+
+  // Nombre maximum de fichiers à auditer en une fois
+  maxBatchSize: 50,
+
+  // Délai maximum pour regrouper les changements (en ms)
+  maxBatchDelay: 5000,
+};
+
+/**
+ * Classe de service de surveillance de fichiers
+ */
+class FileWatcherService {
+  /**
+   * Constructeur
+   * @param {Object} config - Configuration du watcher
+   */
+  constructor(config = {}) {
+    this.config = { ...DEFAULT_WATCHER_CONFIG, ...config };
+    this.watcher = null;
+    this.isWatching = false;
+    this.changeQueue = new Map(); // Map pour regrouper les changements par fichier
+    this.batchTimer = null;
+    this.eventListeners = new Map();
+
+    // Initialiser la fonction de débouncing avec lodash.debounce
+    this.debouncedProcessBatch = debounce(
+      () => this.processChangeBatch(),
+      this.config.debounceDelay,
+      { leading: false, trailing: true, maxWait: this.config.maxBatchDelay },
+    );
+
+    // Initialiser les écouteurs d'événements
+    Object.values(FileChangeEvent).forEach((event) => {
+      this.eventListeners.set(event, []);
+    });
+
+    this.log(`FileWatcherService initialisé pour: ${this.config.watchPath}`);
+  }
+
+  /**
+   * Journalisation conditionnelle
+   * @param {string} message - Message à logger
+   * @param {string} level - Niveau de log (info, warn, error)
+   */
+  log(message, level = "info") {
+    if (this.config.verbose) {
+      const timestamp = new Date().toISOString();
+      const prefix = `[FileWatcher ${timestamp}]`;
+
+      switch (level) {
+        case "warn":
+          console.warn(`${prefix} ⚠️ ${message}`);
+          break;
+        case "error":
+          console.error(`${prefix} ❌ ${message}`);
+          break;
+        default:
+          console.log(`${prefix} ℹ️ ${message}`);
+      }
+    }
+  }
+
+  /**
+   * Démarrer la surveillance
+   * @returns {Promise<boolean>} - Succès du démarrage
+   */
+  async start() {
+    if (this.isWatching) {
+      this.log("Le watcher est déjà en cours d'exécution", "warn");
+      return true;
+    }
+
+    try {
+      // Vérifier que le chemin existe
+      try {
+        await fs.access(this.config.watchPath);
+      } catch (error) {
+        throw new Error(
+          `Le chemin à surveiller n'existe pas: ${this.config.watchPath}`,
+        );
+      }
+
+      // Configurer chokidar
+      const watchOptions = {
+        ignored: this.config.excludePatterns,
+        ignoreInitial: this.config.ignoreInitial,
+        ignorePermissionErrors: true,
+        followSymlinks: this.config.followSymlinks,
+        usePolling: this.config.usePolling,
+        interval: this.config.interval,
+        binaryInterval: this.config.interval,
+        alwaysStat: false,
+        depth: 99,
+        awaitWriteFinish: {
+          stabilityThreshold: 2000,
+          pollInterval: 100,
+        },
+      };
+
+      // Créer le watcher
+      this.watcher = chokidar.watch(this.config.watchPath, watchOptions);
+
+      // Configurer les écouteurs d'événements
+      this.setupEventListeners();
+
+      this.isWatching = true;
+      this.log(`Surveillance démarrée pour: ${this.config.watchPath}`);
+
+      return new Promise((resolve, reject) => {
+        this.watcher.on("ready", () => {
+          this.log("Watcher prêt");
+          resolve(true);
+        });
+
+        this.watcher.on("error", (error) => {
+          this.log(
+            `Erreur lors du démarrage du watcher: ${error.message}`,
+            "error",
+          );
+          reject(error);
+        });
+
+        // Timeout de sécurité
+        setTimeout(() => {
+          if (this.isWatching) {
+            this.log("Watcher démarré (timeout)");
+            resolve(true);
+          }
+        }, 5000);
+      });
+    } catch (error) {
+      this.log(`Erreur lors du démarrage: ${error.message}`, "error");
+      this.isWatching = false;
+      throw error;
+    }
+  }
+
+  /**
+   * Configurer les écouteurs d'événements
+   */
+  setupEventListeners() {
+    if (!this.watcher) return;
+
+    // Écouter tous les événements
+    this.watcher
+      .on("add", (filePath) =>
+        this.handleFileChange(FileChangeEvent.ADD, filePath),
+      )
+      .on("change", (filePath) =>
+        this.handleFileChange(FileChangeEvent.CHANGE, filePath),
+      )
+      .on("unlink", (filePath) =>
+        this.handleFileChange(FileChangeEvent.UNLINK, filePath),
+      )
+      .on("addDir", (dirPath) =>
+        this.handleFileChange(FileChangeEvent.ADD_DIR, dirPath),
+      )
+      .on("unlinkDir", (dirPath) =>
+        this.handleFileChange(FileChangeEvent.UNLINK_DIR, dirPath),
+      )
+      .on("ready", () => this.emitEvent(FileChangeEvent.READY))
+      .on("error", (error) => this.emitEvent(FileChangeEvent.ERROR, error));
+  }
+
+  /**
+   * Gérer un changement de fichier
+   * @param {string} eventType - Type d'événement
+   * @param {string} filePath - Chemin du fichier
+   */
+  async handleFileChange(eventType, filePath) {
+    const relativePath = path.relative(this.config.watchPath, filePath);
+
+    // Vérifier si le fichier correspond aux patterns d'inclusion
+    if (!this.shouldIncludeFile(relativePath)) {
+      return;
+    }
+
+    this.log(`${eventType}: ${relativePath}`);
+
+    // Émettre l'événement
+    this.emitEvent(eventType, { filePath, relativePath, eventType });
+
+    // Ajouter à la file d'attente pour l'audit
+    if (this.config.enableAutoAudit && this.isAuditableEvent(eventType)) {
+      this.addToChangeQueue(filePath, eventType);
+    }
+  }
+
+  /**
+   * Vérifier si un fichier doit être inclus
+   * @param {string} filePath - Chemin du fichier
+   * @returns {boolean} - True si le fichier doit être inclus
+   */
+  shouldIncludeFile(filePath) {
+    // Ignorer les fichiers cachés
+    if (this.config.ignoreDotFiles && path.basename(filePath).startsWith(".")) {
+      return false;
+    }
+
+    // Vérifier les patterns d'exclusion
+    for (const pattern of this.config.excludePatterns) {
+      const minimatch = require("minimatch");
+      if (minimatch(filePath, pattern)) {
+        return false;
+      }
+    }
+
+    // Vérifier les patterns d'inclusion
+    if (this.config.includePatterns && this.config.includePatterns.length > 0) {
+      const minimatch = require("minimatch");
+      for (const pattern of this.config.includePatterns) {
+        if (minimatch(filePath, pattern)) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * Vérifier si un événement est auditable
+   * @param {string} eventType - Type d'événement
+   * @returns {boolean} - True si l'événement déclenche un audit
+   */
+  isAuditableEvent(eventType) {
+    return (
+      eventType === FileChangeEvent.ADD || eventType === FileChangeEvent.CHANGE
+    );
+  }
+
+  /**
+   * Ajouter un fichier à la file d'attente des changements
+   * @param {string} filePath - Chemin du fichier
+   * @param {string} eventType - Type d'événement
+   */
+  addToChangeQueue(filePath, eventType) {
+    // Mettre à jour la file d'attente
+    this.changeQueue.set(filePath, {
+      filePath,
+      eventType,
+      timestamp: Date.now(),
+      count: (this.changeQueue.get(filePath)?.count || 0) + 1,
+    });
+
+    // Planifier le traitement par lots
+    this.scheduleBatchProcessing();
+  }
+
+  /**
+   * Planifier le traitement par lots avec débouncing
+   */
+  scheduleBatchProcessing() {
+    // Vérifier si on a atteint la taille maximale du lot
+    if (this.changeQueue.size >= this.config.maxBatchSize) {
+      // Annuler le débouncing et traiter immédiatement
+      this.debouncedProcessBatch.cancel();
+      this.processChangeBatch();
+      return;
+    }
+
+    // Utiliser lodash.debounce pour regrouper les changements
+    this.debouncedProcessBatch();
+  }
+
+  /**
+   * Traiter le lot de changements
+   */
+  async processChangeBatch() {
+    if (this.changeQueue.size === 0) {
+      return;
+    }
+
+    // Récupérer les fichiers modifiés
+    const changedFiles = Array.from(this.changeQueue.keys());
+    this.log(
+      `Traitement de ${changedFiles.length} fichiers modifiés (débouncing: ${this.config.debounceDelay}ms)`,
+    );
+
+    // Vider la file d'attente
+    this.changeQueue.clear();
+
+    // Exécuter l'audit incrémental
+    if (this.config.enableAutoAudit) {
+      try {
+        await this.runIncrementalAudit(changedFiles);
+      } catch (error) {
+        this.log(
+          `Erreur lors de l'audit incrémental: ${error.message}`,
+          "error",
+        );
+      }
+    }
+  }
+
+  /**
+   * Exécuter un audit incrémental
+   * @param {string[]} files - Liste des fichiers à auditer
+   */
+  async runIncrementalAudit(files) {
+    if (!files || files.length === 0) {
+      return;
+    }
+
+    this.log(`Début de l'audit incrémental pour ${files.length} fichiers`);
+
+    try {
+      const result = await auditFilesIncremental(files, {
+        useAstCache: true,
+        generateRecommendations: true,
+        exportJson: false,
+      });
+
+      this.log(
+        `Audit terminé: ${result.statistics.modifiedFiles} fichiers modifiés, ${result.statistics.addedFiles} ajoutés`,
+      );
+
+      // Émettre l'événement d'audit terminé
+      this.emitEvent("auditComplete", { result, files });
+    } catch (error) {
+      this.log(
+        `Erreur lors de l'exécution de l'audit: ${error.message}`,
+        "error",
+      );
+      this.emitEvent("auditError", { error, files });
+    }
+  }
+
+  /**
+   * Arrêter la surveillance
+   * @returns {Promise<boolean>} - Succès de l'arrêt
+   */
+  async stop() {
+    if (!this.isWatching || !this.watcher) {
+      this.log("Le watcher n'est pas en cours d'exécution", "warn");
+      return true;
+    }
+
+    try {
+      // Annuler le débouncing
+      this.debouncedProcessBatch.cancel();
+
+      // Vider la file d'attente
+      this.changeQueue.clear();
+
+      // Fermer le watcher
+      await this.watcher.close();
+
+      this.isWatching = false;
+      this.watcher = null;
+
+      this.log("Surveillance arrêtée");
+      return true;
+    } catch (error) {
+      this.log(`Erreur lors de l'arrêt: ${error.message}`, "error");
+      throw error;
+    }
+  }
+
+  /**
+   * Ajouter un écouteur d'événement
+   * @param {string} event - Nom de l'événement
+   * @param {Function} listener - Fonction d'écoute
+   */
+  on(event, listener) {
+    if (!this.eventListeners.has(event)) {
+      this.eventListeners.set(event, []);
+    }
+    this.eventListeners.get(event).push(listener);
+  }
+
+  /**
+   * Supprimer un écouteur d'événement
+   * @param {string} event - Nom de l'événement
+   * @param {Function} listener - Fonction d'écoute à supprimer
+   */
+  off(event, listener) {
+    if (!this.eventListeners.has(event)) return;
+
+    const listeners = this.eventListeners.get(event);
+    const index = listeners.indexOf(listener);
+    if (index !== -1) {
+      listeners.splice(index, 1);
+    }
+  }
+
+  /**
+   * Émettre un événement
+   * @param {string} event - Nom de l'événement
+   * @param {any} data - Données de l'événement
+   */
+  emitEvent(event, data = null) {
+    if (!this.eventListeners.has(event)) return;
+
+    const listeners = this.eventListeners.get(event);
+    listeners.forEach((listener) => {
+      try {
+        listener(data);
+      } catch (error) {
+        this.log(
+          `Erreur dans l'écouteur d'événement ${event}: ${error.message}`,
+          "error",
+        );
+      }
+    });
+  }
+
+  /**
+   * Obtenir l'état du watcher
+   * @returns {Object} - État du watcher
+   */
+  getStatus() {
+    return {
+      isWatching: this.isWatching,
+      watchPath: this.config.watchPath,
+      changeQueueSize: this.changeQueue.size,
+      config: {
+        ...this.config,
+        // Masquer les chemins complets dans les logs
+        watchPath: this.config.watchPath,
+        includePatterns: this.config.includePatterns,
+        excludePatterns: this.config.excludePatterns,
+      },
+    };
+  }
+
+  /**
+   * Obtenir les fichiers actuellement surveillés
+   * @returns {Promise<string[]>} - Liste des fichiers surveillés
+   */
+  async getWatchedFiles() {
+    if (!this.watcher) {
+      return [];
+    }
+
+    const watched = this.watcher.getWatched();
+    const files = [];
+
+    for (const [dir, dirFiles] of Object.entries(watched)) {
+      for (const file of dirFiles) {
+        files.push(path.join(dir, file));
+      }
+    }
+
+    return files;
+  }
+
+  /**
+   * Vider la file d'attente des changements
+   */
+  clearChangeQueue() {
+    this.changeQueue.clear();
+    this.debouncedProcessBatch.cancel();
+    this.log("File d'attente des changements vidée");
+  }
+
+  /**
+   * Forcer un audit immédiat
+   * @param {string[]} files - Fichiers à auditer (optionnel, tous si vide)
+   * @returns {Promise<Object>} - Résultat de l'audit
+   */
+  async forceAudit(files = []) {
+    if (files.length === 0) {
+      // Obtenir tous les fichiers surveillés
+      files = await this.getWatchedFiles();
+    }
+
+    this.log(`Audit forcé pour ${files.length} fichiers`);
+    return this.runIncrementalAudit(files);
+  }
+}
+
+/**
+ * Créer une instance de FileWatcherService
+ * @param {Object} config - Configuration du watcher
+ * @returns {FileWatcherService} - Instance du service
+ */
+function createFileWatcherService(config = {}) {
+  return new FileWatcherService(config);
+}
+
+// Exports
+module.exports = {
+  FileWatcherService,
+  createFileWatcherService,
+  FileChangeEvent,
+  DEFAULT_WATCHER_CONFIG,
+};

@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/helpers/records/async-generator-request-record.js",
+  "hash": "0d4f1500cb4620e07b75fcc2983212798348bbed7ed94a5d32766bbb778b8dbe",
+  "timestamp": 1768699409071,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.070Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 407,
+    "mtime": 1768595306214.3264,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

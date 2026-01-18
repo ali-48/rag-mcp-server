@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/2019/CreateListFromArrayLike.js",
+  "hash": "11fc77ec77a72c63570aaae0f257b6de1b383394cd4cb3b8761949d19a5f9983",
+  "timestamp": 1768699409009,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.009Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 1344,
+    "mtime": 1768595306279.3264,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/pg-protocol/src/types/chunky.d.ts",
+  "hash": "a184faa9f71c372f3c5ee7ba28fc96e852fbaa2460cffd5c5ad291bd31cbd50d",
+  "timestamp": 1768699409104,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.103Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 24,
+    "mtime": 1766870654378.9731,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

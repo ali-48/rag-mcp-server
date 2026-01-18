@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/2019/CreateDataPropertyOrThrow.js",
+  "hash": "26a5b4cb7dcad730b59deca045c85e44baa5a774dda84b12e9ca487a43f005e7",
+  "timestamp": 1768699409012,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.011Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 700,
+    "mtime": 1768595306275.3264,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

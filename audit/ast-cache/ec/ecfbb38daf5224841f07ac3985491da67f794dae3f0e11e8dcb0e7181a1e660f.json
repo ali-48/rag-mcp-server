@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/helpers/isStringOrUndefined.js",
+  "hash": "ecfbb38daf5224841f07ac3985491da67f794dae3f0e11e8dcb0e7181a1e660f",
+  "timestamp": 1768699409086,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.086Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 137,
+    "mtime": 1768595306380.3262,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

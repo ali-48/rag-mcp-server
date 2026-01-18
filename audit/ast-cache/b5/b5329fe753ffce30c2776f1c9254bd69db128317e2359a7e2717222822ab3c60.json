@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/2019/DateFromTime.js",
+  "hash": "b5329fe753ffce30c2776f1c9254bd69db128317e2359a7e2717222822ab3c60",
+  "timestamp": 1768699409037,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.037Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 988,
+    "mtime": 1768595306287.3264,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/2019/AsyncIteratorClose.js",
+  "hash": "9020bed899e72950d9277a4bba16eb27a23866c4aabb742e3830f22fac47f195",
+  "timestamp": 1768699409040,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.040Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 1806,
+    "mtime": 1768595306218.3264,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

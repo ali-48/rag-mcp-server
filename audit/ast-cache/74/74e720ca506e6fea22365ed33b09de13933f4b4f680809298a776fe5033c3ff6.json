@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/5/ToNumber.js",
+  "hash": "74e720ca506e6fea22365ed33b09de13933f4b4f680809298a776fe5033c3ff6",
+  "timestamp": 1768699408981,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:28.981Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 929,
+    "mtime": 1768595306582.3254,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

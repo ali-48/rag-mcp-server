@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/2019/OrdinaryGetPrototypeOf.js",
+  "hash": "88f1b35d0ff4e8799b5c90ed48765912058f85e26d74bcdb082ca6fb8bf8feef",
+  "timestamp": 1768699409047,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.047Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 494,
+    "mtime": 1768595306488.3257,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

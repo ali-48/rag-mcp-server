@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/2019/CreateMethodProperty.js",
+  "hash": "7f7aca56bbec0eeac50dd832270b66e9b678aadeb09a354fde2a46333eb34b80",
+  "timestamp": 1768699409021,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.020Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 944,
+    "mtime": 1768595306281.3264,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

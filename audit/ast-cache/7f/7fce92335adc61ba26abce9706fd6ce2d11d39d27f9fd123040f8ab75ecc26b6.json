@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/helpers/isObject.js",
+  "hash": "7fce92335adc61ba26abce9706fd6ce2d11d39d27f9fd123040f8ab75ecc26b6",
+  "timestamp": 1768699409076,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.076Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 100,
+    "mtime": 1768595306374.3262,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

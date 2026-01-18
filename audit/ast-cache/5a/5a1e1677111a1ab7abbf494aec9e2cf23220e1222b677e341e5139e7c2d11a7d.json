@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/helpers/padTimeComponent.js",
+  "hash": "5a1e1677111a1ab7abbf494aec9e2cf23220e1222b677e341e5139e7c2d11a7d",
+  "timestamp": 1768699409078,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.078Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 211,
+    "mtime": 1768595306498.3257,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/@vitest/ui/dist/client/assets/index-BUCFJtth.js",
+  "hash": "dcbfd4ab8873c379f12607463a4b61086ccceb3c34d1e3d2b78a4e3c5196e058",
+  "timestamp": 1768699409163,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.158Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 703403,
+    "mtime": 1768275122314.4453,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

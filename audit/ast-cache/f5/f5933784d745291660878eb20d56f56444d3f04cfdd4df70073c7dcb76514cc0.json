@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/2019/AbstractEqualityComparison.js",
+  "hash": "f5933784d745291660878eb20d56f56444d3f04cfdd4df70073c7dcb76514cc0",
+  "timestamp": 1768699409034,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.034Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 1203,
+    "mtime": 1768595306203.5725,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

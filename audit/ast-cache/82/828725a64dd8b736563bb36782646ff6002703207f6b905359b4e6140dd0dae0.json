@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/pg-connection-string/index.js",
+  "hash": "828725a64dd8b736563bb36782646ff6002703207f6b905359b4e6140dd0dae0",
+  "timestamp": 1768699409106,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.105Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 6265,
+    "mtime": 1766870654218.9734,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

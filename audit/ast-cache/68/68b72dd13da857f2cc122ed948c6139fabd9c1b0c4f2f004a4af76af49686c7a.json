@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/audit/code_map.json",
+  "hash": "68b72dd13da857f2cc122ed948c6139fabd9c1b0c4f2f004a4af76af49686c7a",
+  "timestamp": 1768699409118,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.113Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 764087,
+    "mtime": 1768699310392.5625,
+    "language": "config",
+    "fileType": "configuration"
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/templates/db-config-template.json",
+  "hash": "d2d9be0bd1fe433f7ea303549807efd7833f4f95590f2c063364b8e4b5da11a9",
+  "timestamp": 1768699409113,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.113Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 1864,
+    "mtime": 1768341915399.2312,
+    "language": "config",
+    "fileType": "configuration"
+  }
+}

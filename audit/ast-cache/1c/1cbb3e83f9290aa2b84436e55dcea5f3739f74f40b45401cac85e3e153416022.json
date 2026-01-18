@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/2019/InLeapYear.js",
+  "hash": "1cbb3e83f9290aa2b84436e55dcea5f3739f74f40b45401cac85e3e153416022",
+  "timestamp": 1768699409037,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.036Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 462,
+    "mtime": 1768595306336.3262,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

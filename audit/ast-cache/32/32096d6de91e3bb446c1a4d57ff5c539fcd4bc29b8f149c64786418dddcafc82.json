@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/2024/GroupBy.js",
+  "hash": "32096d6de91e3bb446c1a4d57ff5c539fcd4bc29b8f149c64786418dddcafc82",
+  "timestamp": 1768699408625,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:28.624Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 2334,
+    "mtime": 1768595306332.3262,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

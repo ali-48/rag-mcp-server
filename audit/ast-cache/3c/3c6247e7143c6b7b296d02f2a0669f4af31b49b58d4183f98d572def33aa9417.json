@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/helpers/integerToNBytes.js",
+  "hash": "3c6247e7143c6b7b296d02f2a0669f4af31b49b58d4183f98d572def33aa9417",
+  "timestamp": 1768699409089,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.088Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 1086,
+    "mtime": 1768595306342.3262,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/helpers/fractionToBinaryString.js",
+  "hash": "ed86e82e002112ac5093c76da620a12fbdf175f0c86ddd98d4dc4c782b02be91",
+  "timestamp": 1768699409059,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.059Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 845,
+    "mtime": 1768595306308.3262,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

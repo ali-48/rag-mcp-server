@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/es2022.js",
+  "hash": "df6c3b27780e4e76fef58fc97548ba16a681955813960228ded7f42266de4fe5",
+  "timestamp": 1768699408990,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:28.989Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 11717,
+    "mtime": 1768595306304.3262,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

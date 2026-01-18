@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/2019/Canonicalize.js",
+  "hash": "b36ce79b0b239ee626365922a757f83630cb7a4455081c9714a4c00390f014ce",
+  "timestamp": 1768699409026,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.026Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 1186,
+    "mtime": 1768595306260.7527,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

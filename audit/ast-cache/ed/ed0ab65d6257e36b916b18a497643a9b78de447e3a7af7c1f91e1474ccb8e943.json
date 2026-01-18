@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/pg-protocol/dist/buffer-reader.d.ts",
+  "hash": "ed0ab65d6257e36b916b18a497643a9b78de447e3a7af7c1f91e1474ccb8e943",
+  "timestamp": 1768699409093,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.093Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 396,
+    "mtime": 1766870654371.9731,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

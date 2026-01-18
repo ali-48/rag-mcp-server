@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/2019/IsAccessorDescriptor.js",
+  "hash": "a0f55d795a7b4f78163513fd7a27c366b3150ae58afaee30dc0f13a5bc5e2506",
+  "timestamp": 1768699409044,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.044Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 558,
+    "mtime": 1768595306356.3262,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

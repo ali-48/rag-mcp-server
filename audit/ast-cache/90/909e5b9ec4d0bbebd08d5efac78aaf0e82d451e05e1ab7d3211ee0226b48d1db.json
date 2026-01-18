@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/2019/NumberToRawBytes.js",
+  "hash": "909e5b9ec4d0bbebd08d5efac78aaf0e82d451e05e1ab7d3211ee0226b48d1db",
+  "timestamp": 1768699409012,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.012Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 1819,
+    "mtime": 1768595306475.3257,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

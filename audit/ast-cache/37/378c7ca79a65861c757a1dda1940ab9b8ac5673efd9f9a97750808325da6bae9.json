@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/2019/FlattenIntoArray.js",
+  "hash": "378c7ca79a65861c757a1dda1940ab9b8ac5673efd9f9a97750808325da6bae9",
+  "timestamp": 1768699409025,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.025Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 1668,
+    "mtime": 1768595306307.3262,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}

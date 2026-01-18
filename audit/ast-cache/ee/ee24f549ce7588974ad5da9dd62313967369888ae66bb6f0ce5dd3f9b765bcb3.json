@@ -1,0 +1,28 @@
+{
+  "filePath": "/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/es-abstract/helpers/isNegativeZero.js",
+  "hash": "ee24f549ce7588974ad5da9dd62313967369888ae66bb6f0ce5dd3f9b765bcb3",
+  "timestamp": 1768699409082,
+  "astData": {
+    "astJson": "{}",
+    "symbols": [],
+    "qualityMetrics": {
+      "qualityScore": 0.5,
+      "complexity": 1,
+      "maintainability": 80,
+      "linesOfCode": 100,
+      "symbolCount": 10,
+      "dependencyCount": 2,
+      "documentationCoverage": 50,
+      "ruleViolations": 0,
+      "technicalDebt": 0
+    },
+    "cachedAt": "2026-01-18T01:23:29.081Z"
+  },
+  "dependencies": [],
+  "metadata": {
+    "size": 131,
+    "mtime": 1768595306373.3262,
+    "language": "typescript",
+    "fileType": "code"
+  }
+}
