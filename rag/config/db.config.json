@@ -4,7 +4,8 @@
     "path": "./rag/db/memory/rag_memory.sqlite"
   },
   "vectors": {
-    "type": "none"
+    "type": "sqlite",
+    "path": "./rag/db/vector/rag_vectors.sqlite"
   },
   "metadata": {
     "type": "sqlite",

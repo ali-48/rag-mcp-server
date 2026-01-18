@@ -2,11 +2,14 @@
 import { existsSync } from "node:fs";
 import { mkdir, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { createAstCacheManager } from "../scripts/ast-cache-manager.js";
 import { auditFileIncremental, auditFilesIncremental, } from "../scripts/audit-incremental.js";
 import { getFileHash } from "../scripts/utils/file-hasher.js";
 // Dossier temporaire pour les tests
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 const TEST_DIR = path.join(__dirname, "temp-test-files");
 describe("Audit Incrémental", () => {
     beforeEach(async () => {
