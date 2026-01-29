@@ -1,7 +1,9 @@
 import * as vscode from 'vscode';
 import { McpClient } from './services/McpClient';
+import { getErrorHandler } from './services/error-handler';
 
 let mcpClient: McpClient | null = null;
+let errorHandler = getErrorHandler();
 
 export function activate(context: vscode.ExtensionContext) {
   console.log('RAG MCP Extension is now active!');
@@ -29,10 +31,16 @@ export function activate(context: vscode.ExtensionContext) {
     }),
     vscode.commands.registerCommand('rag-mcp.getStatus', () => {
       getStatus();
+    }),
+    vscode.commands.registerCommand('rag-mcp.showErrorLogs', () => {
+      errorHandler.showLogs();
     })
   ];
 
   commands.forEach(command => context.subscriptions.push(command));
+
+  // Add error handler output channel to subscriptions
+  context.subscriptions.push(errorHandler.getOutputChannel());
 
   // Auto-connect to MCP server
   connectToMcpServer();
@@ -49,22 +57,31 @@ async function connectToMcpServer() {
     await mcpClient?.connect();
     vscode.window.showInformationMessage('✅ Connected to RAG MCP Server');
   } catch (error) {
-    vscode.window.showErrorMessage(`❌ Failed to connect to RAG MCP Server: ${error}`);
+    await errorHandler.handleError(error, {
+      operation: 'connectToMcpServer',
+      retryCallback: () => connectToMcpServer()
+    });
   }
 }
 
 async function showDashboard(context: vscode.ExtensionContext) {
-  const panel = vscode.window.createWebviewPanel(
-    'ragDashboard',
-    'RAG MCP Dashboard',
-    vscode.ViewColumn.One,
-    {
-      enableScripts: true,
-      retainContextWhenHidden: true
-    }
-  );
+  try {
+    const panel = vscode.window.createWebviewPanel(
+      'ragDashboard',
+      'RAG MCP Dashboard',
+      vscode.ViewColumn.One,
+      {
+        enableScripts: true,
+        retainContextWhenHidden: true
+      }
+    );
 
-  panel.webview.html = getDashboardWebviewContent();
+    panel.webview.html = getDashboardWebviewContent();
+  } catch (error) {
+    await errorHandler.handleError(error, {
+      operation: 'showDashboard'
+    });
+  }
 }
 
 async function initProject() {
@@ -78,27 +95,37 @@ async function initProject() {
   }
 
   try {
-    vscode.window.withProgress({
+    await vscode.window.withProgress({
       location: vscode.ProgressLocation.Notification,
       title: 'Initializing RAG Project...',
       cancellable: false
     }, async (progress) => {
       progress.report({ message: 'Starting initialization...' });
 
-      const result = await mcpClient?.call('init_rag', {
-        project_path: projectPath,
-        force: true,
-        verbose: true
-      });
+      const result = await errorHandler.executeWithRetry(
+        () => mcpClient!.call('init_rag', {
+          project_path: projectPath,
+          force: true,
+          verbose: true
+        }),
+        { tool: 'init_rag', description: 'Initialize RAG project' }
+      );
 
       if (result?.status === 'ok') {
         vscode.window.showInformationMessage(`✅ RAG project initialized: ${projectPath}`);
       } else {
-        vscode.window.showErrorMessage(`❌ Failed to initialize RAG project: ${result?.message || 'Unknown error'}`);
+        const errorMessage = result?.message || 'Unknown error';
+        await errorHandler.handleError(new Error(`Failed to initialize RAG project: ${errorMessage}`), {
+          tool: 'init_rag',
+          params: { project_path: projectPath }
+        });
       }
     });
   } catch (error) {
-    vscode.window.showErrorMessage(`❌ Error initializing RAG project: ${error}`);
+    await errorHandler.handleError(error, {
+      tool: 'init_rag',
+      params: { project_path: projectPath }
+    });
   }
 }
 
@@ -118,7 +145,7 @@ async function activatePipeline() {
   });
 
   try {
-    vscode.window.withProgress({
+    await vscode.window.withProgress({
       location: vscode.ProgressLocation.Notification,
       title: `Activating RAG Pipeline (${selectedMode})...`,
       cancellable: false
@@ -135,16 +162,26 @@ async function activatePipeline() {
         params.project_path = projectPath;
       }
 
-      const result = await mcpClient?.call('activated_rag', params);
+      const result = await errorHandler.executeWithRetry(
+        () => mcpClient!.call('activated_rag', params),
+        { tool: 'activated_rag', description: 'Activate RAG pipeline' }
+      );
 
       if (result?.success) {
         vscode.window.showInformationMessage(`✅ RAG pipeline activated successfully (${selectedMode})`);
       } else {
-        vscode.window.showErrorMessage(`❌ Failed to activate RAG pipeline: ${result?.message || 'Unknown error'}`);
+        const errorMessage = result?.message || 'Unknown error';
+        await errorHandler.handleError(new Error(`Failed to activate RAG pipeline: ${errorMessage}`), {
+          tool: 'activated_rag',
+          params
+        });
       }
     });
   } catch (error) {
-    vscode.window.showErrorMessage(`❌ Error activating RAG pipeline: ${error}`);
+    await errorHandler.handleError(error, {
+      tool: 'activated_rag',
+      operation: 'activatePipeline'
+    });
   }
 }
 
@@ -170,25 +207,35 @@ async function queryRag(context: vscode.ExtensionContext) {
   panel.webview.html = getLoadingWebviewContent();
 
   try {
-    const result = await mcpClient?.call('query_rag', {
-      query,
-      top_k: 10,
-      format_output: true
-    });
+    const result = await errorHandler.executeWithRetry(
+      () => mcpClient!.call('query_rag', {
+        query,
+        top_k: 10,
+        format_output: true
+      }),
+      { tool: 'query_rag', description: 'Execute RAG query' }
+    );
 
     panel.webview.html = getQueryResultsWebviewContent(query, result);
   } catch (error) {
-    panel.webview.html = getErrorWebviewContent(`Query failed: ${error}`);
+    await errorHandler.handleError(error, {
+      tool: 'query_rag',
+      params: { query }
+    });
+    panel.webview.html = getErrorWebviewContent(`Query failed. Check error logs for details.`);
   }
 }
 
 async function getStatus() {
   try {
-    const result = await mcpClient?.call('get_status', {
-      scope: 'global',
-      include_notes_for_ai: true,
-      include_allowed_actions: true
-    });
+    const result = await errorHandler.executeWithRetry(
+      () => mcpClient!.call('get_status', {
+        scope: 'global',
+        include_notes_for_ai: true,
+        include_allowed_actions: true
+      }),
+      { tool: 'get_status', description: 'Get RAG system status' }
+    );
 
     if (result?.status === 'ok') {
       const data = result.data;
@@ -200,10 +247,16 @@ async function getStatus() {
 
       vscode.window.showInformationMessage(message);
     } else {
-      vscode.window.showErrorMessage(`❌ Failed to get status: ${result?.message || 'Unknown error'}`);
+      const errorMessage = result?.message || 'Unknown error';
+      await errorHandler.handleError(new Error(`Failed to get status: ${errorMessage}`), {
+        tool: 'get_status'
+      });
     }
   } catch (error) {
-    vscode.window.showErrorMessage(`❌ Error getting status: ${error}`);
+    await errorHandler.handleError(error, {
+      tool: 'get_status',
+      operation: 'getStatus'
+    });
   }
 }
 
@@ -283,6 +336,7 @@ function getDashboardWebviewContent(): string {
         <button class="button" onclick="activatePipeline()">Activate Pipeline</button>
         <button class="button" onclick="queryRag()">Query RAG</button>
         <button class="button" onclick="refreshStatus()">Refresh Status</button>
+        <button class="button" onclick="showErrorLogs()" style="background: var(--vscode-inputValidation-errorBackground);">Show Error Logs</button>
       </div>
 
       <div class="card">
@@ -306,6 +360,10 @@ function getDashboardWebviewContent(): string {
 
         function queryRag() {
           vscode.postMessage({ command: 'queryRag' });
+        }
+
+        function showErrorLogs() {
+          vscode.postMessage({ command: 'showErrorLogs' });
         }
 
         // Handle messages from extension
@@ -442,13 +500,29 @@ function getErrorWebviewContent(error: string): string {
           border-radius: 8px;
           border: 1px solid #f5c6cb;
         }
+        .error-button {
+          background: var(--vscode-button-background);
+          color: var(--vscode-button-foreground);
+          border: none;
+          padding: 8px 16px;
+          border-radius: 4px;
+          cursor: pointer;
+          margin-top: 10px;
+        }
       </style>
     </head>
     <body>
       <h1>Error</h1>
       <div class="error">
         ${error}
+        <br><br>
+        <button class="error-button" onclick="showErrorLogs()">Show Error Logs</button>
       </div>
+      <script>
+        function showErrorLogs() {
+          vscode.postMessage({ command: 'showErrorLogs' });
+        }
+      </script>
     </body>
     </html>
   `;
