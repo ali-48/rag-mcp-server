@@ -1,0 +1,107 @@
+{
+  "name": "rag-mcp-extension",
+  "displayName": "RAG MCP Extension",
+  "description": "VS Code extension for interacting with RAG MCP Server",
+  "version": "0.1.0",
+  "publisher": "rag-mcp",
+  "engines": {
+    "vscode": "^1.96.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "rag-mcp.showDashboard",
+        "title": "RAG MCP: Show Dashboard"
+      },
+      {
+        "command": "rag-mcp.initProject",
+        "title": "RAG MCP: Initialize RAG Project"
+      },
+      {
+        "command": "rag-mcp.activatePipeline",
+        "title": "RAG MCP: Activate RAG Pipeline"
+      },
+      {
+        "command": "rag-mcp.queryRag",
+        "title": "RAG MCP: Query RAG"
+      },
+      {
+        "command": "rag-mcp.getStatus",
+        "title": "RAG MCP: Get System Status"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "rag-mcp-activitybar",
+          "title": "RAG MCP",
+          "icon": "media/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "rag-mcp-activitybar": [
+        {
+          "id": "rag-mcp.dashboard",
+          "name": "Dashboard",
+          "type": "webview"
+        },
+        {
+          "id": "rag-mcp.projects",
+          "name": "Projects",
+          "type": "webview"
+        },
+        {
+          "id": "rag-mcp.status",
+          "name": "System Status",
+          "type": "webview"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "RAG MCP Extension",
+      "properties": {
+        "rag-mcp.serverUrl": {
+          "type": "string",
+          "default": "ws://localhost:3000",
+          "description": "URL of the RAG MCP Server WebSocket"
+        },
+        "rag-mcp.timeout": {
+          "type": "number",
+          "default": 30000,
+          "description": "Timeout for MCP requests in milliseconds"
+        },
+        "rag-mcp.autoRefresh": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable auto-refresh of dashboard"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile",
+    "test": "node ./out/test/runTest.js",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.96.0",
+    "@vscode/vsce": "^3.2.0",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "ws": "^8.0.0"
+  }
+}
