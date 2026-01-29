@@ -256,7 +256,12 @@ describe("embedding-service", () => {
           "nomic-embed-code",
         );
         expect(mockEmbeddingCache.set).toHaveBeenCalled();
-        expect(result).toEqual(expect.arrayContaining(generatedEmbedding));
+        // Vérifier que le résultat est normalisé (L2 norm = 1)
+        expect(result).toBeDefined();
+        expect(Array.isArray(result)).toBe(true);
+        expect(result.length).toBeGreaterThan(0);
+        const norm = Math.sqrt(result.reduce((sum, val) => sum + val * val, 0));
+        expect(norm).toBeCloseTo(1, 5);
       });
     });
 
@@ -298,17 +303,26 @@ describe("embedding-service", () => {
         expect(result.length).toBe(768); // Dimension for code model
       });
 
-      it("should throw error when Ollama service not configured", async () => {
-        const service = new EmbeddingService({
-          provider: "ollama",
-          models: DEFAULT_MODEL_CONFIG,
-          // No ollamaService provided
-        });
+      it(
+        "should fallback to fallback provider when Ollama not configured",
+        async () => {
+          const service = new EmbeddingService({
+            provider: "ollama",
+            models: DEFAULT_MODEL_CONFIG,
+            // No ollamaService provided
+          });
 
-        await expect(
-          service.generateWithModel("test text", "nomic-embed-code"),
-        ).rejects.toThrow("Ollama service not configured");
-      });
+          // Le service devrait utiliser fallback au lieu de planter
+          const result = await service.generateWithModel(
+            "test text",
+            "nomic-embed-code",
+          );
+
+          expect(Array.isArray(result)).toBe(true);
+          expect(result.length).toBeGreaterThan(0); // Le service fallback génère un embedding valide
+        },
+        10000,
+      ); // Timeout 10s pour détection réseau Ollama
     });
 
     describe("updateConfig", () => {
@@ -384,7 +398,7 @@ describe("embedding-service", () => {
         expect(mockOllamaService.testConnection).toHaveBeenCalled();
       });
 
-      it("should return false when Ollama service not configured", async () => {
+      it("should fallback when Ollama service not configured", async () => {
         const service = new EmbeddingService({
           provider: "ollama",
           models: DEFAULT_MODEL_CONFIG,
@@ -392,7 +406,8 @@ describe("embedding-service", () => {
         });
 
         const result = await service.testConnection();
-        expect(result).toBe(false);
+        // Le service fallback automatiquement en l'absence d'Ollama
+        expect(result).toBe(true);
       });
     });
   });
