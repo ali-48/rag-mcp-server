@@ -1,0 +1,4 @@
+Ceci est un fichier de test pour démontrer query_rag.
+Il contient des informations sur l'extension VS Code RAG MCP.
+L'extension permet de visualiser l'état du serveur RAG.
+Elle inclut un dashboard avec auto-refresh et gestion d'erreurs.

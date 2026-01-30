@@ -21,22 +21,6 @@
         "title": "RAG MCP: Show Dashboard"
       },
       {
-        "command": "rag-mcp.configureServer",
-        "title": "RAG MCP: Configure Server"
-      },
-      {
-        "command": "rag-mcp.initProject",
-        "title": "RAG MCP: Initialize RAG Project"
-      },
-      {
-        "command": "rag-mcp.activatePipeline",
-        "title": "RAG MCP: Activate RAG Pipeline"
-      },
-      {
-        "command": "rag-mcp.queryRag",
-        "title": "RAG MCP: Query RAG"
-      },
-      {
         "command": "rag-mcp.getStatus",
         "title": "RAG MCP: Get System Status"
       }

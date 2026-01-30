@@ -136,137 +136,6 @@ export class DashboardView {
     await this.loadStatusData();
   }
 
-  private async handleInitProject(): Promise<void> {
-    try {
-      const projectPath = await vscode.window.showInputBox({
-        prompt: 'Enter project path to initialize RAG for',
-        placeHolder: '/path/to/your/project'
-      });
-
-      if (!projectPath) {
-        return;
-      }
-
-      vscode.window.withProgress({
-        location: vscode.ProgressLocation.Notification,
-        title: 'Initializing RAG Project...',
-        cancellable: false
-      }, async (progress) => {
-        progress.report({ message: 'Starting initialization...' });
-
-        const result = await this.errorHandler.executeWithRetry(
-          () => this.mcpClient!.call('init_rag', {
-            project_path: projectPath,
-            force: true,
-            verbose: true
-          }),
-          { tool: 'init_rag', description: 'Initialize RAG project' }
-        );
-
-        if (result?.status === 'ok') {
-          vscode.window.showInformationMessage(`✅ RAG project initialized: ${projectPath}`);
-          await this.loadStatusData(); // Refresh dashboard
-        } else {
-          throw new Error(result?.message || 'Failed to initialize project');
-        }
-      });
-    } catch (error) {
-      await this.errorHandler.handleError(error, {
-        tool: 'init_rag',
-        operation: 'Initialize project from dashboard'
-      });
-    }
-  }
-
-  private async handleActivatePipeline(): Promise<void> {
-    try {
-      const modes = ['full', 'incremental', 'analyze_only', 'watch'];
-      const selectedMode = await vscode.window.showQuickPick(modes, {
-        placeHolder: 'Select activation mode'
-      });
-
-      if (!selectedMode) {
-        return;
-      }
-
-      const projectPath = await vscode.window.showInputBox({
-        prompt: 'Enter project path (optional, leave empty for current workspace)',
-        placeHolder: vscode.workspace.rootPath || ''
-      });
-
-      vscode.window.withProgress({
-        location: vscode.ProgressLocation.Notification,
-        title: `Activating RAG Pipeline (${selectedMode})...`,
-        cancellable: false
-      }, async (progress) => {
-        progress.report({ message: 'Starting pipeline activation...' });
-
-        const params: any = {
-          mode: selectedMode,
-          enable_phase0: true,
-          enable_llm_enrichment: false
-        };
-
-        if (projectPath) {
-          params.project_path = projectPath;
-        }
-
-        const result = await this.errorHandler.executeWithRetry(
-          () => this.mcpClient!.call('activated_rag', params),
-          { tool: 'activated_rag', description: 'Activate RAG pipeline' }
-        );
-
-        if (result?.success) {
-          vscode.window.showInformationMessage(`✅ RAG pipeline activated successfully (${selectedMode})`);
-          await this.loadStatusData(); // Refresh dashboard
-        } else {
-          throw new Error(result?.message || 'Failed to activate pipeline');
-        }
-      });
-    } catch (error) {
-      await this.errorHandler.handleError(error, {
-        tool: 'activated_rag',
-        operation: 'Activate pipeline from dashboard'
-      });
-    }
-  }
-
-  private async handleQueryRag(): Promise<void> {
-    try {
-      const query = await vscode.window.showInputBox({
-        prompt: 'Enter your RAG query',
-        placeHolder: 'Search for code, documentation, or configuration'
-      });
-
-      if (!query) {
-        return;
-      }
-
-      vscode.window.showInformationMessage(`Executing query: ${query}`, { modal: false });
-
-      // In a real implementation, we would open a QueryView here
-      // For now, just show a notification
-      const result = await this.errorHandler.executeWithRetry(
-        () => this.mcpClient!.call('query_rag', {
-          query,
-          top_k: 10,
-          format_output: true
-        }),
-        { tool: 'query_rag', description: 'Execute RAG query' }
-      );
-
-      if (result?.results?.length > 0) {
-        vscode.window.showInformationMessage(`Found ${result.results.length} results for "${query}"`);
-      } else {
-        vscode.window.showWarningMessage(`No results found for "${query}"`);
-      }
-    } catch (error) {
-      await this.errorHandler.handleError(error, {
-        tool: 'query_rag',
-        operation: 'Query RAG from dashboard'
-      });
-    }
-  }
 
   private setupMessageListeners(): void {
     this.panel.webview.onDidReceiveMessage(
@@ -275,15 +144,6 @@ export class DashboardView {
           switch (message.command) {
             case 'refresh':
               await this.handleRefresh();
-              break;
-            case 'initProject':
-              await this.handleInitProject();
-              break;
-            case 'activatePipeline':
-              await this.handleActivatePipeline();
-              break;
-            case 'queryRag':
-              await this.handleQueryRag();
               break;
             case 'showErrorLogs':
               this.errorHandler.showLogs();
@@ -917,22 +777,16 @@ export class DashboardView {
                     <span class="button-icon">🔄</span>
                     Refresh Status
                   </button>
-                  <button id="initProjectBtn" class="button button-success">
-                    <span class="button-icon">➕</span>
-                    Initialize Project
-                  </button>
-                  <button id="activatePipelineBtn" class="button">
-                    <span class="button-icon">🚀</span>
-                    Activate Pipeline
-                  </button>
-                  <button id="queryRagBtn" class="button">
-                    <span class="button-icon">🔍</span>
-                    Query RAG
-                  </button>
                   <button id="showErrorLogsBtn" class="button button-warning">
                     <span class="button-icon">📋</span>
                     Show Error Logs
                   </button>
+                </div>
+                <div style="margin-top: 16px; padding: 12px; background: rgba(0, 0, 0, 0.2); border-radius: var(--border-radius); border: 1px solid rgba(255, 255, 255, 0.1);">
+                  <p style="margin: 0; font-size: 0.85em; opacity: 0.8;">
+                    <strong>Note:</strong> RAG operations (init, activate, query) are reserved for AI access via MCP protocol.
+                    Use the MCP server directly for these operations.
+                  </p>
                 </div>
               </div>
 
@@ -968,9 +822,6 @@ export class DashboardView {
           const loadingIndicator = document.getElementById('loadingIndicator');
           const content = document.getElementById('content');
           const refreshBtn = document.getElementById('refreshBtn');
-          const initProjectBtn = document.getElementById('initProjectBtn');
-          const activatePipelineBtn = document.getElementById('activatePipelineBtn');
-          const queryRagBtn = document.getElementById('queryRagBtn');
           const showErrorLogsBtn = document.getElementById('showErrorLogsBtn');
 
           // State
@@ -983,18 +834,6 @@ export class DashboardView {
 
           refreshBtn.addEventListener('click', () => {
             vscode.postMessage({ command: 'refresh' });
-          });
-
-          initProjectBtn.addEventListener('click', () => {
-            vscode.postMessage({ command: 'initProject' });
-          });
-
-          activatePipelineBtn.addEventListener('click', () => {
-            vscode.postMessage({ command: 'activatePipeline' });
-          });
-
-          queryRagBtn.addEventListener('click', () => {
-            vscode.postMessage({ command: 'queryRag' });
           });
 
           showErrorLogsBtn.addEventListener('click', () => {

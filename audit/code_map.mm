@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <map version="1.0.1">
-  <node CREATED="1769716307557"><![CDATA[Code Map]]></node>
+  <node CREATED="1769798444419"><![CDATA[Code Map]]></node>
   <node TEXT="Projet" FOLDED="false">
     <node ><![CDATA[Statistiques]]></node>
-      <node ><![CDATA[Fichiers: 219]]></node>
-      <node ><![CDATA[Fonctions: 514]]></node>
-      <node ><![CDATA[Classes: 53]]></node>
-      <node ><![CDATA[Imports: 381]]></node>
-      <node ><![CDATA[Appels: 4186]]></node>
+      <node ><![CDATA[Fichiers: 238]]></node>
+      <node ><![CDATA[Fonctions: 504]]></node>
+      <node ><![CDATA[Classes: 59]]></node>
+      <node ><![CDATA[Imports: 416]]></node>
+      <node ><![CDATA[Appels: 3947]]></node>
     <node ><![CDATA[Fichiers par type]]></node>
-      <node ><![CDATA[doc: 45]]></node>
-      <node ><![CDATA[config: 29]]></node>
+      <node ><![CDATA[doc: 46]]></node>
+      <node ><![CDATA[config: 32]]></node>
       <node ><![CDATA[other: 4]]></node>
-      <node ><![CDATA[code: 141]]></node>
+      <node ><![CDATA[code: 156]]></node>
     <node FOLDED="true"><![CDATA[Fichiers]]></node>
       <node FOLDED="true" ICON="doc"><![CDATA[.clinerules/Règles_Absolues_Rag_Mcp_Server.md]]></node>
         <node COLOR="#FFFF00"><![CDATA[Qualité: 0.62]]></node>
@@ -356,11 +356,11 @@
         <node ><![CDATA[Lignes: 10]]></node>
         <node ><![CDATA[Taille: 77 octets]]></node>
       <node FOLDED="true" ICON="doc"><![CDATA[extension-rag/README.md]]></node>
-        <node COLOR="#FFFF00"><![CDATA[Qualité: 0.76]]></node>
-        <node COLOR="#00FF00"><![CDATA[Maintenabilité: 0.84]]></node>
-        <node COLOR="#FF0000"><![CDATA[Complexité: 0.36]]></node>
-        <node ><![CDATA[Lignes: 72]]></node>
-        <node ><![CDATA[Taille: 1720 octets]]></node>
+        <node COLOR="#FFFF00"><![CDATA[Qualité: 0.78]]></node>
+        <node COLOR="#00FF00"><![CDATA[Maintenabilité: 0.85]]></node>
+        <node COLOR="#FF0000"><![CDATA[Complexité: 0.34]]></node>
+        <node ><![CDATA[Lignes: 69]]></node>
+        <node ><![CDATA[Taille: 1461 octets]]></node>
       <node FOLDED="true" ICON="doc"><![CDATA[extension-rag/docs/ARCHITECTURE_DECISION_WEBVIEW.md]]></node>
         <node COLOR="#FFFF00"><![CDATA[Qualité: 0.62]]></node>
         <node COLOR="#FFFF00"><![CDATA[Maintenabilité: 0.70]]></node>
@@ -368,16 +368,16 @@
         <node ><![CDATA[Lignes: 187]]></node>
         <node ><![CDATA[Taille: 5402 octets]]></node>
       <node FOLDED="true" ICON="code"><![CDATA[extension-rag/out/extension.js]]></node>
-        <node COLOR="#FF0000"><![CDATA[Qualité: 0.21]]></node>
-        <node COLOR="#FF0000"><![CDATA[Maintenabilité: 0.21]]></node>
-        <node COLOR="#FFFF00"><![CDATA[Complexité: 0.79]]></node>
-        <node ><![CDATA[Lignes: 453]]></node>
-        <node ><![CDATA[Taille: 14647 octets]]></node>
+        <node COLOR="#FFA500"><![CDATA[Qualité: 0.42]]></node>
+        <node COLOR="#FFA500"><![CDATA[Maintenabilité: 0.42]]></node>
+        <node COLOR="#FFA500"><![CDATA[Complexité: 0.58]]></node>
+        <node ><![CDATA[Lignes: 116]]></node>
+        <node ><![CDATA[Taille: 4680 octets]]></node>
         <node FOLDED="true"><![CDATA[Fonctions]]></node>
           <node FOLDED="true"><![CDATA[activate]]></node>
             <node ><![CDATA[Visibilité: private]]></node>
-            <node ><![CDATA[Lignes: 29]]></node>
-            <node COLOR="#FFA500"><![CDATA[Complexité: 0.58]]></node>
+            <node ><![CDATA[Lignes: 25]]></node>
+            <node COLOR="#FFA500"><![CDATA[Complexité: 0.50]]></node>
             <node ><![CDATA[Appels: 0]]></node>
           <node FOLDED="true"><![CDATA[deactivate]]></node>
             <node ><![CDATA[Visibilité: private]]></node>
@@ -386,50 +386,10 @@
             <node ><![CDATA[Appels: 0]]></node>
           <node FOLDED="true"><![CDATA[connectToMcpServer]]></node>
             <node ><![CDATA[Visibilité: private]]></node>
-            <node ><![CDATA[Lignes: 9]]></node>
-            <node COLOR="#FF0000"><![CDATA[Complexité: 0.18]]></node>
-            <node ><![CDATA[Appels: 0]]></node>
-          <node FOLDED="true"><![CDATA[showDashboard]]></node>
-            <node ><![CDATA[Visibilité: private]]></node>
-            <node ><![CDATA[Lignes: 7]]></node>
-            <node COLOR="#FF0000"><![CDATA[Complexité: 0.14]]></node>
-            <node ><![CDATA[Appels: 0]]></node>
-          <node FOLDED="true"><![CDATA[initProject]]></node>
-            <node ><![CDATA[Visibilité: private]]></node>
-            <node ><![CDATA[Lignes: 32]]></node>
-            <node COLOR="#FFFF00"><![CDATA[Complexité: 0.64]]></node>
-            <node ><![CDATA[Appels: 0]]></node>
-          <node FOLDED="true"><![CDATA[activatePipeline]]></node>
-            <node ><![CDATA[Visibilité: private]]></node>
-            <node ><![CDATA[Lignes: 40]]></node>
-            <node COLOR="#00FF00"><![CDATA[Complexité: 0.80]]></node>
-            <node ><![CDATA[Appels: 0]]></node>
-          <node FOLDED="true"><![CDATA[queryRag]]></node>
-            <node ><![CDATA[Visibilité: private]]></node>
-            <node ><![CDATA[Lignes: 24]]></node>
-            <node COLOR="#FFA500"><![CDATA[Complexité: 0.48]]></node>
+            <node ><![CDATA[Lignes: 12]]></node>
+            <node COLOR="#FF0000"><![CDATA[Complexité: 0.24]]></node>
             <node ><![CDATA[Appels: 0]]></node>
           <node FOLDED="true"><![CDATA[getStatus]]></node>
-            <node ><![CDATA[Visibilité: private]]></node>
-            <node ><![CDATA[Lignes: 24]]></node>
-            <node COLOR="#FFA500"><![CDATA[Complexité: 0.48]]></node>
-            <node ><![CDATA[Appels: 0]]></node>
-          <node FOLDED="true"><![CDATA[getDashboardWebviewContent]]></node>
-            <node ><![CDATA[Visibilité: private]]></node>
-            <node ><![CDATA[Lignes: 116]]></node>
-            <node COLOR="#00FF00"><![CDATA[Complexité: 1.00]]></node>
-            <node ><![CDATA[Appels: 0]]></node>
-          <node FOLDED="true"><![CDATA[getLoadingWebviewContent]]></node>
-            <node ><![CDATA[Visibilité: private]]></node>
-            <node ><![CDATA[Lignes: 42]]></node>
-            <node COLOR="#00FF00"><![CDATA[Complexité: 0.84]]></node>
-            <node ><![CDATA[Appels: 0]]></node>
-          <node FOLDED="true"><![CDATA[getQueryResultsWebviewContent]]></node>
-            <node ><![CDATA[Visibilité: private]]></node>
-            <node ><![CDATA[Lignes: 54]]></node>
-            <node COLOR="#00FF00"><![CDATA[Complexité: 1.00]]></node>
-            <node ><![CDATA[Appels: 0]]></node>
-          <node FOLDED="true"><![CDATA[getErrorWebviewContent]]></node>
             <node ><![CDATA[Visibilité: private]]></node>
             <node ><![CDATA[Lignes: 30]]></node>
             <node COLOR="#FFFF00"><![CDATA[Complexité: 0.60]]></node>
@@ -470,13 +430,41 @@
         <node COLOR="#FFA500"><![CDATA[Qualité: 0.55]]></node>
         <node COLOR="#FFA500"><![CDATA[Maintenabilité: 0.55]]></node>
         <node COLOR="#FFA500"><![CDATA[Complexité: 0.45]]></node>
-        <node ><![CDATA[Lignes: 166]]></node>
-        <node ><![CDATA[Taille: 6886 octets]]></node>
+        <node ><![CDATA[Lignes: 190]]></node>
+        <node ><![CDATA[Taille: 8275 octets]]></node>
         <node FOLDED="true"><![CDATA[Classes]]></node>
           <node FOLDED="true"><![CDATA[McpClient]]></node>
-            <node ><![CDATA[Méthodes: 6]]></node>
+            <node ><![CDATA[Méthodes: 7]]></node>
+            <node ><![CDATA[Propriétés: 9]]></node>
+            <node ><![CDATA[Lignes: 183]]></node>
+      <node FOLDED="true" ICON="code"><![CDATA[extension-rag/out/services/error-handler.js]]></node>
+        <node COLOR="#FFA500"><![CDATA[Qualité: 0.52]]></node>
+        <node COLOR="#FFA500"><![CDATA[Maintenabilité: 0.52]]></node>
+        <node COLOR="#FFA500"><![CDATA[Complexité: 0.48]]></node>
+        <node ><![CDATA[Lignes: 235]]></node>
+        <node ><![CDATA[Taille: 8678 octets]]></node>
+        <node FOLDED="true"><![CDATA[Fonctions]]></node>
+          <node FOLDED="true"><![CDATA[getErrorHandler]]></node>
+            <node ><![CDATA[Visibilité: private]]></node>
+            <node ><![CDATA[Lignes: 6]]></node>
+            <node COLOR="#FF0000"><![CDATA[Complexité: 0.12]]></node>
+            <node ><![CDATA[Appels: 0]]></node>
+        <node FOLDED="true"><![CDATA[Classes]]></node>
+          <node FOLDED="true"><![CDATA[ErrorHandler]]></node>
+            <node ><![CDATA[Méthodes: 9]]></node>
+            <node ><![CDATA[Propriétés: 5]]></node>
+            <node ><![CDATA[Lignes: 185]]></node>
+      <node FOLDED="true" ICON="code"><![CDATA[extension-rag/out/views/DashboardView.js]]></node>
+        <node COLOR="#FFA500"><![CDATA[Qualité: 0.42]]></node>
+        <node COLOR="#FF0000"><![CDATA[Maintenabilité: 0.34]]></node>
+        <node COLOR="#FFA500"><![CDATA[Complexité: 0.46]]></node>
+        <node ><![CDATA[Lignes: 993]]></node>
+        <node ><![CDATA[Taille: 34652 octets]]></node>
+        <node FOLDED="true"><![CDATA[Classes]]></node>
+          <node FOLDED="true"><![CDATA[DashboardView]]></node>
+            <node ><![CDATA[Méthodes: 12]]></node>
             <node ><![CDATA[Propriétés: 7]]></node>
-            <node ><![CDATA[Lignes: 159]]></node>
+            <node ><![CDATA[Lignes: 953]]></node>
       <node FOLDED="true" ICON="config"><![CDATA[extension-rag/package-lock.json]]></node>
         <node COLOR="#FFA500"><![CDATA[Qualité: 0.44]]></node>
         <node COLOR="#FF0000"><![CDATA[Maintenabilité: 0.40]]></node>
@@ -484,22 +472,22 @@
         <node ><![CDATA[Lignes: 4900]]></node>
         <node ><![CDATA[Taille: 173984 octets]]></node>
       <node FOLDED="true" ICON="config"><![CDATA[extension-rag/package.json]]></node>
-        <node COLOR="#FFA500"><![CDATA[Qualité: 0.56]]></node>
-        <node COLOR="#FFFF00"><![CDATA[Maintenabilité: 0.60]]></node>
-        <node COLOR="#FFA500"><![CDATA[Complexité: 0.50]]></node>
-        <node ><![CDATA[Lignes: 108]]></node>
-        <node ><![CDATA[Taille: 2588 octets]]></node>
+        <node COLOR="#FFA500"><![CDATA[Qualité: 0.58]]></node>
+        <node COLOR="#FFFF00"><![CDATA[Maintenabilité: 0.62]]></node>
+        <node COLOR="#FFA500"><![CDATA[Complexité: 0.48]]></node>
+        <node ><![CDATA[Lignes: 96]]></node>
+        <node ><![CDATA[Taille: 2270 octets]]></node>
       <node FOLDED="true" ICON="code"><![CDATA[extension-rag/src/extension.ts]]></node>
-        <node COLOR="#FF0000"><![CDATA[Qualité: 0.14]]></node>
-        <node COLOR="#FF0000"><![CDATA[Maintenabilité: 0.10]]></node>
-        <node COLOR="#00FF00"><![CDATA[Complexité: 0.80]]></node>
-        <node ><![CDATA[Lignes: 530]]></node>
-        <node ><![CDATA[Taille: 15046 octets]]></node>
+        <node COLOR="#FFA500"><![CDATA[Qualité: 0.45]]></node>
+        <node COLOR="#FFA500"><![CDATA[Maintenabilité: 0.45]]></node>
+        <node COLOR="#FFA500"><![CDATA[Complexité: 0.55]]></node>
+        <node ><![CDATA[Lignes: 93]]></node>
+        <node ><![CDATA[Taille: 2921 octets]]></node>
         <node FOLDED="true"><![CDATA[Fonctions]]></node>
           <node FOLDED="true"><![CDATA[activate]]></node>
             <node ><![CDATA[Visibilité: public]]></node>
-            <node ><![CDATA[Lignes: 40]]></node>
-            <node COLOR="#00FF00"><![CDATA[Complexité: 0.80]]></node>
+            <node ><![CDATA[Lignes: 31]]></node>
+            <node COLOR="#FFFF00"><![CDATA[Complexité: 0.62]]></node>
             <node ><![CDATA[Appels: 0]]></node>
           <node FOLDED="true"><![CDATA[deactivate]]></node>
             <node ><![CDATA[Visibilité: public]]></node>
@@ -511,50 +499,10 @@
             <node ><![CDATA[Lignes: 11]]></node>
             <node COLOR="#FF0000"><![CDATA[Complexité: 0.22]]></node>
             <node ><![CDATA[Appels: 0]]></node>
-          <node FOLDED="true"><![CDATA[showDashboard]]></node>
-            <node ><![CDATA[Visibilité: private]]></node>
-            <node ><![CDATA[Lignes: 19]]></node>
-            <node COLOR="#FF0000"><![CDATA[Complexité: 0.38]]></node>
-            <node ><![CDATA[Appels: 0]]></node>
-          <node FOLDED="true"><![CDATA[initProject]]></node>
-            <node ><![CDATA[Visibilité: private]]></node>
-            <node ><![CDATA[Lignes: 44]]></node>
-            <node COLOR="#00FF00"><![CDATA[Complexité: 0.88]]></node>
-            <node ><![CDATA[Appels: 0]]></node>
-          <node FOLDED="true"><![CDATA[activatePipeline]]></node>
-            <node ><![CDATA[Visibilité: private]]></node>
-            <node ><![CDATA[Lignes: 55]]></node>
-            <node COLOR="#00FF00"><![CDATA[Complexité: 1.00]]></node>
-            <node ><![CDATA[Appels: 0]]></node>
-          <node FOLDED="true"><![CDATA[queryRag]]></node>
-            <node ><![CDATA[Visibilité: private]]></node>
-            <node ><![CDATA[Lignes: 40]]></node>
-            <node COLOR="#00FF00"><![CDATA[Complexité: 0.80]]></node>
-            <node ><![CDATA[Appels: 0]]></node>
           <node FOLDED="true"><![CDATA[getStatus]]></node>
             <node ><![CDATA[Visibilité: private]]></node>
             <node ><![CDATA[Lignes: 33]]></node>
             <node COLOR="#FFFF00"><![CDATA[Complexité: 0.66]]></node>
-            <node ><![CDATA[Appels: 0]]></node>
-          <node FOLDED="true"><![CDATA[getDashboardWebviewContent]]></node>
-            <node ><![CDATA[Visibilité: private]]></node>
-            <node ><![CDATA[Lignes: 121]]></node>
-            <node COLOR="#00FF00"><![CDATA[Complexité: 1.00]]></node>
-            <node ><![CDATA[Appels: 0]]></node>
-          <node FOLDED="true"><![CDATA[getLoadingWebviewContent]]></node>
-            <node ><![CDATA[Visibilité: private]]></node>
-            <node ><![CDATA[Lignes: 42]]></node>
-            <node COLOR="#00FF00"><![CDATA[Complexité: 0.84]]></node>
-            <node ><![CDATA[Appels: 0]]></node>
-          <node FOLDED="true"><![CDATA[getQueryResultsWebviewContent]]></node>
-            <node ><![CDATA[Visibilité: private]]></node>
-            <node ><![CDATA[Lignes: 55]]></node>
-            <node COLOR="#00FF00"><![CDATA[Complexité: 1.00]]></node>
-            <node ><![CDATA[Appels: 0]]></node>
-          <node FOLDED="true"><![CDATA[getErrorWebviewContent]]></node>
-            <node ><![CDATA[Visibilité: private]]></node>
-            <node ><![CDATA[Lignes: 46]]></node>
-            <node COLOR="#00FF00"><![CDATA[Complexité: 0.92]]></node>
             <node ><![CDATA[Appels: 0]]></node>
       <node FOLDED="true" ICON="code"><![CDATA[extension-rag/src/models/json-schemas.ts]]></node>
         <node COLOR="#FFA500"><![CDATA[Qualité: 0.45]]></node>
@@ -616,6 +564,17 @@
             <node ><![CDATA[Méthodes: 9]]></node>
             <node ><![CDATA[Propriétés: 5]]></node>
             <node ><![CDATA[Lignes: 233]]></node>
+      <node FOLDED="true" ICON="code"><![CDATA[extension-rag/src/views/DashboardView.ts]]></node>
+        <node COLOR="#FFA500"><![CDATA[Qualité: 0.41]]></node>
+        <node COLOR="#FF0000"><![CDATA[Maintenabilité: 0.33]]></node>
+        <node COLOR="#FFA500"><![CDATA[Complexité: 0.47]]></node>
+        <node ><![CDATA[Lignes: 1012]]></node>
+        <node ><![CDATA[Taille: 33381 octets]]></node>
+        <node FOLDED="true"><![CDATA[Classes]]></node>
+          <node FOLDED="true"><![CDATA[DashboardView]]></node>
+            <node ><![CDATA[Méthodes: 12]]></node>
+            <node ><![CDATA[Propriétés: 7]]></node>
+            <node ><![CDATA[Lignes: 987]]></node>
       <node FOLDED="true" ICON="code"><![CDATA[extension-rag/test-validation.js]]></node>
         <node COLOR="#FFFF00"><![CDATA[Qualité: 0.78]]></node>
         <node COLOR="#FFFF00"><![CDATA[Maintenabilité: 0.78]]></node>
@@ -628,6 +587,101 @@
         <node COLOR="#FF0000"><![CDATA[Complexité: 0.10]]></node>
         <node ><![CDATA[Lignes: 21]]></node>
         <node ><![CDATA[Taille: 499 octets]]></node>
+      <node FOLDED="true" ICON="config"><![CDATA[mcp-gateway/package-lock.json]]></node>
+        <node COLOR="#FFA500"><![CDATA[Qualité: 0.56]]></node>
+        <node COLOR="#FFFF00"><![CDATA[Maintenabilité: 0.60]]></node>
+        <node COLOR="#FFA500"><![CDATA[Complexité: 0.50]]></node>
+        <node ><![CDATA[Lignes: 123]]></node>
+        <node ><![CDATA[Taille: 4140 octets]]></node>
+      <node FOLDED="true" ICON="config"><![CDATA[mcp-gateway/package.json]]></node>
+        <node COLOR="#00FF00"><![CDATA[Qualité: 0.95]]></node>
+        <node COLOR="#00FF00"><![CDATA[Maintenabilité: 0.99]]></node>
+        <node COLOR="#FF0000"><![CDATA[Complexité: 0.11]]></node>
+        <node ><![CDATA[Lignes: 22]]></node>
+        <node ><![CDATA[Taille: 407 octets]]></node>
+      <node FOLDED="true" ICON="code"><![CDATA[mcp-gateway/src/index.ts]]></node>
+        <node COLOR="#FFA500"><![CDATA[Qualité: 0.57]]></node>
+        <node COLOR="#FFA500"><![CDATA[Maintenabilité: 0.57]]></node>
+        <node COLOR="#FFA500"><![CDATA[Complexité: 0.43]]></node>
+        <node ><![CDATA[Lignes: 272]]></node>
+        <node ><![CDATA[Taille: 8326 octets]]></node>
+      <node FOLDED="true" ICON="code"><![CDATA[mcp-gateway/src/logging.ts]]></node>
+        <node COLOR="#FFA500"><![CDATA[Qualité: 0.54]]></node>
+        <node COLOR="#FFA500"><![CDATA[Maintenabilité: 0.54]]></node>
+        <node COLOR="#FFA500"><![CDATA[Complexité: 0.46]]></node>
+        <node ><![CDATA[Lignes: 256]]></node>
+        <node ><![CDATA[Taille: 6603 octets]]></node>
+        <node FOLDED="true"><![CDATA[Classes]]></node>
+          <node FOLDED="true"><![CDATA[GatewayLogger]]></node>
+            <node ><![CDATA[Méthodes: 18]]></node>
+            <node ><![CDATA[Propriétés: 4]]></node>
+            <node ><![CDATA[Lignes: 234]]></node>
+      <node FOLDED="true" ICON="code"><![CDATA[mcp-gateway/src/types/contract.ts]]></node>
+        <node COLOR="#FFA500"><![CDATA[Qualité: 0.57]]></node>
+        <node COLOR="#FFA500"><![CDATA[Maintenabilité: 0.57]]></node>
+        <node COLOR="#FFA500"><![CDATA[Complexité: 0.43]]></node>
+        <node ><![CDATA[Lignes: 318]]></node>
+        <node ><![CDATA[Taille: 8907 octets]]></node>
+      <node FOLDED="true" ICON="code"><![CDATA[mcp-gateway/test-contract.ts]]></node>
+        <node COLOR="#00FF00"><![CDATA[Qualité: 0.81]]></node>
+        <node COLOR="#00FF00"><![CDATA[Maintenabilité: 0.81]]></node>
+        <node COLOR="#FF0000"><![CDATA[Complexité: 0.19]]></node>
+        <node ><![CDATA[Lignes: 44]]></node>
+        <node ><![CDATA[Taille: 1305 octets]]></node>
+      <node FOLDED="true" ICON="code"><![CDATA[mcp-gateway/test-cycle-detection.ts]]></node>
+        <node COLOR="#FFA500"><![CDATA[Qualité: 0.55]]></node>
+        <node COLOR="#FFA500"><![CDATA[Maintenabilité: 0.55]]></node>
+        <node COLOR="#FFA500"><![CDATA[Complexité: 0.45]]></node>
+        <node ><![CDATA[Lignes: 216]]></node>
+        <node ><![CDATA[Taille: 6838 octets]]></node>
+        <node FOLDED="true"><![CDATA[Fonctions]]></node>
+          <node FOLDED="true"><![CDATA[runTests]]></node>
+            <node ><![CDATA[Visibilité: private]]></node>
+            <node ><![CDATA[Lignes: 207]]></node>
+            <node COLOR="#00FF00"><![CDATA[Complexité: 1.00]]></node>
+            <node ><![CDATA[Appels: 0]]></node>
+      <node FOLDED="true" ICON="code"><![CDATA[mcp-gateway/test-gateway.ts]]></node>
+        <node COLOR="#FFA500"><![CDATA[Qualité: 0.54]]></node>
+        <node COLOR="#FFA500"><![CDATA[Maintenabilité: 0.54]]></node>
+        <node COLOR="#FFA500"><![CDATA[Complexité: 0.46]]></node>
+        <node ><![CDATA[Lignes: 101]]></node>
+        <node ><![CDATA[Taille: 3700 octets]]></node>
+        <node FOLDED="true"><![CDATA[Fonctions]]></node>
+          <node FOLDED="true"><![CDATA[runTests]]></node>
+            <node ><![CDATA[Visibilité: private]]></node>
+            <node ><![CDATA[Lignes: 91]]></node>
+            <node COLOR="#00FF00"><![CDATA[Complexité: 1.00]]></node>
+            <node ><![CDATA[Appels: 0]]></node>
+      <node FOLDED="true" ICON="code"><![CDATA[mcp-gateway/test-json-schema.ts]]></node>
+        <node COLOR="#FFA500"><![CDATA[Qualité: 0.55]]></node>
+        <node COLOR="#FFA500"><![CDATA[Maintenabilité: 0.55]]></node>
+        <node COLOR="#FFA500"><![CDATA[Complexité: 0.45]]></node>
+        <node ><![CDATA[Lignes: 122]]></node>
+        <node ><![CDATA[Taille: 4612 octets]]></node>
+        <node FOLDED="true"><![CDATA[Fonctions]]></node>
+          <node FOLDED="true"><![CDATA[runTests]]></node>
+            <node ><![CDATA[Visibilité: private]]></node>
+            <node ><![CDATA[Lignes: 113]]></node>
+            <node COLOR="#00FF00"><![CDATA[Complexité: 1.00]]></node>
+            <node ><![CDATA[Appels: 0]]></node>
+      <node FOLDED="true" ICON="code"><![CDATA[mcp-gateway/test-routing.ts]]></node>
+        <node COLOR="#FFA500"><![CDATA[Qualité: 0.55]]></node>
+        <node COLOR="#FFA500"><![CDATA[Maintenabilité: 0.55]]></node>
+        <node COLOR="#FFA500"><![CDATA[Complexité: 0.45]]></node>
+        <node ><![CDATA[Lignes: 205]]></node>
+        <node ><![CDATA[Taille: 6269 octets]]></node>
+        <node FOLDED="true"><![CDATA[Fonctions]]></node>
+          <node FOLDED="true"><![CDATA[runTests]]></node>
+            <node ><![CDATA[Visibilité: private]]></node>
+            <node ><![CDATA[Lignes: 196]]></node>
+            <node COLOR="#00FF00"><![CDATA[Complexité: 1.00]]></node>
+            <node ><![CDATA[Appels: 0]]></node>
+      <node FOLDED="true" ICON="config"><![CDATA[mcp-gateway/tsconfig.json]]></node>
+        <node COLOR="#00FF00"><![CDATA[Qualité: 0.96]]></node>
+        <node COLOR="#00FF00"><![CDATA[Maintenabilité: 1.00]]></node>
+        <node COLOR="#FF0000"><![CDATA[Complexité: 0.10]]></node>
+        <node ><![CDATA[Lignes: 20]]></node>
+        <node ><![CDATA[Taille: 461 octets]]></node>
       <node FOLDED="true" ICON="config"><![CDATA[memory.json]]></node>
         <node COLOR="#00FF00"><![CDATA[Qualité: 0.86]]></node>
         <node COLOR="#00FF00"><![CDATA[Maintenabilité: 0.90]]></node>
@@ -638,14 +692,14 @@
         <node COLOR="#FFA500"><![CDATA[Qualité: 0.44]]></node>
         <node COLOR="#FF0000"><![CDATA[Maintenabilité: 0.40]]></node>
         <node COLOR="#FFA500"><![CDATA[Complexité: 0.50]]></node>
-        <node ><![CDATA[Lignes: 8258]]></node>
-        <node ><![CDATA[Taille: 287575 octets]]></node>
+        <node ><![CDATA[Lignes: 8280]]></node>
+        <node ><![CDATA[Taille: 288195 octets]]></node>
       <node FOLDED="true" ICON="config"><![CDATA[package.json]]></node>
-        <node COLOR="#FFFF00"><![CDATA[Qualité: 0.71]]></node>
+        <node COLOR="#FFFF00"><![CDATA[Qualité: 0.70]]></node>
         <node COLOR="#FFFF00"><![CDATA[Maintenabilité: 0.74]]></node>
-        <node COLOR="#FF0000"><![CDATA[Complexité: 0.35]]></node>
-        <node ><![CDATA[Lignes: 71]]></node>
-        <node ><![CDATA[Taille: 1996 octets]]></node>
+        <node COLOR="#FF0000"><![CDATA[Complexité: 0.36]]></node>
+        <node ><![CDATA[Lignes: 72]]></node>
+        <node ><![CDATA[Taille: 2017 octets]]></node>
       <node FOLDED="true" ICON="config"><![CDATA[rag/config/db.config.json]]></node>
         <node COLOR="#00FF00"><![CDATA[Qualité: 0.97]]></node>
         <node COLOR="#00FF00"><![CDATA[Maintenabilité: 1.00]]></node>
@@ -2421,6 +2475,18 @@
             <node ><![CDATA[Lignes: 42]]></node>
             <node COLOR="#00FF00"><![CDATA[Complexité: 0.84]]></node>
             <node ><![CDATA[Appels: 0]]></node>
+      <node FOLDED="true" ICON="code"><![CDATA[src/index-websocket.ts]]></node>
+        <node COLOR="#FFA500"><![CDATA[Qualité: 0.46]]></node>
+        <node COLOR="#FFA500"><![CDATA[Maintenabilité: 0.46]]></node>
+        <node COLOR="#FFA500"><![CDATA[Complexité: 0.54]]></node>
+        <node ><![CDATA[Lignes: 157]]></node>
+        <node ><![CDATA[Taille: 4923 octets]]></node>
+        <node FOLDED="true"><![CDATA[Fonctions]]></node>
+          <node FOLDED="true"><![CDATA[main]]></node>
+            <node ><![CDATA[Visibilité: private]]></node>
+            <node ><![CDATA[Lignes: 91]]></node>
+            <node COLOR="#00FF00"><![CDATA[Complexité: 1.00]]></node>
+            <node ><![CDATA[Appels: 0]]></node>
       <node FOLDED="true" ICON="code"><![CDATA[src/index.ts]]></node>
         <node COLOR="#FFA500"><![CDATA[Qualité: 0.48]]></node>
         <node COLOR="#FFA500"><![CDATA[Maintenabilité: 0.48]]></node>
@@ -4128,6 +4194,29 @@
             <node ><![CDATA[Lignes: 16]]></node>
             <node COLOR="#FF0000"><![CDATA[Complexité: 0.32]]></node>
             <node ><![CDATA[Appels: 0]]></node>
+      <node FOLDED="true" ICON="code"><![CDATA[src/websocket-transport.ts]]></node>
+        <node COLOR="#FFA500"><![CDATA[Qualité: 0.54]]></node>
+        <node COLOR="#FFA500"><![CDATA[Maintenabilité: 0.54]]></node>
+        <node COLOR="#FFA500"><![CDATA[Complexité: 0.46]]></node>
+        <node ><![CDATA[Lignes: 195]]></node>
+        <node ><![CDATA[Taille: 5152 octets]]></node>
+        <node FOLDED="true"><![CDATA[Classes]]></node>
+          <node FOLDED="true"><![CDATA[WebSocketServerTransport]]></node>
+            <node ><![CDATA[Méthodes: 6]]></node>
+            <node ><![CDATA[Propriétés: 5]]></node>
+            <node ><![CDATA[Lignes: 187]]></node>
+      <node FOLDED="true" ICON="code"><![CDATA[src/ws-transport.ts]]></node>
+        <node COLOR="#FFA500"><![CDATA[Qualité: 0.51]]></node>
+        <node COLOR="#FFA500"><![CDATA[Maintenabilité: 0.51]]></node>
+        <node COLOR="#FFA500"><![CDATA[Complexité: 0.49]]></node>
+        <node ><![CDATA[Lignes: 222]]></node>
+        <node ><![CDATA[Taille: 6255 octets]]></node>
+        <node FOLDED="true"><![CDATA[Classes]]></node>
+          <node FOLDED="true"><![CDATA[WebSocketTransport]]></node>
+            <node ><![CDATA[Méthodes: 7]]></node>
+            <node ><![CDATA[Propriétés: 7]]></node>
+            <node ><![CDATA[Lignes: 212]]></node>
+            <node ><![CDATA[Implements: Transport]]></node>
       <node FOLDED="true" ICON="doc"><![CDATA[templates/README.md]]></node>
         <node COLOR="#FFFF00"><![CDATA[Qualité: 0.62]]></node>
         <node COLOR="#FFFF00"><![CDATA[Maintenabilité: 0.70]]></node>
@@ -4197,6 +4286,12 @@
         <node COLOR="#FFA500"><![CDATA[Complexité: 0.50]]></node>
         <node ><![CDATA[Lignes: 120]]></node>
         <node ><![CDATA[Taille: 4154 octets]]></node>
+      <node FOLDED="true" ICON="doc"><![CDATA[test-query.txt]]></node>
+        <node COLOR="#00FF00"><![CDATA[Qualité: 0.99]]></node>
+        <node COLOR="#00FF00"><![CDATA[Maintenabilité: 1.00]]></node>
+        <node COLOR="#FF0000"><![CDATA[Complexité: 0.03]]></node>
+        <node ><![CDATA[Lignes: 5]]></node>
+        <node ><![CDATA[Taille: 239 octets]]></node>
       <node FOLDED="true" ICON="doc"><![CDATA[test-recherche-rag.md]]></node>
         <node COLOR="#FFFF00"><![CDATA[Qualité: 0.62]]></node>
         <node COLOR="#FFFF00"><![CDATA[Maintenabilité: 0.70]]></node>
@@ -4251,6 +4346,12 @@
         <node COLOR="#FF0000"><![CDATA[Complexité: 0.00]]></node>
         <node ><![CDATA[Lignes: 1]]></node>
         <node ><![CDATA[Taille: 0 octets]]></node>
+      <node FOLDED="true" ICON="code"><![CDATA[test-websocket.js]]></node>
+        <node COLOR="#00FF00"><![CDATA[Qualité: 0.81]]></node>
+        <node COLOR="#00FF00"><![CDATA[Maintenabilité: 0.81]]></node>
+        <node COLOR="#FF0000"><![CDATA[Complexité: 0.19]]></node>
+        <node ><![CDATA[Lignes: 44]]></node>
+        <node ><![CDATA[Taille: 977 octets]]></node>
       <node FOLDED="true" ICON="config"><![CDATA[tsconfig.json]]></node>
         <node COLOR="#00FF00"><![CDATA[Qualité: 0.91]]></node>
         <node COLOR="#00FF00"><![CDATA[Maintenabilité: 0.95]]></node>
@@ -4266,52 +4367,53 @@
     <node FOLDED="true"><![CDATA[Relations]]></node>
       <node FOLDED="true"><![CDATA[Imports]]></node>
         <node ><![CDATA[file_035 → ./build-test/src/rag/phase0/chunker/chunker-intelligent.js]]></node>
-        <node ><![CDATA[file_051 → file_133]]></node>
-        <node ><![CDATA[file_051 → file_184]]></node>
+        <node ><![CDATA[file_051 → file_147]]></node>
+        <node ><![CDATA[file_051 → file_199]]></node>
         <node ><![CDATA[file_052 → ../build/src/core/tool-registry.js]]></node>
         <node ><![CDATA[file_052 → ../build/src/rag/state-manager.js]]></node>
         <node ><![CDATA[file_057 → vscode]]></node>
         <node ><![CDATA[file_057 → file_059]]></node>
+        <node ><![CDATA[file_057 → file_060]]></node>
+        <node ><![CDATA[file_057 → file_061]]></node>
         <node ><![CDATA[file_059 → file_058]]></node>
-        <node ><![CDATA[file_062 → vscode]]></node>
-        <node ><![CDATA[file_062 → file_064]]></node>
-        <node ><![CDATA[file_062 → file_065]]></node>
-        <node ><![CDATA[file_064 → file_063]]></node>
-        <node ><![CDATA[file_065 → vscode]]></node>
-        <node ><![CDATA[file_066 → file_058]]></node>
-        <node ><![CDATA[file_076 → path]]></node>
-        <node ><![CDATA[file_076 → url]]></node>
-        <node ><![CDATA[file_076 → file_095]]></node>
-        <node ><![CDATA[file_076 → file_096]]></node>
-        <node ><![CDATA[file_077 → fs]]></node>
-        <node ><![CDATA[file_077 → path]]></node>
-        <node ><![CDATA[... et 361 autres]]></node>
+        <node ><![CDATA[file_060 → vscode]]></node>
+        <node ><![CDATA[file_061 → vscode]]></node>
+        <node ><![CDATA[file_061 → file_060]]></node>
+        <node ><![CDATA[file_064 → vscode]]></node>
+        <node ><![CDATA[file_064 → file_066]]></node>
+        <node ><![CDATA[file_064 → file_067]]></node>
+        <node ><![CDATA[file_064 → file_068]]></node>
+        <node ><![CDATA[file_066 → file_065]]></node>
+        <node ><![CDATA[file_067 → vscode]]></node>
+        <node ><![CDATA[file_068 → vscode]]></node>
+        <node ><![CDATA[... et 396 autres]]></node>
       <node FOLDED="true"><![CDATA[Appels]]></node>
         <node ><![CDATA[fn_001 → fn_002]]></node>
         <node ><![CDATA[fn_002 → fn_001]]></node>
         <node ><![CDATA[fn_003 → fn_004]]></node>
         <node ><![CDATA[fn_003 → fn_005]]></node>
         <node ><![CDATA[fn_003 → fn_006]]></node>
-        <node ><![CDATA[fn_003 → fn_007]]></node>
-        <node ><![CDATA[fn_003 → fn_008]]></node>
-        <node ><![CDATA[fn_003 → fn_009]]></node>
-        <node ><![CDATA[fn_003 → fn_010]]></node>
-        <node ><![CDATA[fn_003 → fn_011]]></node>
-        <node ><![CDATA[fn_003 → fn_012]]></node>
-        <node ><![CDATA[fn_003 → fn_013]]></node>
-        <node ><![CDATA[fn_003 → fn_014]]></node>
         <node ><![CDATA[fn_004 → fn_003]]></node>
         <node ><![CDATA[fn_004 → fn_005]]></node>
         <node ><![CDATA[fn_004 → fn_006]]></node>
-        <node ><![CDATA[fn_004 → fn_007]]></node>
-        <node ><![CDATA[fn_004 → fn_008]]></node>
-        <node ><![CDATA[fn_004 → fn_009]]></node>
-        <node ><![CDATA[fn_004 → fn_010]]></node>
-        <node ><![CDATA[... et 4166 autres]]></node>
+        <node ><![CDATA[fn_005 → fn_003]]></node>
+        <node ><![CDATA[fn_005 → fn_004]]></node>
+        <node ><![CDATA[fn_005 → fn_006]]></node>
+        <node ><![CDATA[fn_006 → fn_003]]></node>
+        <node ><![CDATA[fn_006 → fn_004]]></node>
+        <node ><![CDATA[fn_006 → fn_005]]></node>
+        <node ><![CDATA[fn_007 → fn_008]]></node>
+        <node ><![CDATA[fn_007 → fn_009]]></node>
+        <node ><![CDATA[fn_007 → fn_010]]></node>
+        <node ><![CDATA[fn_007 → fn_011]]></node>
+        <node ><![CDATA[fn_008 → fn_007]]></node>
+        <node ><![CDATA[fn_008 → fn_009]]></node>
+        <node ><![CDATA[... et 3927 autres]]></node>
       <node FOLDED="true"><![CDATA[Héritage]]></node>
-        <node ><![CDATA[cls_009 → EventEmitter]]></node>
-        <node ><![CDATA[cls_030 → Error]]></node>
-        <node ><![CDATA[cls_049 → Error]]></node>
-        <node ><![CDATA[cls_051 → IVectorStore]]></node>
+        <node ><![CDATA[cls_013 → EventEmitter]]></node>
+        <node ><![CDATA[cls_034 → Error]]></node>
+        <node ><![CDATA[cls_053 → Error]]></node>
+        <node ><![CDATA[cls_055 → IVectorStore]]></node>
+        <node ><![CDATA[cls_057 → Transport]]></node>
   </node>
 </map>
