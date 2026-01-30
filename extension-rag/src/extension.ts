@@ -21,6 +21,10 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand('rag-mcp.showDashboard', () => {
       DashboardView.createOrShow(context.extensionUri, mcpClient);
     }),
+    vscode.commands.registerCommand('rag-mcp.configureServer', () => {
+      const command = new (require('./commands/ConfigureServerCommand')).ConfigureServerCommand();
+      command.execute(context);
+    }),
     vscode.commands.registerCommand('rag-mcp.initProject', () => {
       initProject();
     }),

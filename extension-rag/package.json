@@ -21,6 +21,10 @@
         "title": "RAG MCP: Show Dashboard"
       },
       {
+        "command": "rag-mcp.configureServer",
+        "title": "RAG MCP: Configure Server"
+      },
+      {
         "command": "rag-mcp.initProject",
         "title": "RAG MCP: Initialize RAG Project"
       },
