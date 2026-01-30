@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <map version="1.0.1">
-  <node CREATED="1769798444419"><![CDATA[Code Map]]></node>
+  <node CREATED="1769800342101"><![CDATA[Code Map]]></node>
   <node TEXT="Projet" FOLDED="false">
     <node ><![CDATA[Statistiques]]></node>
-      <node ><![CDATA[Fichiers: 238]]></node>
-      <node ><![CDATA[Fonctions: 504]]></node>
-      <node ><![CDATA[Classes: 59]]></node>
-      <node ><![CDATA[Imports: 416]]></node>
-      <node ><![CDATA[Appels: 3947]]></node>
+      <node ><![CDATA[Fichiers: 242]]></node>
+      <node ><![CDATA[Fonctions: 509]]></node>
+      <node ><![CDATA[Classes: 62]]></node>
+      <node ><![CDATA[Imports: 425]]></node>
+      <node ><![CDATA[Appels: 3960]]></node>
     <node ><![CDATA[Fichiers par type]]></node>
-      <node ><![CDATA[doc: 46]]></node>
+      <node ><![CDATA[doc: 47]]></node>
       <node ><![CDATA[config: 32]]></node>
       <node ><![CDATA[other: 4]]></node>
-      <node ><![CDATA[code: 156]]></node>
+      <node ><![CDATA[code: 159]]></node>
     <node FOLDED="true"><![CDATA[Fichiers]]></node>
       <node FOLDED="true" ICON="doc"><![CDATA[.clinerules/Règles_Absolues_Rag_Mcp_Server.md]]></node>
         <node COLOR="#FFFF00"><![CDATA[Qualité: 0.62]]></node>
@@ -308,6 +308,12 @@
         <node COLOR="#FFA500"><![CDATA[Complexité: 0.50]]></node>
         <node ><![CDATA[Lignes: 182]]></node>
         <node ><![CDATA[Taille: 5740 octets]]></node>
+      <node FOLDED="true" ICON="doc"><![CDATA[docs/TASK_EVENTS_SYSTEM.md]]></node>
+        <node COLOR="#FFFF00"><![CDATA[Qualité: 0.62]]></node>
+        <node COLOR="#FFFF00"><![CDATA[Maintenabilité: 0.70]]></node>
+        <node COLOR="#FFA500"><![CDATA[Complexité: 0.50]]></node>
+        <node ><![CDATA[Lignes: 297]]></node>
+        <node ><![CDATA[Taille: 8664 octets]]></node>
       <node FOLDED="true" ICON="doc"><![CDATA[docs/phase2-analysis.md]]></node>
         <node COLOR="#FFFF00"><![CDATA[Qualité: 0.62]]></node>
         <node COLOR="#FFFF00"><![CDATA[Maintenabilité: 0.70]]></node>
@@ -2099,12 +2105,56 @@
             <node ><![CDATA[Méthodes: 11]]></node>
             <node ><![CDATA[Propriétés: 2]]></node>
             <node ><![CDATA[Lignes: 267]]></node>
+      <node FOLDED="true" ICON="code"><![CDATA[src/core/task-event-emitter.ts]]></node>
+        <node COLOR="#FF0000"><![CDATA[Qualité: 0.34]]></node>
+        <node COLOR="#FF0000"><![CDATA[Maintenabilité: 0.26]]></node>
+        <node COLOR="#FFA500"><![CDATA[Complexité: 0.54]]></node>
+        <node ><![CDATA[Lignes: 511]]></node>
+        <node ><![CDATA[Taille: 13709 octets]]></node>
+        <node FOLDED="true"><![CDATA[Fonctions]]></node>
+          <node FOLDED="true"><![CDATA[getTaskEventEmitter]]></node>
+            <node ><![CDATA[Visibilité: public]]></node>
+            <node ><![CDATA[Lignes: 8]]></node>
+            <node COLOR="#FF0000"><![CDATA[Complexité: 0.16]]></node>
+            <node ><![CDATA[Appels: 0]]></node>
+          <node FOLDED="true"><![CDATA[testTaskEventEmitter]]></node>
+            <node ><![CDATA[Visibilité: public]]></node>
+            <node ><![CDATA[Lignes: 55]]></node>
+            <node COLOR="#00FF00"><![CDATA[Complexité: 1.00]]></node>
+            <node ><![CDATA[Appels: 0]]></node>
+        <node FOLDED="true"><![CDATA[Classes]]></node>
+          <node FOLDED="true"><![CDATA[TaskEventEmitter]]></node>
+            <node ><![CDATA[Méthodes: 19]]></node>
+            <node ><![CDATA[Propriétés: 3]]></node>
+            <node ><![CDATA[Lignes: 350]]></node>
+      <node FOLDED="true" ICON="code"><![CDATA[src/core/task-queue-wrapper.ts]]></node>
+        <node COLOR="#FFA500"><![CDATA[Qualité: 0.46]]></node>
+        <node COLOR="#FFA500"><![CDATA[Maintenabilité: 0.46]]></node>
+        <node COLOR="#FFA500"><![CDATA[Complexité: 0.54]]></node>
+        <node ><![CDATA[Lignes: 369]]></node>
+        <node ><![CDATA[Taille: 10545 octets]]></node>
+        <node FOLDED="true"><![CDATA[Fonctions]]></node>
+          <node FOLDED="true"><![CDATA[getTaskQueueWrapper]]></node>
+            <node ><![CDATA[Visibilité: public]]></node>
+            <node ><![CDATA[Lignes: 7]]></node>
+            <node COLOR="#FF0000"><![CDATA[Complexité: 0.14]]></node>
+            <node ><![CDATA[Appels: 0]]></node>
+          <node FOLDED="true"><![CDATA[testTaskQueueWrapper]]></node>
+            <node ><![CDATA[Visibilité: public]]></node>
+            <node ><![CDATA[Lignes: 66]]></node>
+            <node COLOR="#00FF00"><![CDATA[Complexité: 1.00]]></node>
+            <node ><![CDATA[Appels: 0]]></node>
+        <node FOLDED="true"><![CDATA[Classes]]></node>
+          <node FOLDED="true"><![CDATA[TaskQueueWrapper]]></node>
+            <node ><![CDATA[Méthodes: 17]]></node>
+            <node ><![CDATA[Propriétés: 2]]></node>
+            <node ><![CDATA[Lignes: 251]]></node>
       <node FOLDED="true" ICON="code"><![CDATA[src/core/task-queue.ts]]></node>
         <node COLOR="#FF0000"><![CDATA[Qualité: 0.33]]></node>
         <node COLOR="#FF0000"><![CDATA[Maintenabilité: 0.25]]></node>
         <node COLOR="#FFA500"><![CDATA[Complexité: 0.55]]></node>
-        <node ><![CDATA[Lignes: 528]]></node>
-        <node ><![CDATA[Taille: 15913 octets]]></node>
+        <node ><![CDATA[Lignes: 529]]></node>
+        <node ><![CDATA[Taille: 13967 octets]]></node>
         <node FOLDED="true"><![CDATA[Fonctions]]></node>
           <node FOLDED="true"><![CDATA[getTaskQueue]]></node>
             <node ><![CDATA[Visibilité: public]]></node>
@@ -4156,6 +4206,23 @@
         <node COLOR="#FFA500"><![CDATA[Complexité: 0.49]]></node>
         <node ><![CDATA[Lignes: 197]]></node>
         <node ><![CDATA[Taille: 7316 octets]]></node>
+      <node FOLDED="true" ICON="code"><![CDATA[src/tools/rag/task-events.ts]]></node>
+        <node COLOR="#FF0000"><![CDATA[Qualité: 0.38]]></node>
+        <node COLOR="#FF0000"><![CDATA[Maintenabilité: 0.29]]></node>
+        <node COLOR="#FFA500"><![CDATA[Complexité: 0.51]]></node>
+        <node ><![CDATA[Lignes: 669]]></node>
+        <node ><![CDATA[Taille: 19314 octets]]></node>
+        <node FOLDED="true"><![CDATA[Fonctions]]></node>
+          <node FOLDED="true"><![CDATA[testTaskEvents]]></node>
+            <node ><![CDATA[Visibilité: public]]></node>
+            <node ><![CDATA[Lignes: 56]]></node>
+            <node COLOR="#00FF00"><![CDATA[Complexité: 1.00]]></node>
+            <node ><![CDATA[Appels: 0]]></node>
+        <node FOLDED="true"><![CDATA[Classes]]></node>
+          <node FOLDED="true"><![CDATA[EventSubscriptionManager]]></node>
+            <node ><![CDATA[Méthodes: 8]]></node>
+            <node ><![CDATA[Propriétés: 3]]></node>
+            <node ><![CDATA[Lignes: 174]]></node>
       <node FOLDED="true" ICON="code"><![CDATA[src/tools/rag/task-status.ts]]></node>
         <node COLOR="#FFA500"><![CDATA[Qualité: 0.54]]></node>
         <node COLOR="#FFA500"><![CDATA[Maintenabilité: 0.54]]></node>
@@ -4367,26 +4434,26 @@
     <node FOLDED="true"><![CDATA[Relations]]></node>
       <node FOLDED="true"><![CDATA[Imports]]></node>
         <node ><![CDATA[file_035 → ./build-test/src/rag/phase0/chunker/chunker-intelligent.js]]></node>
-        <node ><![CDATA[file_051 → file_147]]></node>
-        <node ><![CDATA[file_051 → file_199]]></node>
-        <node ><![CDATA[file_052 → ../build/src/core/tool-registry.js]]></node>
-        <node ><![CDATA[file_052 → ../build/src/rag/state-manager.js]]></node>
-        <node ><![CDATA[file_057 → vscode]]></node>
-        <node ><![CDATA[file_057 → file_059]]></node>
-        <node ><![CDATA[file_057 → file_060]]></node>
-        <node ><![CDATA[file_057 → file_061]]></node>
-        <node ><![CDATA[file_059 → file_058]]></node>
-        <node ><![CDATA[file_060 → vscode]]></node>
+        <node ><![CDATA[file_052 → file_150]]></node>
+        <node ><![CDATA[file_052 → file_202]]></node>
+        <node ><![CDATA[file_053 → ../build/src/core/tool-registry.js]]></node>
+        <node ><![CDATA[file_053 → ../build/src/rag/state-manager.js]]></node>
+        <node ><![CDATA[file_058 → vscode]]></node>
+        <node ><![CDATA[file_058 → file_060]]></node>
+        <node ><![CDATA[file_058 → file_061]]></node>
+        <node ><![CDATA[file_058 → file_062]]></node>
+        <node ><![CDATA[file_060 → file_059]]></node>
         <node ><![CDATA[file_061 → vscode]]></node>
-        <node ><![CDATA[file_061 → file_060]]></node>
-        <node ><![CDATA[file_064 → vscode]]></node>
-        <node ><![CDATA[file_064 → file_066]]></node>
-        <node ><![CDATA[file_064 → file_067]]></node>
-        <node ><![CDATA[file_064 → file_068]]></node>
-        <node ><![CDATA[file_066 → file_065]]></node>
-        <node ><![CDATA[file_067 → vscode]]></node>
+        <node ><![CDATA[file_062 → vscode]]></node>
+        <node ><![CDATA[file_062 → file_061]]></node>
+        <node ><![CDATA[file_065 → vscode]]></node>
+        <node ><![CDATA[file_065 → file_067]]></node>
+        <node ><![CDATA[file_065 → file_068]]></node>
+        <node ><![CDATA[file_065 → file_069]]></node>
+        <node ><![CDATA[file_067 → file_066]]></node>
         <node ><![CDATA[file_068 → vscode]]></node>
-        <node ><![CDATA[... et 396 autres]]></node>
+        <node ><![CDATA[file_069 → vscode]]></node>
+        <node ><![CDATA[... et 405 autres]]></node>
       <node FOLDED="true"><![CDATA[Appels]]></node>
         <node ><![CDATA[fn_001 → fn_002]]></node>
         <node ><![CDATA[fn_002 → fn_001]]></node>
@@ -4408,12 +4475,12 @@
         <node ><![CDATA[fn_007 → fn_011]]></node>
         <node ><![CDATA[fn_008 → fn_007]]></node>
         <node ><![CDATA[fn_008 → fn_009]]></node>
-        <node ><![CDATA[... et 3927 autres]]></node>
+        <node ><![CDATA[... et 3940 autres]]></node>
       <node FOLDED="true"><![CDATA[Héritage]]></node>
         <node ><![CDATA[cls_013 → EventEmitter]]></node>
-        <node ><![CDATA[cls_034 → Error]]></node>
-        <node ><![CDATA[cls_053 → Error]]></node>
-        <node ><![CDATA[cls_055 → IVectorStore]]></node>
-        <node ><![CDATA[cls_057 → Transport]]></node>
+        <node ><![CDATA[cls_036 → Error]]></node>
+        <node ><![CDATA[cls_055 → Error]]></node>
+        <node ><![CDATA[cls_057 → IVectorStore]]></node>
+        <node ><![CDATA[cls_060 → Transport]]></node>
   </node>
 </map>
