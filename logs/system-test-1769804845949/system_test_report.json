@@ -1,0 +1,87 @@
+{
+  "test_id": "system-test-1769804845949",
+  "timestamp": "2026-01-30T20:27:25.949Z",
+  "status": "partial_success",
+  "score": 83.33333333333334,
+  "checks": [
+    {
+      "check": "5 flux définis",
+      "status": "✅",
+      "details": "Tous les flux de test sont définis"
+    },
+    {
+      "check": "Aucun cycle détecté",
+      "status": "✅",
+      "details": "La détection de cycles fonctionne"
+    },
+    {
+      "check": "Logging structuré",
+      "status": "✅",
+      "details": "6 interactions loggées"
+    },
+    {
+      "check": "Validation JSON Schema",
+      "status": "❌",
+      "details": "Certains flux manquent de validation"
+    },
+    {
+      "check": "Traçabilité complète",
+      "status": "✅",
+      "details": "Trace disponible pour analyse"
+    },
+    {
+      "check": "Séparation IA/Humain",
+      "status": "✅",
+      "details": "VS Code pour humains, autres pour IA"
+    }
+  ],
+  "flows": [
+    {
+      "step": 1,
+      "source": "vs_code",
+      "target": "gateway",
+      "operation": "route",
+      "has_validation": true
+    },
+    {
+      "step": 2,
+      "source": "task_manager",
+      "target": "gateway",
+      "operation": "route",
+      "has_validation": true
+    },
+    {
+      "step": 3,
+      "source": "vs_code",
+      "target": "gateway",
+      "operation": "route",
+      "has_validation": true
+    },
+    {
+      "step": 4,
+      "source": "gateway",
+      "target": "gateway",
+      "operation": "detect_cycles",
+      "has_validation": false
+    },
+    {
+      "step": 5,
+      "source": "all_components",
+      "target": "logging_system",
+      "operation": "log_interaction",
+      "has_validation": false
+    }
+  ],
+  "components": [
+    "vs_code",
+    "gateway",
+    "task_manager",
+    "rag"
+  ],
+  "configuration": {
+    "max_hops": 5,
+    "timeout_ms": 30000
+  },
+  "logs_directory": "/home/ali/Documents/Cline/MCP/rag-mcp-server/logs/system-test-1769804845949",
+  "summary": "⚠️ TEST SYSTÈME PARTIELLEMENT RÉUSSI - Certaines vérifications ont échoué"
+}

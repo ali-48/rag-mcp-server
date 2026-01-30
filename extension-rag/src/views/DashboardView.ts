@@ -151,6 +151,15 @@ export class DashboardView {
             case 'testConnection':
               await this.testConnection();
               break;
+            case 'openConfig':
+              await this.openConfigView();
+              break;
+            case 'openMonitor':
+              await this.openMonitorView();
+              break;
+            case 'openLogs':
+              await this.openLogsView();
+              break;
           }
         } catch (error) {
           await this.errorHandler.handleError(error, {
@@ -160,6 +169,48 @@ export class DashboardView {
       },
       undefined
     );
+  }
+
+  private async openConfigView(): Promise<void> {
+    try {
+      // Import and open ConfigView
+      const { ConfigView } = await import('./ConfigView');
+      ConfigView.createOrShow(this.extensionUri, this.mcpClient);
+    } catch (error) {
+      this.sendMessageToWebview('showNotification', {
+        type: 'error',
+        message: 'Failed to open Configuration',
+        details: error instanceof Error ? error.message : String(error)
+      });
+    }
+  }
+
+  private async openMonitorView(): Promise<void> {
+    try {
+      // Import and open MonitorView
+      const { MonitorView } = await import('./MonitorView');
+      MonitorView.createOrShow(this.extensionUri, this.mcpClient);
+    } catch (error) {
+      this.sendMessageToWebview('showNotification', {
+        type: 'error',
+        message: 'Failed to open Monitor',
+        details: error instanceof Error ? error.message : String(error)
+      });
+    }
+  }
+
+  private async openLogsView(): Promise<void> {
+    try {
+      // Import and open LogView
+      const { LogView } = await import('./LogView');
+      LogView.createOrShow(this.extensionUri, this.mcpClient);
+    } catch (error) {
+      this.sendMessageToWebview('showNotification', {
+        type: 'error',
+        message: 'Failed to open Logs',
+        details: error instanceof Error ? error.message : String(error)
+      });
+    }
   }
 
   private async testConnection(): Promise<void> {
@@ -771,21 +822,29 @@ export class DashboardView {
               </div>
 
               <div class="card">
-                <h2>Quick Actions</h2>
+                <h2>Navigation</h2>
                 <div class="actions-grid">
+                  <button id="openConfigBtn" class="button">
+                    <span class="button-icon">⚙️</span>
+                    Configuration
+                  </button>
+                  <button id="openMonitorBtn" class="button">
+                    <span class="button-icon">📊</span>
+                    Server Monitor
+                  </button>
+                  <button id="openLogsBtn" class="button">
+                    <span class="button-icon">📋</span>
+                    View Logs
+                  </button>
                   <button id="refreshBtn" class="button">
                     <span class="button-icon">🔄</span>
                     Refresh Status
                   </button>
-                  <button id="showErrorLogsBtn" class="button button-warning">
-                    <span class="button-icon">📋</span>
-                    Show Error Logs
-                  </button>
                 </div>
                 <div style="margin-top: 16px; padding: 12px; background: rgba(0, 0, 0, 0.2); border-radius: var(--border-radius); border: 1px solid rgba(255, 255, 255, 0.1);">
                   <p style="margin: 0; font-size: 0.85em; opacity: 0.8;">
-                    <strong>Note:</strong> RAG operations (init, activate, query) are reserved for AI access via MCP protocol.
-                    Use the MCP server directly for these operations.
+                    <strong>Note:</strong> This dashboard provides read-only status monitoring.
+                    For RAG operations (init, activate, query), use the MCP server directly via AI tools.
                   </p>
                 </div>
               </div>
@@ -822,7 +881,9 @@ export class DashboardView {
           const loadingIndicator = document.getElementById('loadingIndicator');
           const content = document.getElementById('content');
           const refreshBtn = document.getElementById('refreshBtn');
-          const showErrorLogsBtn = document.getElementById('showErrorLogsBtn');
+          const openConfigBtn = document.getElementById('openConfigBtn');
+          const openMonitorBtn = document.getElementById('openMonitorBtn');
+          const openLogsBtn = document.getElementById('openLogsBtn');
 
           // State
           let isConnected = false;
@@ -836,8 +897,16 @@ export class DashboardView {
             vscode.postMessage({ command: 'refresh' });
           });
 
-          showErrorLogsBtn.addEventListener('click', () => {
-            vscode.postMessage({ command: 'showErrorLogs' });
+          openConfigBtn.addEventListener('click', () => {
+            vscode.postMessage({ command: 'openConfig' });
+          });
+
+          openMonitorBtn.addEventListener('click', () => {
+            vscode.postMessage({ command: 'openMonitor' });
+          });
+
+          openLogsBtn.addEventListener('click', () => {
+            vscode.postMessage({ command: 'openLogs' });
           });
 
           // Message handling

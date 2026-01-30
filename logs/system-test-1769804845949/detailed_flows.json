@@ -1,0 +1,235 @@
+[
+  {
+    "step": 1,
+    "source": "vs_code",
+    "target": "gateway",
+    "operation": "route",
+    "payload": {
+      "source": "vs_code_extension",
+      "target": "task_manager",
+      "operation": "request_planning",
+      "payload": {
+        "originalRequest": "Test système complet system-test-1769804845949",
+        "tasks": [
+          {
+            "title": "Tâche de test système system-test-1769804845949",
+            "description": "Tâche créée pour tester le flux complet VS Code → Gateway → Task Manager ↔ RAG"
+          }
+        ]
+      },
+      "validation": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "source": {
+              "type": "string"
+            },
+            "target": {
+              "type": "string"
+            },
+            "operation": {
+              "type": "string"
+            },
+            "payload": {
+              "type": "object"
+            }
+          },
+          "required": [
+            "source",
+            "target",
+            "operation",
+            "payload"
+          ]
+        },
+        "version": "1.0.0"
+      }
+    },
+    "expected_result": {
+      "success": true,
+      "request_id": "string",
+      "task_id": "string"
+    }
+  },
+  {
+    "step": 2,
+    "source": "task_manager",
+    "target": "gateway",
+    "operation": "route",
+    "payload": {
+      "source": "task_manager",
+      "target": "rag_server",
+      "operation": "index_decision",
+      "payload": {
+        "decision": {
+          "task_id": "task-system-test-1769804845949",
+          "decision_type": "test_completed",
+          "decision_by": "system_test",
+          "decision_timestamp": "2026-01-30T20:27:25.958Z",
+          "content": "Décision de test pour le système complet",
+          "metadata": {
+            "test": true,
+            "system_test": true,
+            "flow": "vs_code_gateway_task_manager_rag"
+          }
+        },
+        "metadata": {
+          "task_id": "task-system-test-1769804845949",
+          "decision_id": "decision-system-test-1769804845949",
+          "decision_type": "test_completed",
+          "decision_by": "system_test",
+          "decision_timestamp": "2026-01-30T20:27:25.958Z",
+          "system_test": true
+        }
+      },
+      "validation": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "decision": {
+              "type": "object"
+            },
+            "metadata": {
+              "type": "object"
+            }
+          },
+          "required": [
+            "decision",
+            "metadata"
+          ]
+        },
+        "version": "1.0.0"
+      }
+    },
+    "expected_result": {
+      "success": true,
+      "decision_id": "string",
+      "indexed_at": "string"
+    }
+  },
+  {
+    "step": 3,
+    "source": "vs_code",
+    "target": "gateway",
+    "operation": "route",
+    "payload": {
+      "source": "vs_code_extension",
+      "target": "rag_server",
+      "operation": "get_task_context",
+      "payload": {
+        "task_id": "task-system-test-1769804845949",
+        "context_type": "all",
+        "limit": 10,
+        "similarity_threshold": 0.3
+      },
+      "validation": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "task_id": {
+              "type": "string"
+            },
+            "context_type": {
+              "type": "string"
+            },
+            "limit": {
+              "type": "number"
+            },
+            "similarity_threshold": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "task_id",
+            "context_type"
+          ]
+        },
+        "version": "1.0.0"
+      }
+    },
+    "expected_result": {
+      "success": true,
+      "task_context": "object",
+      "statistics": "object",
+      "recommendations": "array"
+    }
+  },
+  {
+    "step": 4,
+    "source": "gateway",
+    "target": "gateway",
+    "operation": "detect_cycles",
+    "payload": {
+      "trace": [
+        "vs_code",
+        "gateway",
+        "task_manager",
+        "gateway",
+        "rag",
+        "gateway"
+      ],
+      "max_hops": 5
+    },
+    "expected_result": {
+      "has_cycle": false,
+      "hops": 5,
+      "trace": "array"
+    }
+  },
+  {
+    "step": 5,
+    "source": "all_components",
+    "target": "logging_system",
+    "operation": "log_interaction",
+    "payload": {
+      "test_id": "system-test-1769804845949",
+      "timestamp": "2026-01-30T20:27:25.958Z",
+      "interactions": [
+        {
+          "component": "vs_code",
+          "operation": "init_test",
+          "timestamp": "2026-01-30T20:27:25.958Z"
+        },
+        {
+          "component": "gateway",
+          "operation": "route",
+          "timestamp": "2026-01-30T20:27:25.958Z"
+        },
+        {
+          "component": "task_manager",
+          "operation": "request_planning",
+          "timestamp": "2026-01-30T20:27:25.958Z"
+        },
+        {
+          "component": "gateway",
+          "operation": "route",
+          "timestamp": "2026-01-30T20:27:25.958Z"
+        },
+        {
+          "component": "rag",
+          "operation": "index_decision",
+          "timestamp": "2026-01-30T20:27:25.958Z"
+        },
+        {
+          "component": "gateway",
+          "operation": "detect_cycles",
+          "timestamp": "2026-01-30T20:27:25.958Z"
+        }
+      ],
+      "metadata": {
+        "test_type": "system_complete",
+        "components": [
+          "vs_code",
+          "gateway",
+          "task_manager",
+          "rag"
+        ],
+        "max_hops": 5
+      }
+    },
+    "expected_result": {
+      "logged": true,
+      "log_file": "string",
+      "entries": 6
+    }
+  }
+]
