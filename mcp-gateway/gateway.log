@@ -1,0 +1,33 @@
+2026-01-30T18:38:52.426Z [INFO] - MCP Gateway initialized
+2026-01-30T18:38:52.527Z [INFO] tgt:test-server - Target registered
+2026-01-30T18:38:52.578Z [INFO] req:req-1769798332578-bzlvmc8nm src:client tgt:test-server op:test_operation - Routing contract: req-1769798332578-bzlvmc8nm
+2026-01-30T18:38:52.579Z [DEBUG] req:req-1769798332578-bzlvmc8nm tgt:test-server - Executing handler for target
+2026-01-30T18:38:52.579Z [INFO] req:req-1769798332578-bzlvmc8nm src:client tgt:test-server op:test_operation - Contract routed successfully (1ms) success:true
+2026-01-30T18:38:52.629Z [INFO] req:req-1769798332629-2o46wofrl src:client tgt:non-existent-server op:test_operation - Routing contract: req-1769798332629-2o46wofrl
+2026-01-30T18:38:52.630Z [ERROR] req:req-1769798332629-2o46wofrl src:client tgt:non-existent-server op:test_operation - Target not found error:TARGET_NOT_FOUND
+2026-01-30T18:38:52.680Z [INFO] tgt:server-a - Target registered
+2026-01-30T18:38:52.680Z [INFO] tgt:server-b - Target registered
+2026-01-30T18:38:52.680Z [INFO] req:req-1769798332680-1h6isolzi src:client tgt:server-a op:test - Routing contract: req-1769798332680-1h6isolzi
+2026-01-30T18:38:52.680Z [DEBUG] req:req-1769798332680-1h6isolzi tgt:server-a - Executing handler for target
+2026-01-30T18:38:52.681Z [INFO] req:req-1769798332681-mq7djdyi9 src:server-a tgt:server-b op:forward - Routing contract: req-1769798332681-mq7djdyi9
+2026-01-30T18:38:52.681Z [DEBUG] req:req-1769798332681-mq7djdyi9 tgt:server-b - Executing handler for target
+2026-01-30T18:38:52.681Z [INFO] req:req-1769798332681-u9dl9rbms src:server-b tgt:server-a op:forward - Routing contract: req-1769798332681-u9dl9rbms
+2026-01-30T18:38:52.681Z [DEBUG] req:req-1769798332681-u9dl9rbms tgt:server-a - Executing handler for target
+2026-01-30T18:38:52.681Z [INFO] req:req-1769798332681-xfdbirh7d src:server-a tgt:server-b op:forward - Routing contract: req-1769798332681-xfdbirh7d
+2026-01-30T18:38:52.681Z [WARN] - Routing cycle detected: server-a:server-b:forward
+2026-01-30T18:38:52.681Z [INFO] req:req-1769798332681-u9dl9rbms src:server-b tgt:server-a op:forward - Contract routed successfully (0ms) success:true
+2026-01-30T18:38:52.681Z [INFO] req:req-1769798332681-mq7djdyi9 src:server-a tgt:server-b op:forward - Contract routed successfully (0ms) success:true
+2026-01-30T18:38:52.681Z [INFO] req:req-1769798332680-1h6isolzi src:client tgt:server-a op:test - Contract routed successfully (1ms) success:true
+2026-01-30T18:38:52.732Z [INFO] tgt:flaky-server - Target registered
+2026-01-30T18:38:52.732Z [INFO] req:req-1769798332732-vn4v2soor src:client tgt:flaky-server op:test - Routing contract: req-1769798332732-vn4v2soor
+2026-01-30T18:38:52.732Z [DEBUG] req:req-1769798332732-vn4v2soor tgt:flaky-server - Executing handler for target
+2026-01-30T18:38:52.733Z [ERROR] req:req-1769798332732-vn4v2soor src:client tgt:flaky-server op:test - Contract routing failed (1ms) success:false
+2026-01-30T18:38:52.733Z [INFO] req:req-1769798332732-vn4v2soor src:client tgt:flaky-server op:test - Retry attempt 2/5
+2026-01-30T18:38:52.743Z [INFO] req:req-1769798332732-vn4v2soor src:client tgt:flaky-server op:test - Routing contract: req-1769798332732-vn4v2soor
+2026-01-30T18:38:52.743Z [DEBUG] req:req-1769798332732-vn4v2soor tgt:flaky-server - Executing handler for target
+2026-01-30T18:38:52.743Z [ERROR] req:req-1769798332732-vn4v2soor src:client tgt:flaky-server op:test - Contract routing failed (0ms) success:false
+2026-01-30T18:38:52.743Z [INFO] req:req-1769798332732-vn4v2soor src:client tgt:flaky-server op:test - Retry attempt 3/5
+2026-01-30T18:38:52.754Z [INFO] req:req-1769798332732-vn4v2soor src:client tgt:flaky-server op:test - Routing contract: req-1769798332732-vn4v2soor
+2026-01-30T18:38:52.754Z [DEBUG] req:req-1769798332732-vn4v2soor tgt:flaky-server - Executing handler for target
+2026-01-30T18:38:52.754Z [INFO] req:req-1769798332732-vn4v2soor src:client tgt:flaky-server op:test - Contract routed successfully (0ms) success:true
+2026-01-30T18:38:52.856Z [INFO] - Cleaned up 5 old history entries
