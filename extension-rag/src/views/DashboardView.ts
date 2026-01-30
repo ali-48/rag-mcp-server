@@ -363,6 +363,7 @@ export class DashboardView {
         <title>RAG MCP Dashboard</title>
         <style>
           :root {
+            /* VS Code Theme Variables */
             --vscode-font-family: -apple-system, BlinkMacSystemFont, 'Segoe WPC', 'Segoe UI', 'HelveticaNeue-Light', 'Ubuntu', 'Droid Sans', sans-serif;
             --vscode-foreground: #cccccc;
             --vscode-editor-background: #1e1e1e;
@@ -374,74 +375,125 @@ export class DashboardView {
             --vscode-errorForeground: #f48771;
             --vscode-warningForeground: #cca700;
             --vscode-successForeground: #89d185;
+            --vscode-input-background: #3c3c3c;
+            --vscode-input-border: #3c3c3c;
+            --vscode-input-foreground: #cccccc;
+            --vscode-focusBorder: #007fd4;
+            --vscode-list-activeSelectionBackground: #094771;
+            --vscode-list-hoverBackground: #2a2d2e;
+            --vscode-badge-background: #4d4d4d;
+            --vscode-badge-foreground: #ffffff;
+
+            /* Custom Variables */
+            --card-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+            --transition-speed: 0.2s;
+            --border-radius: 6px;
+            --border-radius-lg: 8px;
+            --spacing-xs: 4px;
+            --spacing-sm: 8px;
+            --spacing-md: 16px;
+            --spacing-lg: 24px;
+            --spacing-xl: 32px;
           }
 
           body {
             font-family: var(--vscode-font-family);
-            padding: 20px;
+            padding: var(--spacing-md);
             color: var(--vscode-foreground);
             background: var(--vscode-editor-background);
             margin: 0;
             line-height: 1.6;
+            font-size: 13px;
           }
 
           h1 {
             color: var(--vscode-textLink-foreground);
-            border-bottom: 2px solid var(--vscode-textLink-foreground);
-            padding-bottom: 10px;
+            border-bottom: 1px solid var(--vscode-editor-inactiveSelectionBackground);
+            padding-bottom: var(--spacing-sm);
             margin-top: 0;
+            margin-bottom: var(--spacing-lg);
+            font-size: 1.8em;
+            font-weight: 600;
           }
 
           h2 {
-            color: var(--vscode-textLink-foreground);
-            margin-top: 24px;
-            margin-bottom: 16px;
+            color: var(--vscode-foreground);
+            margin-top: var(--spacing-lg);
+            margin-bottom: var(--spacing-md);
+            font-size: 1.3em;
+            font-weight: 600;
+            border-bottom: 1px solid var(--vscode-editor-inactiveSelectionBackground);
+            padding-bottom: var(--spacing-sm);
           }
 
           h3 {
-            margin-top: 12px;
-            margin-bottom: 8px;
+            margin-top: var(--spacing-md);
+            margin-bottom: var(--spacing-sm);
+            font-size: 1.1em;
+            font-weight: 600;
+            color: var(--vscode-foreground);
           }
 
           .dashboard {
             display: flex;
             flex-direction: column;
-            gap: 24px;
+            gap: var(--spacing-lg);
             max-width: 1200px;
             margin: 0 auto;
           }
 
           .card {
             background: var(--vscode-editor-inactiveSelectionBackground);
-            border-radius: 8px;
-            padding: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            border-radius: var(--border-radius-lg);
+            padding: var(--spacing-lg);
+            box-shadow: var(--card-shadow);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: box-shadow var(--transition-speed) ease;
+          }
+
+          .card:hover {
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
           }
 
           .connection-status {
             display: flex;
             align-items: center;
-            gap: 12px;
-            margin-bottom: 16px;
-            padding: 12px;
-            border-radius: 6px;
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-lg);
+            padding: var(--spacing-md);
+            border-radius: var(--border-radius);
             background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
           }
 
           .status-indicator {
-            width: 12px;
-            height: 12px;
+            width: 10px;
+            height: 10px;
             border-radius: 50%;
+            position: relative;
           }
 
           .status-connected {
             background: var(--vscode-successForeground);
-            box-shadow: 0 0 8px var(--vscode-successForeground);
+            box-shadow: 0 0 10px var(--vscode-successForeground);
+          }
+
+          .status-connected::after {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            border-radius: 50%;
+            background: var(--vscode-successForeground);
+            opacity: 0.3;
+            animation: pulse 2s infinite;
           }
 
           .status-disconnected {
             background: var(--vscode-errorForeground);
-            box-shadow: 0 0 8px var(--vscode-errorForeground);
+            box-shadow: 0 0 10px var(--vscode-errorForeground);
           }
 
           .status-testing {
@@ -450,64 +502,89 @@ export class DashboardView {
           }
 
           @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
+            0%, 100% {
+              transform: scale(1);
+              opacity: 1;
+            }
+            50% {
+              transform: scale(1.1);
+              opacity: 0.7;
+            }
           }
 
           .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 16px;
-            margin-top: 16px;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--spacing-md);
+            margin-top: var(--spacing-md);
           }
 
           .stat-card {
             background: rgba(0, 0, 0, 0.2);
-            padding: 16px;
-            border-radius: 6px;
+            padding: var(--spacing-md);
+            border-radius: var(--border-radius);
             text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: transform var(--transition-speed) ease, border-color var(--transition-speed) ease;
+          }
+
+          .stat-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--vscode-textLink-foreground);
           }
 
           .stat-value {
-            font-size: 2em;
-            font-weight: bold;
-            margin: 8px 0;
+            font-size: 2.2em;
+            font-weight: 600;
+            margin: var(--spacing-sm) 0;
+            color: var(--vscode-textLink-foreground);
           }
 
           .stat-label {
-            font-size: 0.9em;
+            font-size: 0.85em;
             opacity: 0.8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
           }
 
           .actions-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 12px;
-            margin-top: 16px;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: var(--spacing-sm);
+            margin-top: var(--spacing-md);
           }
 
           .button {
             background: var(--vscode-button-background);
             color: white;
             border: none;
-            padding: 10px 16px;
-            border-radius: 4px;
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: var(--border-radius);
             cursor: pointer;
             font-family: inherit;
-            font-size: 14px;
-            transition: background 0.2s;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all var(--transition-speed) ease;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
+            gap: var(--spacing-sm);
+            min-height: 36px;
           }
 
           .button:hover {
             background: var(--vscode-button-hoverBackground);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
           }
 
           .button:active {
-            transform: translateY(1px);
+            transform: translateY(0);
+          }
+
+          .button:focus {
+            outline: 1px solid var(--vscode-focusBorder);
+            outline-offset: 2px;
           }
 
           .button-danger {
@@ -522,60 +599,92 @@ export class DashboardView {
             background: #5c4c2c;
           }
 
+          .button-secondary {
+            background: var(--vscode-badge-background);
+          }
+
           .button-icon {
-            font-size: 16px;
+            font-size: 14px;
+            line-height: 1;
           }
 
           .projects-list {
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: var(--spacing-sm);
           }
 
           .project-card {
             background: rgba(0, 0, 0, 0.2);
-            padding: 16px;
-            border-radius: 6px;
+            padding: var(--spacing-md);
+            border-radius: var(--border-radius);
             border-left: 4px solid var(--vscode-textLink-foreground);
+            transition: all var(--transition-speed) ease;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+          }
+
+          .project-card:hover {
+            transform: translateX(4px);
+            border-color: var(--vscode-textLink-foreground);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
           }
 
           .project-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 8px;
+            margin-bottom: var(--spacing-sm);
           }
 
           .project-status {
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.8em;
-            font-weight: bold;
+            padding: var(--spacing-xs) var(--spacing-sm);
+            border-radius: var(--border-radius);
+            font-size: 0.75em;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
           }
 
-          .status-initialized { background: #2c5c2c; }
-          .status-active { background: #2c4c5c; }
-          .status-completed { background: #5c4c2c; }
-          .status-error { background: #5c2c2c; }
+          .status-initialized {
+            background: rgba(137, 209, 133, 0.2);
+            color: var(--vscode-successForeground);
+            border: 1px solid rgba(137, 209, 133, 0.3);
+          }
+          .status-active {
+            background: rgba(55, 148, 255, 0.2);
+            color: var(--vscode-textLink-foreground);
+            border: 1px solid rgba(55, 148, 255, 0.3);
+          }
+          .status-completed {
+            background: rgba(204, 167, 0, 0.2);
+            color: var(--vscode-warningForeground);
+            border: 1px solid rgba(204, 167, 0, 0.3);
+          }
+          .status-error {
+            background: rgba(244, 135, 113, 0.2);
+            color: var(--vscode-errorForeground);
+            border: 1px solid rgba(244, 135, 113, 0.3);
+          }
 
           .project-details {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 12px;
-            margin-top: 12px;
-            font-size: 0.9em;
-            opacity: 0.9;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: var(--spacing-sm);
+            margin-top: var(--spacing-sm);
+            font-size: 0.85em;
           }
 
           .detail-item {
             display: flex;
             flex-direction: column;
-            gap: 4px;
+            gap: 2px;
           }
 
           .detail-label {
-            font-size: 0.8em;
+            font-size: 0.75em;
             opacity: 0.7;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
           }
 
           .loading {
@@ -583,12 +692,12 @@ export class DashboardView {
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 40px;
-            gap: 16px;
+            padding: var(--spacing-xl);
+            gap: var(--spacing-md);
           }
 
           .spinner {
-            border: 3px solid rgba(255,255,255,0.1);
+            border: 3px solid rgba(255, 255, 255, 0.1);
             border-top: 3px solid var(--vscode-textLink-foreground);
             border-radius: 50%;
             width: 40px;
@@ -605,13 +714,14 @@ export class DashboardView {
             position: fixed;
             top: 20px;
             right: 20px;
-            padding: 16px;
-            border-radius: 6px;
+            padding: var(--spacing-md);
+            border-radius: var(--border-radius);
             background: var(--vscode-editor-inactiveSelectionBackground);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
             z-index: 1000;
             max-width: 400px;
             animation: slideIn 0.3s ease-out;
+            border: 1px solid rgba(255, 255, 255, 0.1);
           }
 
           @keyframes slideIn {
@@ -645,18 +755,28 @@ export class DashboardView {
             cursor: pointer;
             font-size: 16px;
             padding: 4px;
+            opacity: 0.7;
+            transition: opacity var(--transition-speed) ease;
+          }
+
+          .notification-close:hover {
+            opacity: 1;
           }
 
           .empty-state {
             text-align: center;
-            padding: 40px;
-            opacity: 0.7;
+            padding: var(--spacing-xl);
+            opacity: 0.6;
+            font-style: italic;
+            border: 2px dashed rgba(255, 255, 255, 0.1);
+            border-radius: var(--border-radius);
+            background: rgba(0, 0, 0, 0.1);
           }
 
           .flex-row {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: var(--spacing-sm);
           }
 
           .flex-grow {
@@ -665,6 +785,82 @@ export class DashboardView {
 
           .hidden {
             display: none !important;
+          }
+
+          .monospace {
+            font-family: 'SF Mono', Monaco, 'Cascadia Mono', 'Segoe UI Mono', 'Roboto Mono', 'Ubuntu Mono', monospace;
+            font-size: 0.9em;
+            opacity: 0.8;
+          }
+
+          .badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 0.75em;
+            font-weight: 600;
+            background: var(--vscode-badge-background);
+            color: var(--vscode-badge-foreground);
+          }
+
+          .tooltip {
+            position: relative;
+          }
+
+          .tooltip:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 6px 10px;
+            background: var(--vscode-editor-inactiveSelectionBackground);
+            color: var(--vscode-foreground);
+            border-radius: var(--border-radius);
+            font-size: 0.85em;
+            white-space: nowrap;
+            z-index: 1000;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+          }
+
+          /* Responsive adjustments */
+          @media (max-width: 768px) {
+            .dashboard {
+              gap: var(--spacing-md);
+            }
+
+            .card {
+              padding: var(--spacing-md);
+            }
+
+            .stats-grid {
+              grid-template-columns: repeat(2, 1fr);
+            }
+
+            .actions-grid {
+              grid-template-columns: 1fr;
+            }
+
+            .project-details {
+              grid-template-columns: 1fr;
+            }
+          }
+
+          @media (max-width: 480px) {
+            body {
+              padding: var(--spacing-sm);
+            }
+
+            .stats-grid {
+              grid-template-columns: 1fr;
+            }
+
+            .connection-status {
+              flex-direction: column;
+              align-items: flex-start;
+              gap: var(--spacing-sm);
+            }
           }
         </style>
       </head>
