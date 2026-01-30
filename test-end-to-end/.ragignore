@@ -1,0 +1,11 @@
+# Fichiers et dossiers à ignorer pour le RAG
+node_modules/
+.git/
+dist/
+build/
+rag/db
+rag/*.log
+*.tmp
+*.log
+.DS_Store
+Thumbs.db

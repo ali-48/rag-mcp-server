@@ -388,6 +388,13 @@ export class IntelligentChunker {
         if (!ast) {
             return this.createEmptyResult(filePath, language);
         }
+        // DEBUG: Log l'AST
+        console.log(`[DEBUG CHUNKER] AST pour ${filePath}:`, {
+            type: ast.rootNode?.type || 'unknown',
+            hasRootNode: !!ast.rootNode,
+            childCount: ast.rootNode?.childCount || 0,
+            textLength: sourceCode.length
+        });
         // Initialiser le contexte
         const context = {
             parseResult,
@@ -401,9 +408,22 @@ export class IntelligentChunker {
             },
         };
         // Obtenir le nœud racine de l'AST
-        const rootNode = ast.rootNode || ast;
+        const rootNode = ast.rootNode;
+        if (!rootNode) {
+            console.warn(`[DEBUG CHUNKER] Pas de rootNode dans AST, retour résultat vide`);
+            return this.createEmptyResult(filePath, language);
+        }
+        // DEBUG: Log le root node
+        console.log(`[DEBUG CHUNKER] Root node:`, {
+            type: rootNode.type,
+            childCount: rootNode.childCount,
+            startPosition: rootNode.startPosition,
+            endPosition: rootNode.endPosition
+        });
         // Appliquer les règles sur l'AST
         this.applyRulesToAST(rootNode, context);
+        // DEBUG: Log les chunks après application des règles
+        console.log(`[DEBUG CHUNKER] Chunks après applyRulesToAST:`, context.state.chunks.length);
         // Appliquer les règles non négociables
         this.applyNonNegotiableRules(context);
         // Trier les chunks par position
@@ -763,19 +783,47 @@ export class IntelligentChunker {
         const byGranularity = {};
         let totalQuality = 0;
         let totalRelevance = 0;
+        let totalTokens = 0;
+        let minTokens = chunks.length > 0 ? Number.MAX_SAFE_INTEGER : 0;
+        let maxTokens = 0;
         for (const chunk of chunks) {
             byType[chunk.type] = (byType[chunk.type] || 0) + 1;
             byGranularity[chunk.granularity] = (byGranularity[chunk.granularity] || 0) + 1;
             totalQuality += chunk.qualityScore;
             totalRelevance += chunk.relevanceScore;
+            const tokens = chunk.metadata.metrics.tokens;
+            totalTokens += tokens;
+            if (tokens < minTokens)
+                minTokens = tokens;
+            if (tokens > maxTokens)
+                maxTokens = tokens;
         }
+        const avgTokens = chunks.length > 0 ? totalTokens / chunks.length : 0;
+        const avgLines = chunks.length > 0 ?
+            chunks.reduce((sum, chunk) => sum + chunk.metadata.metrics.lines, 0) / chunks.length : 0;
         return {
             totalChunks: chunks.length,
+            chunksPerFile: chunks.length, // alias pour compatibilité
             byType,
             byGranularity,
             averageQuality: chunks.length > 0 ? totalQuality / chunks.length : 0,
             averageRelevance: chunks.length > 0 ? totalRelevance / chunks.length : 0,
             chunkingTime,
+            tokenStats: {
+                average: Math.round(avgTokens * 100) / 100,
+                min: minTokens === Number.MAX_SAFE_INTEGER ? 0 : minTokens,
+                max: maxTokens,
+                total: totalTokens,
+            },
+            lineStats: {
+                average: Math.round(avgLines * 100) / 100,
+                total: chunks.reduce((sum, chunk) => sum + chunk.metadata.metrics.lines, 0),
+            },
+            sizeStats: {
+                avgChunkSize: Math.round(avgTokens), // pour compatibilité avec la tâche T3.4
+                minChunkSize: minTokens === Number.MAX_SAFE_INTEGER ? 0 : minTokens,
+                maxChunkSize: maxTokens,
+            },
         };
     }
     /**

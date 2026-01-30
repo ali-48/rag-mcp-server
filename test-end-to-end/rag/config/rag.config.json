@@ -5,13 +5,10 @@
   "mode": "default",
   "infrastructure": {
     "memory_db": "sqlite://rag/db/memory/rag_memory.sqlite",
-    "vector_db": null,
-    "vector_store": {
-      "backend": "sqlite",
-      "path": "./rag/db/vector/rag_vectors.sqlite"
-    },
+    "vector_db": "sqlite://rag/db/vector/rag_vectors.sqlite",
+    "metadata_db": "sqlite://rag/db/metadata/rag_metadata.sqlite",
     "config_version": "1.0"
   },
-  "project_id": "7c0c6481",
-  "initialized_at": "2026-01-29T18:04:03.268Z"
+  "project_id": "4d6c6db8",
+  "initialized_at": "2026-01-29T17:55:03.349Z"
 }

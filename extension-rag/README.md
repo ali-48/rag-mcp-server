@@ -12,13 +12,10 @@ A VS Code extension for interacting with RAG MCP Server.
 
 ## Commands
 
-| Command                           | Description                      |
-| --------------------------------- | -------------------------------- |
-| `RAG MCP: Show Dashboard`         | Opens interactive dashboard      |
-| `RAG MCP: Initialize RAG Project` | Initialize RAG for a project     |
-| `RAG MCP: Activate RAG Pipeline`  | Run RAG pipeline on a project    |
-| `RAG MCP: Query RAG`              | Semantic search in indexed files |
-| `RAG MCP: Get System Status`      | Get RAG system status            |
+| Command                      | Description                 |
+| ---------------------------- | --------------------------- |
+| `RAG MCP: Show Dashboard`    | Opens interactive dashboard |
+| `RAG MCP: Get System Status` | Get RAG system status       |
 
 ## Configuration
 

@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { McpClient } from './services/McpClient';
 import { getErrorHandler } from './services/error-handler';
+import { DashboardView } from './views/DashboardView';
 
 let mcpClient: McpClient | null = null;
 let errorHandler = getErrorHandler();
@@ -18,7 +19,7 @@ export function activate(context: vscode.ExtensionContext) {
   // Register commands
   const commands = [
     vscode.commands.registerCommand('rag-mcp.showDashboard', () => {
-      showDashboard(context);
+      DashboardView.createOrShow(context.extensionUri, mcpClient);
     }),
     vscode.commands.registerCommand('rag-mcp.initProject', () => {
       initProject();
