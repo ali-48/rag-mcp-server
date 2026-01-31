@@ -1,0 +1,145 @@
+{
+  "extensions": [
+    {
+      "name": "Git MCP",
+      "description": "Outils Git via MCP",
+      "compatible": true,
+      "conflicts": [],
+      "commands": [
+        "git_status",
+        "git_diff",
+        "git_log"
+      ],
+      "resources": [
+        "git://*"
+      ],
+      "recommendation": "✅ Compatible"
+    },
+    {
+      "name": "SQLite MCP",
+      "description": "Accès SQLite via MCP",
+      "compatible": true,
+      "conflicts": [],
+      "commands": [
+        "read_query",
+        "write_query",
+        "create_table"
+      ],
+      "resources": [
+        "sqlite://*"
+      ],
+      "recommendation": "✅ Compatible"
+    },
+    {
+      "name": "Time MCP",
+      "description": "Outils temps via MCP",
+      "compatible": true,
+      "conflicts": [],
+      "commands": [
+        "get_current_time",
+        "convert_time"
+      ],
+      "resources": [
+        "time://*"
+      ],
+      "recommendation": "✅ Compatible"
+    },
+    {
+      "name": "Web Research MCP",
+      "description": "Recherche web via MCP",
+      "compatible": true,
+      "conflicts": [],
+      "commands": [
+        "search_google",
+        "visit_page"
+      ],
+      "resources": [
+        "web://*"
+      ],
+      "recommendation": "✅ Compatible"
+    },
+    {
+      "name": "Ollama MCP",
+      "description": "LLM local via MCP",
+      "compatible": true,
+      "conflicts": [],
+      "commands": [
+        "run",
+        "chat_completion",
+        "pull"
+      ],
+      "resources": [
+        "ollama://*"
+      ],
+      "recommendation": "✅ Compatible"
+    }
+  ],
+  "conflicts": [
+    {
+      "command": "get_status",
+      "ragDescription": "Récupère le statut",
+      "conflictingExtensions": [
+        "Git MCP",
+        "SQLite MCP",
+        "Time MCP"
+      ],
+      "severity": "MEDIUM",
+      "resolution": "Renommer la commande ou utiliser un namespace"
+    }
+  ],
+  "recommendations": [
+    {
+      "scenario": "RAG + Git MCP",
+      "description": "RAG avec outils Git",
+      "compatible": false,
+      "issues": [
+        "Commandes similaires: get_status (RAG) vs git_status (Git)"
+      ],
+      "recommendations": [
+        "Utiliser des noms distincts ou namespaces"
+      ]
+    },
+    {
+      "scenario": "RAG + SQLite MCP",
+      "description": "RAG avec base de données",
+      "compatible": true,
+      "issues": [
+        "Accès concurrent à SQLite possible"
+      ],
+      "recommendations": [
+        "Utiliser des connexions DB distinctes",
+        "Implémenter un verrouillage"
+      ]
+    },
+    {
+      "scenario": "RAG + Web Research MCP",
+      "description": "RAG avec recherche web",
+      "compatible": true,
+      "issues": [
+        "Accès réseau concurrent"
+      ],
+      "recommendations": [
+        "Limiter les requêtes parallèles",
+        "Implémenter un rate limiting global"
+      ]
+    },
+    {
+      "scenario": "RAG + Ollama MCP",
+      "description": "RAG avec LLM local",
+      "compatible": true,
+      "issues": [
+        "Utilisation concurrente du LLM"
+      ],
+      "recommendations": [
+        "Gérer les files d'attente de requêtes",
+        "Limiter l'utilisation mémoire"
+      ]
+    }
+  ],
+  "summary": {
+    "compatible": 5,
+    "incompatible": 0,
+    "warnings": 1,
+    "total": 6
+  }
+}

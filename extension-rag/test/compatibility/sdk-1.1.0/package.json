@@ -1,0 +1,13 @@
+{
+  "name": "test-sdk-1.1.0",
+  "version": "1.0.0",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.1.0",
+    "ws": "^8.17.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "@types/node": "^20.0.0",
+    "@types/ws": "^8.5.0"
+  }
+}

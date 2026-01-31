@@ -60,12 +60,12 @@ async function connectToMcpServer() {
 async function getStatus() {
   try {
     const result = await errorHandler.executeWithRetry(
-      () => mcpClient!.call('get_status', {
+      () => mcpClient!.call('rag_get_status', {
         scope: 'global',
         include_notes_for_ai: true,
         include_allowed_actions: true
       }),
-      { tool: 'get_status', description: 'Get RAG system status' }
+      { tool: 'rag_get_status', description: 'Get RAG system status' }
     );
 
     if (result?.status === 'ok') {
@@ -80,12 +80,12 @@ async function getStatus() {
     } else {
       const errorMessage = result?.message || 'Unknown error';
       await errorHandler.handleError(new Error(`Failed to get status: ${errorMessage}`), {
-        tool: 'get_status'
+        tool: 'rag_get_status'
       });
     }
   } catch (error) {
     await errorHandler.handleError(error, {
-      tool: 'get_status',
+      tool: 'rag_get_status',
       operation: 'getStatus'
     });
   }

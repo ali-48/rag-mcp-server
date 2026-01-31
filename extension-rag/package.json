@@ -80,16 +80,21 @@
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile",
     "test": "node ./out/test/runTest.js",
+    "test:unit": "jest --config jest.config.js",
+    "test:unit:watch": "jest --config jest.config.js --watch",
+    "test:unit:coverage": "jest --config jest.config.js --coverage",
+    "test:unit:verbose": "jest --config jest.config.js --verbose",
     "package": "vsce package"
   },
   "devDependencies": {
+    "@modelcontextprotocol/sdk": "^1.25.3",
+    "@types/jest": "^30.0.0",
     "@types/node": "^20.0.0",
     "@types/vscode": "^1.96.0",
     "@vscode/vsce": "^3.2.0",
-    "typescript": "^5.0.0"
-  },
-  "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.0.0",
-    "ws": "^8.0.0"
+    "jest": "^30.2.0",
+    "ts-jest": "^29.4.6",
+    "typescript": "^5.0.0",
+    "ws": "^8.19.0"
   }
 }

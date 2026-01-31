@@ -2,8 +2,6 @@
   "compilerOptions": {
     "module": "commonjs",
     "target": "ES2022",
-    // "dom" est nécessaire pour les WebViews (Dashboard, Monitor, Config, Log)
-    // skipLibCheck: true permet d'éviter les conflits avec le module 'ws'
     "lib": ["ES2022", "dom"],
     "outDir": "out",
     "sourceMap": true,

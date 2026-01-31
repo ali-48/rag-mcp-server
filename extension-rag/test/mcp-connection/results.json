@@ -1,0 +1,64 @@
+{
+  "connection": {
+    "passed": true,
+    "duration": "6ms",
+    "url": "ws://localhost:3000",
+    "message": "Serveur disponible",
+    "websocket": {
+      "passed": true,
+      "duration": "6ms",
+      "message": "Connexion WebSocket établie"
+    }
+  },
+  "authentication": {
+    "passed": false,
+    "error": "Cannot find module '/home/ali/Documents/Cline/MCP/rag-mcp-server/extension-rag/node_modules/@modelcontextprotocol/sdk/dist/cjs/index.js'",
+    "message": "Échec authentification MCP"
+  },
+  "commands": {
+    "passed": 0,
+    "total": 3,
+    "results": [
+      {
+        "name": "client_connection",
+        "description": "Connexion client MCP",
+        "passed": false,
+        "error": "Cannot find module '/home/ali/Documents/Cline/MCP/rag-mcp-server/extension-rag/node_modules/@modelcontextprotocol/sdk/dist/cjs/index.js'",
+        "message": "Impossible de créer le client"
+      }
+    ],
+    "message": "0/3 commandes réussies"
+  },
+  "performance": {
+    "results": [
+      {
+        "name": "Latence",
+        "passed": true,
+        "value": "2ms",
+        "threshold": "< 1000ms",
+        "message": "Latence acceptable"
+      },
+      {
+        "name": "Débit",
+        "passed": true,
+        "value": "93 msg/sec",
+        "threshold": "> 5 msg/sec",
+        "message": "Débit acceptable"
+      },
+      {
+        "name": "Stabilité",
+        "passed": true,
+        "value": "100%",
+        "threshold": ">= 80%",
+        "message": "Stabilité acceptable"
+      }
+    ],
+    "message": "3/3 tests passés"
+  },
+  "errors": [],
+  "summary": {
+    "passed": 5,
+    "failed": 4,
+    "total": 9
+  }
+}

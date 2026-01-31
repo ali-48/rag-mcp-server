@@ -208,7 +208,7 @@ export const toolSchemas: Record<string, { input: JSONSchema; output: JSONSchema
     input: initRagInputSchema,
     output: baseOutputSchema,
   },
-  get_status: {
+  rag_get_status: {
     input: getStatusInputSchema,
     output: baseOutputSchema,
   },

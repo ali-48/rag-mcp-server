@@ -156,10 +156,10 @@ export class ContextService {
         },
         branches: {
           current: state.HEAD?.name || null,
-          local: state.refs?.filter(ref => ref.type === 0).map(ref => ref.name) || [],
-          remote: state.refs?.filter(ref => ref.type === 1).map(ref => ref.name) || []
+          local: state.refs?.filter((ref: GitRef) => ref.type === 0).map((ref: GitRef) => ref.name) || [],
+          remote: state.refs?.filter((ref: GitRef) => ref.type === 1).map((ref: GitRef) => ref.name) || []
         },
-        remotes: repo.state.remotes?.map(remote => ({
+        remotes: repo.state.remotes?.map((remote: GitRemoteApi) => ({
           name: remote.name,
           fetch_url: remote.fetchUrl || null,
           push_url: remote.pushUrl || null
@@ -399,7 +399,7 @@ export class ContextService {
     }
 
     // Vérifier les fichiers de configuration
-    const configNames = project.config_files.map(c => c.name);
+    const configNames = project.config_files?.map(c => c.name) || [];
     if (configNames.includes('dockerfile') || configNames.includes('docker-compose.yml')) {
       return 'docker';
     }
@@ -417,6 +417,18 @@ export class ContextService {
 }
 
 // Types pour le contexte VS Code
+
+// Interfaces pour les types Git de VS Code
+interface GitRef {
+  type: number;  // 0 = local, 1 = remote
+  name: string;
+}
+
+interface GitRemoteApi {
+  name: string;
+  fetchUrl?: string;
+  pushUrl?: string;
+}
 
 export interface VSCodeContext {
   timestamp: string;

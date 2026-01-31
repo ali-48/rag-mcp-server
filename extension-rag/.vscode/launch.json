@@ -7,7 +7,47 @@
       "request": "launch",
       "args": ["--extensionDevelopmentPath=${workspaceFolder}"],
       "outFiles": ["${workspaceFolder}/out/**/*.js"],
-      "preLaunchTask": "${defaultBuildTask}"
+      "preLaunchTask": "${defaultBuildTask}",
+      "presentation": {
+        "group": "Extension",
+        "order": 1
+      }
+    },
+    {
+      "name": "Start WebSocket MCP Server",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/../build/index-websocket.js",
+      "cwd": "${workspaceFolder}/..",
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "skipFiles": ["<node_internals>/**"],
+      "env": {
+        "NODE_ENV": "development"
+      },
+      "presentation": {
+        "group": "Server",
+        "order": 1
+      },
+      "preLaunchTask": "npm: build (workspace)"
+    },
+    {
+      "name": "Extension + WebSocket Server",
+      "type": "extensionHost",
+      "request": "launch",
+      "args": ["--extensionDevelopmentPath=${workspaceFolder}"],
+      "outFiles": ["${workspaceFolder}/out/**/*.js"],
+      "preLaunchTask": "${defaultBuildTask}",
+      "presentation": {
+        "group": "Combined",
+        "order": 1
+      },
+      "serverReadyAction": {
+        "action": "startDebugging",
+        "name": "Start WebSocket MCP Server",
+        "killOnServerStop": true,
+        "pattern": "WebSocket server started on port 3000"
+      }
     },
     {
       "name": "Extension Tests",
@@ -21,7 +61,21 @@
         "${workspaceFolder}/out/**/*.js",
         "${workspaceFolder}/out/test/**/*.js"
       ],
-      "preLaunchTask": "${defaultBuildTask}"
+      "preLaunchTask": "${defaultBuildTask}",
+      "presentation": {
+        "group": "Tests",
+        "order": 1
+      }
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Full Stack Debug",
+      "configurations": ["Run Extension", "Start WebSocket MCP Server"],
+      "presentation": {
+        "group": "Combined",
+        "order": 2
+      }
     }
   ]
 }

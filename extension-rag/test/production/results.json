@@ -1,0 +1,171 @@
+{
+  "environment": {
+    "node.js_version": {
+      "passed": true,
+      "version": "v22.14.0",
+      "required": ">= 18.0.0",
+      "message": "Version Node.js compatible"
+    },
+    "memory_available": {
+      "passed": true,
+      "free": "7.19GB",
+      "total": "15.55GB",
+      "required": ">= 1GB libre",
+      "message": "Mémoire suffisante"
+    },
+    "disk_space": {
+      "passed": true,
+      "free": "39.51GB",
+      "required": ">= 5GB libre",
+      "message": "Espace disque suffisant"
+    },
+    "network_connectivity": {
+      "passed": true,
+      "message": "Connectivité réseau OK (https://api.github.com)",
+      "required": "Connectivité internet"
+    },
+    "dependencies": {
+      "passed": false,
+      "missing": [
+        "@modelcontextprotocol/sdk",
+        "vscode"
+      ],
+      "required": "Toutes les dépendances",
+      "message": "Dépendances manquantes: @modelcontextprotocol/sdk, vscode"
+    },
+    "port_availability": {
+      "passed": true,
+      "unavailable": [],
+      "required": "Ports disponibles",
+      "message": "Tous les ports disponibles"
+    }
+  },
+  "performance": {
+    "startup_time": {
+      "passed": false,
+      "error": "Cannot find module '../src/services/McpClient'\nRequire stack:\n- /home/ali/Documents/Cline/MCP/rag-mcp-server/extension-rag/scripts/production-test.js\n- /home/ali/Documents/Cline/MCP/rag-mcp-server/extension-rag/scripts/run-all-tests.js"
+    },
+    "connection_time": {
+      "passed": false,
+      "value": "ERROR",
+      "error": "Cannot find module '../src/services/McpClient'\nRequire stack:\n- /home/ali/Documents/Cline/MCP/rag-mcp-server/extension-rag/scripts/production-test.js\n- /home/ali/Documents/Cline/MCP/rag-mcp-server/extension-rag/scripts/run-all-tests.js",
+      "message": "Erreur de connexion"
+    },
+    "memory_usage": {
+      "passed": true,
+      "value": "24MB",
+      "threshold": "< 100MB",
+      "message": "Utilisation mémoire acceptable"
+    },
+    "cpu_usage": {
+      "passed": true,
+      "value": "1.38 (6 CPUs)",
+      "threshold": "< 4.199999999999999",
+      "message": "Charge CPU acceptable"
+    },
+    "response_time": {
+      "passed": true,
+      "value": "3ms",
+      "threshold": "< 100ms",
+      "message": "Temps de réponse rapide"
+    },
+    "throughput": {
+      "passed": true,
+      "value": "Infinity ops/sec",
+      "threshold": "> 10000 ops/sec",
+      "message": "Débit élevé"
+    }
+  },
+  "stability": {
+    "error_handling": {
+      "passed": true,
+      "errorsHandled": 2,
+      "message": "Gestion des erreurs fonctionnelle"
+    },
+    "crash_recovery": {
+      "passed": true,
+      "message": "Récupération après crash testée"
+    },
+    "memory_leaks": {
+      "passed": false,
+      "increase": "1778KB",
+      "threshold": "< 1MB",
+      "message": "Fuites mémoire potentielles"
+    },
+    "long_running": {
+      "passed": true,
+      "duration": "822ms",
+      "threshold": "< 10000ms",
+      "message": "Exécution longue stable"
+    },
+    "concurrent_connections": {
+      "passed": true,
+      "message": "Connexions concurrentes supportées"
+    },
+    "data_consistency": {
+      "passed": true,
+      "message": "Cohérence des données vérifiée"
+    }
+  },
+  "security": {
+    "input_validation": {
+      "passed": true,
+      "passedTests": "4/4",
+      "message": "Validation des entrées fonctionnelle"
+    },
+    "authentication": {
+      "passed": true,
+      "message": "Authentification configurée"
+    },
+    "encryption": {
+      "passed": true,
+      "message": "Chiffrement configuré"
+    },
+    "log_security": {
+      "passed": false,
+      "sensitiveDataFound": 3,
+      "message": "Données sensibles dans les logs"
+    },
+    "rate_limiting": {
+      "passed": true,
+      "message": "Rate limiting configuré"
+    },
+    "dependency_security": {
+      "passed": true,
+      "insecureDependencies": 0,
+      "message": "Dépendances sécurisées"
+    }
+  },
+  "monitoring": {
+    "log_collection": {
+      "passed": true,
+      "message": "Collecte des logs configurée"
+    },
+    "metrics_collection": {
+      "passed": true,
+      "message": "Collecte des métriques configurée"
+    },
+    "alerting": {
+      "passed": true,
+      "message": "Système d'alertes configuré"
+    },
+    "health_checks": {
+      "passed": true,
+      "message": "Health checks configurés"
+    },
+    "performance_monitoring": {
+      "passed": true,
+      "message": "Monitoring des performances configuré"
+    },
+    "error_tracking": {
+      "passed": true,
+      "message": "Suivi des erreurs configuré"
+    }
+  },
+  "summary": {
+    "passed": 25,
+    "failed": 4,
+    "warnings": 1,
+    "total": 30
+  }
+}

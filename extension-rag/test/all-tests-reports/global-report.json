@@ -1,0 +1,594 @@
+{
+  "timestamp": "2026-01-31T00:20:41.083Z",
+  "summary": {
+    "totalTests": 67,
+    "passed": 45,
+    "failed": 14,
+    "warnings": 8,
+    "score": 67
+  },
+  "compatibility": {
+    "sdkVersions": [
+      {
+        "version": "1.0.0",
+        "success": false,
+        "output": "test-sdk.ts(2,24): error TS2307: Cannot find module '@modelcontextprotocol/sdk' or its corresponding type declarations.\ntest-sdk.ts(6,35): error TS2339: Property 'default' does not exist on type 'typeof WebSocket'.\n../../../../node_modules/@types/chokidar/index.d.ts(21,14): error TS2420: Class 'import(\"/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/@types/chokidar/index\").FSWatcher' incorrectly implements interface 'import(\"fs\").FSWatcher'.\n  Type 'FSWatcher' is missing the following properties from type 'FSWatcher': ref, unref\n",
+        "error": "Command failed: cd /home/ali/Documents/Cline/MCP/rag-mcp-server/extension-rag/test/compatibility/sdk-1.0.0 && npm install --silent && npx tsc test-sdk.ts --outDir dist --module commonjs --target ES2020 && node dist/test-sdk.js"
+      },
+      {
+        "version": "1.1.0",
+        "success": false,
+        "output": "test-sdk.ts(2,24): error TS2307: Cannot find module '@modelcontextprotocol/sdk' or its corresponding type declarations.\ntest-sdk.ts(6,35): error TS2339: Property 'default' does not exist on type 'typeof WebSocket'.\n../../../../node_modules/@types/chokidar/index.d.ts(21,14): error TS2420: Class 'import(\"/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/@types/chokidar/index\").FSWatcher' incorrectly implements interface 'import(\"fs\").FSWatcher'.\n  Type 'FSWatcher' is missing the following properties from type 'FSWatcher': ref, unref\n",
+        "error": "Command failed: cd /home/ali/Documents/Cline/MCP/rag-mcp-server/extension-rag/test/compatibility/sdk-1.1.0 && npm install --silent && npx tsc test-sdk.ts --outDir dist --module commonjs --target ES2020 && node dist/test-sdk.js"
+      },
+      {
+        "version": "1.2.0",
+        "success": false,
+        "output": "test-sdk.ts(2,24): error TS2307: Cannot find module '@modelcontextprotocol/sdk' or its corresponding type declarations.\ntest-sdk.ts(6,35): error TS2339: Property 'default' does not exist on type 'typeof WebSocket'.\n../../../../node_modules/@types/chokidar/index.d.ts(21,14): error TS2420: Class 'import(\"/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/@types/chokidar/index\").FSWatcher' incorrectly implements interface 'import(\"fs\").FSWatcher'.\n  Type 'FSWatcher' is missing the following properties from type 'FSWatcher': ref, unref\n",
+        "error": "Command failed: cd /home/ali/Documents/Cline/MCP/rag-mcp-server/extension-rag/test/compatibility/sdk-1.2.0 && npm install --silent && npx tsc test-sdk.ts --outDir dist --module commonjs --target ES2020 && node dist/test-sdk.js"
+      },
+      {
+        "version": "2.0.0",
+        "success": false,
+        "output": "",
+        "error": "Command failed: cd /home/ali/Documents/Cline/MCP/rag-mcp-server/extension-rag/test/compatibility/sdk-2.0.0 && npm install --silent && npx tsc test-sdk.ts --outDir dist --module commonjs --target ES2020 && node dist/test-sdk.js"
+      },
+      {
+        "version": "latest",
+        "success": false,
+        "output": "test-sdk.ts(2,24): error TS2307: Cannot find module '@modelcontextprotocol/sdk' or its corresponding type declarations.\ntest-sdk.ts(6,35): error TS2339: Property 'default' does not exist on type 'typeof WebSocket'.\n../../../../node_modules/@types/chokidar/index.d.ts(21,14): error TS2420: Class 'import(\"/home/ali/Documents/Cline/MCP/rag-mcp-server/node_modules/@types/chokidar/index\").FSWatcher' incorrectly implements interface 'import(\"fs\").FSWatcher'.\n  Type 'FSWatcher' is missing the following properties from type 'FSWatcher': ref, unref\n",
+        "error": "Command failed: cd /home/ali/Documents/Cline/MCP/rag-mcp-server/extension-rag/test/compatibility/sdk-latest && npm install --silent && npx tsc test-sdk.ts --outDir dist --module commonjs --target ES2020 && node dist/test-sdk.js"
+      }
+    ],
+    "nodeVersions": [
+      {
+        "version": "16.0.0",
+        "supported": false,
+        "features": {
+          "es2020": true,
+          "esModules": true,
+          "webSocket": true,
+          "fetch": false
+        },
+        "current": false
+      },
+      {
+        "version": "18.0.0",
+        "supported": true,
+        "features": {
+          "es2020": true,
+          "esModules": true,
+          "webSocket": true,
+          "fetch": true
+        },
+        "current": false
+      },
+      {
+        "version": "20.0.0",
+        "supported": true,
+        "features": {
+          "es2020": true,
+          "esModules": true,
+          "webSocket": true,
+          "fetch": true
+        },
+        "current": false
+      },
+      {
+        "version": "22.0.0",
+        "supported": true,
+        "features": {
+          "es2020": true,
+          "esModules": true,
+          "webSocket": true,
+          "fetch": true
+        },
+        "current": false
+      }
+    ],
+    "vscodeVersions": [
+      {
+        "version": "1.85.0",
+        "name": "Stable",
+        "supported": true,
+        "apis": {
+          "webview": true,
+          "workspace": true,
+          "commands": true,
+          "window": true
+        }
+      },
+      {
+        "version": "1.90.0",
+        "name": "Insiders",
+        "supported": true,
+        "apis": {
+          "webview": true,
+          "workspace": true,
+          "commands": true,
+          "window": true
+        }
+      },
+      {
+        "version": "1.95.0",
+        "name": "Latest",
+        "supported": true,
+        "apis": {
+          "webview": true,
+          "workspace": true,
+          "commands": true,
+          "window": true
+        }
+      }
+    ],
+    "extensions": [
+      {
+        "name": "GitLens",
+        "id": "eamodio.gitlens",
+        "compatible": false,
+        "conflicts": [
+          "Peut surcharger certaines commandes Git"
+        ],
+        "recommendation": "⚠️ Conflits potentiels"
+      },
+      {
+        "name": "ESLint",
+        "id": "dbaeumer.vscode-eslint",
+        "compatible": false,
+        "conflicts": [
+          "Peut interférer avec le linting TypeScript"
+        ],
+        "recommendation": "⚠️ Conflits potentiels"
+      },
+      {
+        "name": "Prettier",
+        "id": "esbenp.prettier-vscode",
+        "compatible": false,
+        "conflicts": [
+          "Peut formater différemment le code"
+        ],
+        "recommendation": "⚠️ Conflits potentiels"
+      },
+      {
+        "name": "Docker",
+        "id": "ms-azuretools.vscode-docker",
+        "compatible": false,
+        "conflicts": [
+          "Aucun conflit connu"
+        ],
+        "recommendation": "⚠️ Conflits potentiels"
+      },
+      {
+        "name": "Python",
+        "id": "ms-python.python",
+        "compatible": false,
+        "conflicts": [
+          "Aucun conflit connu"
+        ],
+        "recommendation": "⚠️ Conflits potentiels"
+      }
+    ],
+    "production": {
+      "performance": {
+        "passed": true,
+        "duration": "11ms",
+        "message": "Performance acceptable"
+      },
+      "mémoire": {
+        "passed": true,
+        "heapUsed": "5MB",
+        "heapTotal": "7MB",
+        "message": "Utilisation mémoire acceptable"
+      },
+      "stabilité": {
+        "passed": false,
+        "errors": [
+          "Dépendance @modelcontextprotocol/sdk manquante"
+        ],
+        "message": "1 erreur(s) de stabilité"
+      },
+      "scalabilité": {
+        "passed": true,
+        "maxConnections": 100,
+        "estimatedMemory": "50MB",
+        "message": "Scalabilité acceptable"
+      },
+      "monitoring": {
+        "passed": true,
+        "metrics": {
+          "logs": true,
+          "metrics": true,
+          "alerts": false,
+          "tracing": false
+        },
+        "message": "Monitoring basique disponible"
+      }
+    },
+    "summary": {
+      "passed": 10,
+      "failed": 6,
+      "warnings": 6,
+      "total": 22
+    }
+  },
+  "mcpConnection": {
+    "connection": {
+      "passed": true,
+      "duration": "6ms",
+      "url": "ws://localhost:3000",
+      "message": "Serveur disponible",
+      "websocket": {
+        "passed": true,
+        "duration": "6ms",
+        "message": "Connexion WebSocket établie"
+      }
+    },
+    "authentication": {
+      "passed": false,
+      "error": "Cannot find module '/home/ali/Documents/Cline/MCP/rag-mcp-server/extension-rag/node_modules/@modelcontextprotocol/sdk/dist/cjs/index.js'",
+      "message": "Échec authentification MCP"
+    },
+    "commands": {
+      "passed": 0,
+      "total": 3,
+      "results": [
+        {
+          "name": "client_connection",
+          "description": "Connexion client MCP",
+          "passed": false,
+          "error": "Cannot find module '/home/ali/Documents/Cline/MCP/rag-mcp-server/extension-rag/node_modules/@modelcontextprotocol/sdk/dist/cjs/index.js'",
+          "message": "Impossible de créer le client"
+        }
+      ],
+      "message": "0/3 commandes réussies"
+    },
+    "performance": {
+      "results": [
+        {
+          "name": "Latence",
+          "passed": true,
+          "value": "2ms",
+          "threshold": "< 1000ms",
+          "message": "Latence acceptable"
+        },
+        {
+          "name": "Débit",
+          "passed": true,
+          "value": "93 msg/sec",
+          "threshold": "> 5 msg/sec",
+          "message": "Débit acceptable"
+        },
+        {
+          "name": "Stabilité",
+          "passed": true,
+          "value": "100%",
+          "threshold": ">= 80%",
+          "message": "Stabilité acceptable"
+        }
+      ],
+      "message": "3/3 tests passés"
+    },
+    "errors": [],
+    "summary": {
+      "passed": 5,
+      "failed": 4,
+      "total": 9
+    }
+  },
+  "production": {
+    "environment": {
+      "node.js_version": {
+        "passed": true,
+        "version": "v22.14.0",
+        "required": ">= 18.0.0",
+        "message": "Version Node.js compatible"
+      },
+      "memory_available": {
+        "passed": true,
+        "free": "7.19GB",
+        "total": "15.55GB",
+        "required": ">= 1GB libre",
+        "message": "Mémoire suffisante"
+      },
+      "disk_space": {
+        "passed": true,
+        "free": "39.51GB",
+        "required": ">= 5GB libre",
+        "message": "Espace disque suffisant"
+      },
+      "network_connectivity": {
+        "passed": true,
+        "message": "Connectivité réseau OK (https://api.github.com)",
+        "required": "Connectivité internet"
+      },
+      "dependencies": {
+        "passed": false,
+        "missing": [
+          "@modelcontextprotocol/sdk",
+          "vscode"
+        ],
+        "required": "Toutes les dépendances",
+        "message": "Dépendances manquantes: @modelcontextprotocol/sdk, vscode"
+      },
+      "port_availability": {
+        "passed": true,
+        "unavailable": [],
+        "required": "Ports disponibles",
+        "message": "Tous les ports disponibles"
+      }
+    },
+    "performance": {
+      "startup_time": {
+        "passed": false,
+        "error": "Cannot find module '../src/services/McpClient'\nRequire stack:\n- /home/ali/Documents/Cline/MCP/rag-mcp-server/extension-rag/scripts/production-test.js\n- /home/ali/Documents/Cline/MCP/rag-mcp-server/extension-rag/scripts/run-all-tests.js"
+      },
+      "connection_time": {
+        "passed": false,
+        "value": "ERROR",
+        "error": "Cannot find module '../src/services/McpClient'\nRequire stack:\n- /home/ali/Documents/Cline/MCP/rag-mcp-server/extension-rag/scripts/production-test.js\n- /home/ali/Documents/Cline/MCP/rag-mcp-server/extension-rag/scripts/run-all-tests.js",
+        "message": "Erreur de connexion"
+      },
+      "memory_usage": {
+        "passed": true,
+        "value": "24MB",
+        "threshold": "< 100MB",
+        "message": "Utilisation mémoire acceptable"
+      },
+      "cpu_usage": {
+        "passed": true,
+        "value": "1.38 (6 CPUs)",
+        "threshold": "< 4.199999999999999",
+        "message": "Charge CPU acceptable"
+      },
+      "response_time": {
+        "passed": true,
+        "value": "3ms",
+        "threshold": "< 100ms",
+        "message": "Temps de réponse rapide"
+      },
+      "throughput": {
+        "passed": true,
+        "value": "Infinity ops/sec",
+        "threshold": "> 10000 ops/sec",
+        "message": "Débit élevé"
+      }
+    },
+    "stability": {
+      "error_handling": {
+        "passed": true,
+        "errorsHandled": 2,
+        "message": "Gestion des erreurs fonctionnelle"
+      },
+      "crash_recovery": {
+        "passed": true,
+        "message": "Récupération après crash testée"
+      },
+      "memory_leaks": {
+        "passed": false,
+        "increase": "1778KB",
+        "threshold": "< 1MB",
+        "message": "Fuites mémoire potentielles"
+      },
+      "long_running": {
+        "passed": true,
+        "duration": "822ms",
+        "threshold": "< 10000ms",
+        "message": "Exécution longue stable"
+      },
+      "concurrent_connections": {
+        "passed": true,
+        "message": "Connexions concurrentes supportées"
+      },
+      "data_consistency": {
+        "passed": true,
+        "message": "Cohérence des données vérifiée"
+      }
+    },
+    "security": {
+      "input_validation": {
+        "passed": true,
+        "passedTests": "4/4",
+        "message": "Validation des entrées fonctionnelle"
+      },
+      "authentication": {
+        "passed": true,
+        "message": "Authentification configurée"
+      },
+      "encryption": {
+        "passed": true,
+        "message": "Chiffrement configuré"
+      },
+      "log_security": {
+        "passed": false,
+        "sensitiveDataFound": 3,
+        "message": "Données sensibles dans les logs"
+      },
+      "rate_limiting": {
+        "passed": true,
+        "message": "Rate limiting configuré"
+      },
+      "dependency_security": {
+        "passed": true,
+        "insecureDependencies": 0,
+        "message": "Dépendances sécurisées"
+      }
+    },
+    "monitoring": {
+      "log_collection": {
+        "passed": true,
+        "message": "Collecte des logs configurée"
+      },
+      "metrics_collection": {
+        "passed": true,
+        "message": "Collecte des métriques configurée"
+      },
+      "alerting": {
+        "passed": true,
+        "message": "Système d'alertes configuré"
+      },
+      "health_checks": {
+        "passed": true,
+        "message": "Health checks configurés"
+      },
+      "performance_monitoring": {
+        "passed": true,
+        "message": "Monitoring des performances configuré"
+      },
+      "error_tracking": {
+        "passed": true,
+        "message": "Suivi des erreurs configuré"
+      }
+    },
+    "summary": {
+      "passed": 25,
+      "failed": 4,
+      "warnings": 1,
+      "total": 30
+    }
+  },
+  "extensions": {
+    "extensions": [
+      {
+        "name": "Git MCP",
+        "description": "Outils Git via MCP",
+        "compatible": true,
+        "conflicts": [],
+        "commands": [
+          "git_status",
+          "git_diff",
+          "git_log"
+        ],
+        "resources": [
+          "git://*"
+        ],
+        "recommendation": "✅ Compatible"
+      },
+      {
+        "name": "SQLite MCP",
+        "description": "Accès SQLite via MCP",
+        "compatible": true,
+        "conflicts": [],
+        "commands": [
+          "read_query",
+          "write_query",
+          "create_table"
+        ],
+        "resources": [
+          "sqlite://*"
+        ],
+        "recommendation": "✅ Compatible"
+      },
+      {
+        "name": "Time MCP",
+        "description": "Outils temps via MCP",
+        "compatible": true,
+        "conflicts": [],
+        "commands": [
+          "get_current_time",
+          "convert_time"
+        ],
+        "resources": [
+          "time://*"
+        ],
+        "recommendation": "✅ Compatible"
+      },
+      {
+        "name": "Web Research MCP",
+        "description": "Recherche web via MCP",
+        "compatible": true,
+        "conflicts": [],
+        "commands": [
+          "search_google",
+          "visit_page"
+        ],
+        "resources": [
+          "web://*"
+        ],
+        "recommendation": "✅ Compatible"
+      },
+      {
+        "name": "Ollama MCP",
+        "description": "LLM local via MCP",
+        "compatible": true,
+        "conflicts": [],
+        "commands": [
+          "run",
+          "chat_completion",
+          "pull"
+        ],
+        "resources": [
+          "ollama://*"
+        ],
+        "recommendation": "✅ Compatible"
+      }
+    ],
+    "conflicts": [
+      {
+        "command": "get_status",
+        "ragDescription": "Récupère le statut",
+        "conflictingExtensions": [
+          "Git MCP",
+          "SQLite MCP",
+          "Time MCP"
+        ],
+        "severity": "MEDIUM",
+        "resolution": "Renommer la commande ou utiliser un namespace"
+      }
+    ],
+    "recommendations": [
+      {
+        "scenario": "RAG + Git MCP",
+        "description": "RAG avec outils Git",
+        "compatible": false,
+        "issues": [
+          "Commandes similaires: get_status (RAG) vs git_status (Git)"
+        ],
+        "recommendations": [
+          "Utiliser des noms distincts ou namespaces"
+        ]
+      },
+      {
+        "scenario": "RAG + SQLite MCP",
+        "description": "RAG avec base de données",
+        "compatible": true,
+        "issues": [
+          "Accès concurrent à SQLite possible"
+        ],
+        "recommendations": [
+          "Utiliser des connexions DB distinctes",
+          "Implémenter un verrouillage"
+        ]
+      },
+      {
+        "scenario": "RAG + Web Research MCP",
+        "description": "RAG avec recherche web",
+        "compatible": true,
+        "issues": [
+          "Accès réseau concurrent"
+        ],
+        "recommendations": [
+          "Limiter les requêtes parallèles",
+          "Implémenter un rate limiting global"
+        ]
+      },
+      {
+        "scenario": "RAG + Ollama MCP",
+        "description": "RAG avec LLM local",
+        "compatible": true,
+        "issues": [
+          "Utilisation concurrente du LLM"
+        ],
+        "recommendations": [
+          "Gérer les files d'attente de requêtes",
+          "Limiter l'utilisation mémoire"
+        ]
+      }
+    ],
+    "summary": {
+      "compatible": 5,
+      "incompatible": 0,
+      "warnings": 1,
+      "total": 6
+    }
+  }
+}

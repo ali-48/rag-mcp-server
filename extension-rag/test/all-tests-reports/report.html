@@ -1,0 +1,142 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rapport Global de Tests MCP Client</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .score {
+            font-size: 48px;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        .category {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .recommendations {
+            background: #e8f4fd;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 30px 0;
+        }
+        .timestamp {
+            color: #666;
+            font-size: 14px;
+            text-align: center;
+            margin-top: 40px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📊 Rapport Global de Tests MCP Client</h1>
+        <div class="score">67/100</div>
+        <p>Testé le 31/01/2026</p>
+    </div>
+
+    <div class="stats">
+        <div class="stat-card">
+            <div>Tests Totaux</div>
+            <div class="stat-value">67</div>
+        </div>
+        <div class="stat-card" style="border-left: 4px solid #28a745;">
+            <div>Tests Passés</div>
+            <div class="stat-value">45</div>
+        </div>
+        <div class="stat-card" style="border-left: 4px solid #dc3545;">
+            <div>Tests Échoués</div>
+            <div class="stat-value">14</div>
+        </div>
+        <div class="stat-card" style="border-left: 4px solid #ffc107;">
+            <div>Avertissements</div>
+            <div class="stat-value">8</div>
+        </div>
+    </div>
+
+    <div class="category">
+        <h2>🔍 Compatibilité SDK MCP</h2>
+        
+            <p>Score: 45/100</p>
+            <p>10/22 tests passés</p>
+        
+    </div>
+
+    <div class="category">
+        <h2>🔌 Connexion MCP</h2>
+        
+            <p>Score: 56/100</p>
+            <p>5/9 tests passés</p>
+        
+    </div>
+
+    <div class="category">
+        <h2>🏭 Tests Production</h2>
+        
+            <p>Score: 83/100</p>
+            <p>25/30 tests passés</p>
+        
+    </div>
+
+    <div class="category">
+        <h2>🔧 Extensions MCP</h2>
+        
+            <p>Score: 83/100</p>
+            <p>5/6 extensions compatibles</p>
+        
+    </div>
+
+    <div class="recommendations">
+        <h2>🎯 Recommandations</h2>
+        
+        <ul>
+          <li>⚠️ Qualité limitée</li>
+          <li>Résoudre les problèmes critiques</li>
+          <li>Améliorer la compatibilité</li>
+          <li>Optimiser les performances</li>
+        </ul>
+    </div>
+
+    <div class="timestamp">
+        Rapport généré le 31/01/2026 01:20:41
+    </div>
+</body>
+</html>

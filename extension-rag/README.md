@@ -198,12 +198,40 @@ npm test
 
 ### Problèmes courants
 
-| Problème                   | Solution                                |
-| -------------------------- | --------------------------------------- |
-| "Cannot connect to server" | Vérifier l'URL dans la configuration    |
-| "Timeout exceeded"         | Augmenter le timeout dans les options   |
-| "No logs available"        | Vérifier que le serveur génère des logs |
-| "Dashboard not updating"   | Vérifier l'auto-refresh est activé      |
+| Problème                   | Solution                                       |
+| -------------------------- | ---------------------------------------------- |
+| "Cannot connect to server" | Vérifier l'URL dans la configuration           |
+| "Timeout exceeded"         | Augmenter le timeout dans les options          |
+| "No logs available"        | Vérifier que le serveur génère des logs        |
+| "Dashboard not updating"   | Vérifier l'auto-refresh est activé             |
+| "WebSocket is not defined" | Voir section "Correction WebSocket" ci-dessous |
+
+### Correction WebSocket (Problème résolu)
+
+**Problème** : L'erreur `WebSocket is not defined` se produisait lors de l'exécution dans l'environnement Node.js de VS Code.
+
+**Solution appliquée** :
+
+1. **Import explicite du module `ws`** dans `McpClient.ts` :
+
+   ```typescript
+   import * as WebSocketModule from "ws";
+   const WebSocket = WebSocketModule.default || WebSocketModule;
+   ```
+
+2. **Configuration TypeScript** :
+   - `tsconfig.json` conserve `"lib": ["ES2022", "dom"]` pour les WebViews
+   - `"skipLibCheck": true` activé pour éviter les conflits de types
+   - Commentaires ajoutés pour expliquer la configuration
+
+3. **Dépendance** : `"ws": "^8.0.0"` ajoutée dans `package.json`
+
+**Vérification** :
+
+- ✅ Connexion WebSocket fonctionnelle sur `ws://localhost:3000`
+- ✅ Appels MCP (`get_status`, `get_task_context`) opérationnels
+- ✅ Reconnexion automatique et gestion d'erreurs
+- ✅ Validation de connexion et statut
 
 ### Logs de debug
 
@@ -213,6 +241,27 @@ Activez le logging détaillé dans la configuration :
 {
   "rag-mcp.options.enableLogging": true
 }
+```
+
+### Tests de validation
+
+Pour vérifier que la correction WebSocket fonctionne :
+
+```bash
+# Depuis le répertoire racine du projet
+cd /home/ali/Documents/Cline/MCP/rag-mcp-server
+node -e "
+const { McpClient } = require('./extension-rag/out/services/McpClient.js');
+async function test() {
+  const client = new McpClient('ws://localhost:3000', 5000);
+  await client.connect();
+  console.log('✅ Connexion WebSocket réussie');
+  const status = await client.validateConnection();
+  console.log('✅ Validation connexion:', status);
+  client.disconnect();
+}
+test().catch(console.error);
+"
 ```
 
 ## 📄 Licence
