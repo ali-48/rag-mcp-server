@@ -1,38 +1,39 @@
-# RAG MCP Extension for VS Code
+# RAG MCP Extension for VS Code (Read-Only)
 
-**Extension d'intégration VS Code pour surveillance humaine uniquement**
+**Extension VS Code pour surveillance read-only du serveur RAG MCP**
 
-> ⚠️ **IMPORTANT : Cette extension est un bonus d'intégration pour usage humain uniquement.**
+> ⚠️ **IMPORTANT : Cette extension est une interface de surveillance READ-ONLY.**
 >
-> **Les opérations RAG (init, activate, query) doivent être effectuées directement via les outils MCP par l'IA.**
+> **Elle lit uniquement les fichiers de monitoring générés par le moteur RAG MCP.**
 >
-> **Cette extension fournit uniquement une interface de surveillance et configuration pour les développeurs humains.**
+> **Aucune interaction avec le moteur RAG, aucune connexion WebSocket, aucune opération d'écriture.**
 
 ## 🎯 Objectif
 
-Cette extension VS Code fournit une interface de **surveillance et configuration** pour le serveur RAG MCP. Elle permet aux développeurs humains de :
+Cette extension VS Code fournit une interface de **surveillance read-only** pour le serveur RAG MCP. Elle permet aux développeurs humains de :
 
-- **Surveiller** l'état du serveur RAG MCP
-- **Configurer** la connexion au serveur
-- **Visualiser** les logs en temps réel
-- **Observer** les métriques de performance
+- **Lire** les métriques système depuis les fichiers JSON
+- **Visualiser** le statut de santé du système
+- **Consulter** les événements récents
+- **Surveiller** les tâches en cours
 
-**Elle ne remplace pas les outils MCP pour les opérations RAG.**
+**Elle ne se connecte pas au serveur RAG MCP, elle lit uniquement les fichiers de monitoring.**
 
 ## 🚫 Ce que cette extension NE FAIT PAS
 
+- ❌ **Ne se connecte pas** au serveur RAG MCP via WebSocket
 - ❌ **N'exécute pas** les opérations RAG (init_rag, activated_rag, query_rag)
+- ❌ **Ne modifie pas** les fichiers de monitoring
+- ❌ **N'interagit pas** avec le moteur RAG
 - ❌ **Ne remplace pas** les outils MCP pour l'IA
-- ❌ **N'est pas** une interface d'exécution pour les pipelines RAG
-- ❌ **Ne permet pas** d'indexer ou de rechercher via l'interface graphique
 
-## ✅ Ce que cette extension FAIT
+## ✅ Ce que cette extension FAIT (Read-Only)
 
-- ✅ **Dashboard** : Surveillance de l'état système RAG
-- ✅ **Configuration** : Configuration serveur MCP (URL, timeout, options)
-- ✅ **Monitoring** : Santé serveur et métriques de performance
-- ✅ **Logs** : Visualisation des logs en temps réel avec filtres
-- ✅ **Navigation** : Liens entre les différentes vues de surveillance
+- ✅ **Dashboard** : Interface de surveillance complète
+- ✅ **Métriques** : Lecture des métriques système depuis `rag/monitoring/metrics.json`
+- ✅ **Santé** : Lecture du statut de santé depuis `rag/monitoring/health/latest.json`
+- ✅ **Événements** : Lecture des événements depuis `rag/monitoring/events/`
+- ✅ **Progression** : Lecture des tâches en cours depuis `rag/monitoring/progress/`
 
 ## 📊 Vues disponibles
 
@@ -40,36 +41,34 @@ Cette extension VS Code fournit une interface de **surveillance et configuration
 
 Interface centrale avec :
 
-- État de connexion au serveur RAG MCP
-- Métriques système (projets initialisés, jobs actifs, etc.)
-- Navigation vers les autres vues
-- Auto-refresh toutes les 5 secondes
+- Métriques système (CPU, mémoire, uptime, threads)
+- File d'attente (tâches en attente, actives, terminées, échouées)
+- Statut de santé avec vérifications détaillées
+- Événements récents (5 derniers événements)
 
-### 2. **Configuration** (`RAG MCP: Configure Server`)
+### 2. **Métriques** (`RAG MCP: Show Metrics`)
 
-Configuration du serveur MCP :
+Affichage détaillé des métriques :
 
-- URL du serveur (ex: `http://localhost:3000`)
-- Timeout des requêtes
-- Options de connexion (auto-connect, logging, retries)
-- Test de connexion intégré
+- Système : démarrage, uptime, CPU, mémoire, threads
+- Performance : temps réponse moyen, requêtes/seconde, taux d'erreur
+- Projets : nombre de projets, fichiers indexés, statut
 
-### 3. **Monitoring** (`RAG MCP: Show Monitor`)
+### 3. **Santé** (`RAG MCP: Show Health`)
 
-Surveillance santé serveur :
+Statut de santé détaillé :
 
-- État des composants (RAG Queue, Vector Store, Embedding Provider)
-- Métriques de performance (connexions actives, taux d'erreur, temps de réponse)
-- Charts de performance (CPU, mémoire, réseau)
+- Statut global (healthy, degraded, unhealthy)
+- Vérifications individuelles (pass, fail, warning)
+- Dernière vérification
 
-### 4. **Logs** (`RAG MCP: Show Logs`)
+### 4. **Événements** (`RAG MCP: Show Events`)
 
-Visualisation logs temps réel :
+Événements du jour :
 
-- Filtrage par niveau (info, warn, error, debug)
-- Recherche textuelle dans les logs
-- Export des logs en JSON
-- Nettoyage des logs
+- 10 derniers événements
+- Type d'événement (info, warning, error, phase_started, etc.)
+- Timestamp et message
 
 ## ⚙️ Configuration
 
@@ -77,50 +76,45 @@ Visualisation logs temps réel :
 
 ```json
 {
-  "rag-mcp.server.url": "http://localhost:3000",
-  "rag-mcp.server.timeout": 30000,
-  "rag-mcp.options.enableAutoConnect": true,
-  "rag-mcp.options.enableLogging": true,
-  "rag-mcp.options.maxRetries": 3,
-  "rag-mcp.options.retryDelay": 1000
+  "rag-mcp.autoRefresh": true
 }
 ```
 
 ### Commandes disponibles
 
-| Commande                    | Description                   | Usage                 |
-| --------------------------- | ----------------------------- | --------------------- |
-| `RAG MCP: Show Dashboard`   | Ouvre le dashboard principal  | Surveillance humaine  |
-| `RAG MCP: Configure Server` | Configure le serveur MCP      | Configuration humaine |
-| `RAG MCP: Show Monitor`     | Affiche le monitoring serveur | Surveillance humaine  |
-| `RAG MCP: Show Logs`        | Affiche les logs temps réel   | Debug humain          |
+| Commande                     | Description                      | Usage                |
+| ---------------------------- | -------------------------------- | -------------------- |
+| `RAG MCP: Show Dashboard`    | Ouvre le dashboard principal     | Surveillance humaine |
+| `RAG MCP: Get System Status` | Affiche le statut système rapide | Surveillance humaine |
+| `RAG MCP: Show Metrics`      | Affiche les métriques détaillées | Surveillance humaine |
+| `RAG MCP: Show Health`       | Affiche le statut de santé       | Surveillance humaine |
+| `RAG MCP: Show Events`       | Affiche les événements récents   | Surveillance humaine |
 
 ## 🏗️ Architecture
 
-### Séparation IA/Humain
+### Séparation stricte monitoring/moteur
 
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   IA (Cline)    │    │   Serveur MCP   │    │   Extension     │
-│                 │    │   RAG MCP       │    │   VS Code       │
+│   Moteur RAG    │    │   Fichiers      │    │   Extension     │
+│                 │    │   Monitoring    │    │   VS Code       │
 ├─────────────────┤    ├─────────────────┤    ├─────────────────┤
-│ • init_rag      │◄──►│ • init_rag      │    │ • Dashboard     │
-│ • activated_rag │    │ • activated_rag │    │ • Configuration │
-│ • query_rag     │    │ • query_rag     │    │ • Monitoring    │
-│ • get_status    │    │ • get_status    │◄──►│ • Logs          │
-│ • get_context   │    │ • get_context   │    │                 │
+│ • Monitoring    │───▶│ • metrics.json  │◀───│ • Dashboard     │
+│   Writer        │    │ • health/       │    │ • Metrics       │
+│   (write-only)  │    │ • events/       │    │ • Health        │
+│                 │    │ • progress/     │    │ • Events        │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
        │                       │                       │
        └───────────────────────┴───────────────────────┘
-                 Communication MCP (WebSocket)
+                 Écriture seule       Lecture seule
 ```
 
 ### Points clés d'architecture
 
-1. **IA ↔ Serveur MCP** : Toutes les opérations RAG passent par MCP
-2. **Humain ↔ Extension** : Toutes les opérations de surveillance passent par l'extension
-3. **Pas de chevauchement** : L'extension ne fait pas d'opérations RAG
-4. **Lecture seule** : L'extension est principalement en lecture (sauf configuration)
+1. **Moteur → Fichiers** : Écriture seule par le `MonitoringWriter`
+2. **Fichiers → Extension** : Lecture seule par le `MonitoringReader`
+3. **Pas de connexion directe** : Aucun WebSocket, aucune API
+4. **Séparation stricte** : Conformité règle #25 (anti-duplication)
 
 ## 🚀 Développement
 
@@ -128,7 +122,7 @@ Visualisation logs temps réel :
 
 - Node.js 18+
 - VS Code 1.96+
-- Serveur RAG MCP en cours d'exécution
+- Serveur RAG MCP avec monitoring activé
 
 ### Installation développement
 
@@ -151,129 +145,8 @@ extension-rag/
 ├── src/
 │   ├── extension.ts          # Point d'entrée principal
 │   ├── services/
-│   │   ├── McpClient.ts      # Client MCP WebSocket
-│   │   ├── ContextService.ts # Service contexte VS Code
-│   │   └── error-handler.ts  # Gestion erreurs
-│   ├── views/
-│   │   ├── DashboardView.ts  # Vue dashboard
-│   │   ├── ConfigView.ts     # Vue configuration
-│   │   ├── MonitorView.ts    # Vue monitoring
-│   │   └── LogView.ts        # Vue logs
-│   └── models/
-│       └── json-schemas.ts   # Schémas JSON validation
+│   │   └── MonitoringReader.ts # Service read-only pour lire les fichiers
+│   └── models/               # (Optionnel) Modèles de données
 ├── package.json              # Manifest extension
 └── tsconfig.json            # Configuration TypeScript
 ```
-
-## 📋 Tests
-
-### Tests unitaires
-
-```bash
-npm test
-```
-
-### Tests d'intégration
-
-1. Démarrer le serveur RAG MCP
-2. Démarrer l'extension en mode debug
-3. Tester chaque vue manuellement
-
-## 🔄 Workflow recommandé
-
-### Pour les développeurs humains
-
-1. **Configuration** : Configurer le serveur via `RAG MCP: Configure Server`
-2. **Surveillance** : Ouvrir le dashboard via `RAG MCP: Show Dashboard`
-3. **Debug** : Consulter les logs via `RAG MCP: Show Logs` en cas de problème
-4. **Performance** : Surveiller les métriques via `RAG MCP: Show Monitor`
-
-### Pour l'IA (Cline)
-
-1. **Opérations RAG** : Utiliser directement les outils MCP (`init_rag`, `activated_rag`, `query_rag`)
-2. **Statut** : Utiliser `get_status` pour vérifier l'état
-3. **Contexte** : Utiliser `get_context` pour récupérer le contexte sémantique
-
-## 🚨 Dépannage
-
-### Problèmes courants
-
-| Problème                   | Solution                                       |
-| -------------------------- | ---------------------------------------------- |
-| "Cannot connect to server" | Vérifier l'URL dans la configuration           |
-| "Timeout exceeded"         | Augmenter le timeout dans les options          |
-| "No logs available"        | Vérifier que le serveur génère des logs        |
-| "Dashboard not updating"   | Vérifier l'auto-refresh est activé             |
-| "WebSocket is not defined" | Voir section "Correction WebSocket" ci-dessous |
-
-### Correction WebSocket (Problème résolu)
-
-**Problème** : L'erreur `WebSocket is not defined` se produisait lors de l'exécution dans l'environnement Node.js de VS Code.
-
-**Solution appliquée** :
-
-1. **Import explicite du module `ws`** dans `McpClient.ts` :
-
-   ```typescript
-   import * as WebSocketModule from "ws";
-   const WebSocket = WebSocketModule.default || WebSocketModule;
-   ```
-
-2. **Configuration TypeScript** :
-   - `tsconfig.json` conserve `"lib": ["ES2022", "dom"]` pour les WebViews
-   - `"skipLibCheck": true` activé pour éviter les conflits de types
-   - Commentaires ajoutés pour expliquer la configuration
-
-3. **Dépendance** : `"ws": "^8.0.0"` ajoutée dans `package.json`
-
-**Vérification** :
-
-- ✅ Connexion WebSocket fonctionnelle sur `ws://localhost:3000`
-- ✅ Appels MCP (`get_status`, `get_task_context`) opérationnels
-- ✅ Reconnexion automatique et gestion d'erreurs
-- ✅ Validation de connexion et statut
-
-### Logs de debug
-
-Activez le logging détaillé dans la configuration :
-
-```json
-{
-  "rag-mcp.options.enableLogging": true
-}
-```
-
-### Tests de validation
-
-Pour vérifier que la correction WebSocket fonctionne :
-
-```bash
-# Depuis le répertoire racine du projet
-cd /home/ali/Documents/Cline/MCP/rag-mcp-server
-node -e "
-const { McpClient } = require('./extension-rag/out/services/McpClient.js');
-async function test() {
-  const client = new McpClient('ws://localhost:3000', 5000);
-  await client.connect();
-  console.log('✅ Connexion WebSocket réussie');
-  const status = await client.validateConnection();
-  console.log('✅ Validation connexion:', status);
-  client.disconnect();
-}
-test().catch(console.error);
-"
-```
-
-## 📄 Licence
-
-MIT
-
-## 🔗 Liens
-
-- [RAG MCP Server](https://github.com/ali-48/rag-mcp-server) - Serveur RAG MCP principal
-- [MCP Documentation](https://spec.modelcontextprotocol.io/) - Documentation MCP officielle
-- [VS Code Extension API](https://code.visualstudio.com/api) - Documentation API extension VS Code
-
----
-
-**Note importante** : Cette extension est conçue comme un outil de **surveillance humaine**. Pour toute opération RAG, utilisez les outils MCP directement via l'IA. L'extension ne doit pas être utilisée pour exécuter des pipelines RAG.

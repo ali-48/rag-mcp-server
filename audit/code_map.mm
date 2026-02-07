@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <map version="1.0.1">
-  <node CREATED="1770486193947"><![CDATA[Code Map]]></node>
+  <node CREATED="1770494035840"><![CDATA[Code Map]]></node>
   <node TEXT="Projet" FOLDED="false">
     <node ><![CDATA[Statistiques]]></node>
-      <node ><![CDATA[Fichiers: 300]]></node>
-      <node ><![CDATA[Fonctions: 521]]></node>
-      <node ><![CDATA[Classes: 96]]></node>
-      <node ><![CDATA[Imports: 549]]></node>
-      <node ><![CDATA[Appels: 3992]]></node>
+      <node ><![CDATA[Fichiers: 307]]></node>
+      <node ><![CDATA[Fonctions: 525]]></node>
+      <node ><![CDATA[Classes: 98]]></node>
+      <node ><![CDATA[Imports: 558]]></node>
+      <node ><![CDATA[Appels: 3996]]></node>
     <node ><![CDATA[Fichiers par type]]></node>
-      <node ><![CDATA[doc: 59]]></node>
+      <node ><![CDATA[doc: 60]]></node>
       <node ><![CDATA[config: 38]]></node>
       <node ><![CDATA[other: 4]]></node>
-      <node ><![CDATA[code: 199]]></node>
+      <node ><![CDATA[code: 205]]></node>
     <node FOLDED="true"><![CDATA[Fichiers]]></node>
       <node FOLDED="true" ICON="doc"><![CDATA[.clinerules/Règles_Absolues_Rag_Mcp_Server.md]]></node>
         <node COLOR="#FFFF00"><![CDATA[Qualité: 0.62]]></node>
@@ -92,6 +92,12 @@
         <node COLOR="#FFA500"><![CDATA[Complexité: 0.50]]></node>
         <node ><![CDATA[Lignes: 325]]></node>
         <node ><![CDATA[Taille: 8287 octets]]></node>
+      <node FOLDED="true" ICON="doc"><![CDATA[QUERY_RAG_INTERFACE_PASSIVE.md]]></node>
+        <node COLOR="#FFFF00"><![CDATA[Qualité: 0.62]]></node>
+        <node COLOR="#FFFF00"><![CDATA[Maintenabilité: 0.70]]></node>
+        <node COLOR="#FFA500"><![CDATA[Complexité: 0.50]]></node>
+        <node ><![CDATA[Lignes: 158]]></node>
+        <node ><![CDATA[Taille: 5245 octets]]></node>
       <node FOLDED="true" ICON="doc"><![CDATA[RAG_ARCHITECTURE_RULES.md]]></node>
         <node COLOR="#FFA500"><![CDATA[Qualité: 0.50]]></node>
         <node COLOR="#FFA500"><![CDATA[Maintenabilité: 0.50]]></node>
@@ -3627,6 +3633,41 @@
             <node ><![CDATA[Méthodes: 7]]></node>
             <node ><![CDATA[Propriétés: 3]]></node>
             <node ><![CDATA[Lignes: 208]]></node>
+      <node FOLDED="true" ICON="code"><![CDATA[src/rag/monitoring/index.ts]]></node>
+        <node COLOR="#FFFF00"><![CDATA[Qualité: 0.60]]></node>
+        <node COLOR="#FFFF00"><![CDATA[Maintenabilité: 0.60]]></node>
+        <node COLOR="#FFA500"><![CDATA[Complexité: 0.40]]></node>
+        <node ><![CDATA[Lignes: 124]]></node>
+        <node ><![CDATA[Taille: 3805 octets]]></node>
+      <node FOLDED="true" ICON="code"><![CDATA[src/rag/monitoring/test-writer.ts]]></node>
+        <node COLOR="#FFA500"><![CDATA[Qualité: 0.55]]></node>
+        <node COLOR="#FFA500"><![CDATA[Maintenabilité: 0.55]]></node>
+        <node COLOR="#FFA500"><![CDATA[Complexité: 0.45]]></node>
+        <node ><![CDATA[Lignes: 483]]></node>
+        <node ><![CDATA[Taille: 14198 octets]]></node>
+      <node FOLDED="true" ICON="code"><![CDATA[src/rag/monitoring/types.ts]]></node>
+        <node COLOR="#FFFF00"><![CDATA[Qualité: 0.60]]></node>
+        <node COLOR="#FFFF00"><![CDATA[Maintenabilité: 0.60]]></node>
+        <node COLOR="#FFA500"><![CDATA[Complexité: 0.40]]></node>
+        <node ><![CDATA[Lignes: 167]]></node>
+        <node ><![CDATA[Taille: 4063 octets]]></node>
+      <node FOLDED="true" ICON="code"><![CDATA[src/rag/monitoring/writer.ts]]></node>
+        <node COLOR="#FFA500"><![CDATA[Qualité: 0.49]]></node>
+        <node COLOR="#FFA500"><![CDATA[Maintenabilité: 0.49]]></node>
+        <node COLOR="#FFA500"><![CDATA[Complexité: 0.51]]></node>
+        <node ><![CDATA[Lignes: 451]]></node>
+        <node ><![CDATA[Taille: 13392 octets]]></node>
+        <node FOLDED="true"><![CDATA[Fonctions]]></node>
+          <node FOLDED="true"><![CDATA[createMonitoringWriter]]></node>
+            <node ><![CDATA[Visibilité: public]]></node>
+            <node ><![CDATA[Lignes: 6]]></node>
+            <node COLOR="#FF0000"><![CDATA[Complexité: 0.12]]></node>
+            <node ><![CDATA[Appels: 0]]></node>
+        <node FOLDED="true"><![CDATA[Classes]]></node>
+          <node FOLDED="true"><![CDATA[MonitoringWriter]]></node>
+            <node ><![CDATA[Méthodes: 16]]></node>
+            <node ><![CDATA[Propriétés: 4]]></node>
+            <node ><![CDATA[Lignes: 413]]></node>
       <node FOLDED="true" ICON="code"><![CDATA[src/rag/ollama-service.ts]]></node>
         <node COLOR="#FF0000"><![CDATA[Qualité: 0.31]]></node>
         <node COLOR="#FF0000"><![CDATA[Maintenabilité: 0.23]]></node>
@@ -4708,8 +4749,8 @@
         <node COLOR="#FFA500"><![CDATA[Qualité: 0.48]]></node>
         <node COLOR="#FFA500"><![CDATA[Maintenabilité: 0.48]]></node>
         <node COLOR="#FFA500"><![CDATA[Complexité: 0.52]]></node>
-        <node ><![CDATA[Lignes: 465]]></node>
-        <node ><![CDATA[Taille: 18695 octets]]></node>
+        <node ><![CDATA[Lignes: 466]]></node>
+        <node ><![CDATA[Taille: 16106 octets]]></node>
         <node FOLDED="true"><![CDATA[Fonctions]]></node>
           <node FOLDED="true"><![CDATA[formatHumanReadable]]></node>
             <node ><![CDATA[Visibilité: private]]></node>
@@ -4938,6 +4979,40 @@
         <node COLOR="#FF0000"><![CDATA[Complexité: 0.20]]></node>
         <node ><![CDATA[Lignes: 39]]></node>
         <node ><![CDATA[Taille: 846 octets]]></node>
+      <node FOLDED="true" ICON="code"><![CDATA[test-monitoring-direct.js]]></node>
+        <node COLOR="#FFA500"><![CDATA[Qualité: 0.48]]></node>
+        <node COLOR="#FFA500"><![CDATA[Maintenabilité: 0.48]]></node>
+        <node COLOR="#FFA500"><![CDATA[Complexité: 0.52]]></node>
+        <node ><![CDATA[Lignes: 286]]></node>
+        <node ><![CDATA[Taille: 7829 octets]]></node>
+        <node FOLDED="true"><![CDATA[Fonctions]]></node>
+          <node FOLDED="true"><![CDATA[validateWriteOnlyCompliance]]></node>
+            <node ><![CDATA[Visibilité: private]]></node>
+            <node ><![CDATA[Lignes: 43]]></node>
+            <node COLOR="#00FF00"><![CDATA[Complexité: 0.86]]></node>
+            <node ><![CDATA[Appels: 0]]></node>
+          <node FOLDED="true"><![CDATA[runTest]]></node>
+            <node ><![CDATA[Visibilité: private]]></node>
+            <node ><![CDATA[Lignes: 124]]></node>
+            <node COLOR="#00FF00"><![CDATA[Complexité: 1.00]]></node>
+            <node ><![CDATA[Appels: 0]]></node>
+        <node FOLDED="true"><![CDATA[Classes]]></node>
+          <node FOLDED="true"><![CDATA[SimpleMonitoringWriter]]></node>
+            <node ><![CDATA[Méthodes: 7]]></node>
+            <node ><![CDATA[Propriétés: 0]]></node>
+            <node ><![CDATA[Lignes: 102]]></node>
+      <node FOLDED="true" ICON="code"><![CDATA[test-monitoring-simple.js]]></node>
+        <node COLOR="#FFA500"><![CDATA[Qualité: 0.55]]></node>
+        <node COLOR="#FFA500"><![CDATA[Maintenabilité: 0.55]]></node>
+        <node COLOR="#FFA500"><![CDATA[Complexité: 0.45]]></node>
+        <node ><![CDATA[Lignes: 160]]></node>
+        <node ><![CDATA[Taille: 4791 octets]]></node>
+        <node FOLDED="true"><![CDATA[Fonctions]]></node>
+          <node FOLDED="true"><![CDATA[runSimpleTest]]></node>
+            <node ><![CDATA[Visibilité: private]]></node>
+            <node ><![CDATA[Lignes: 149]]></node>
+            <node COLOR="#00FF00"><![CDATA[Complexité: 1.00]]></node>
+            <node ><![CDATA[Appels: 0]]></node>
       <node FOLDED="true" ICON="doc"><![CDATA[test-query.txt]]></node>
         <node COLOR="#00FF00"><![CDATA[Qualité: 0.99]]></node>
         <node COLOR="#00FF00"><![CDATA[Maintenabilité: 1.00]]></node>
@@ -5018,27 +5093,27 @@
         <node ><![CDATA[Taille: 606 octets]]></node>
     <node FOLDED="true"><![CDATA[Relations]]></node>
       <node FOLDED="true"><![CDATA[Imports]]></node>
-        <node ><![CDATA[file_037 → ./build-test/src/rag/phase0/chunker/chunker-intelligent.js]]></node>
-        <node ><![CDATA[file_057 → file_192]]></node>
-        <node ><![CDATA[file_057 → file_251]]></node>
-        <node ><![CDATA[file_058 → ../build/src/core/tool-registry.js]]></node>
-        <node ><![CDATA[file_058 → ../build/src/rag/state-manager.js]]></node>
-        <node ><![CDATA[file_068 → vscode]]></node>
-        <node ><![CDATA[file_068 → file_071]]></node>
-        <node ><![CDATA[file_068 → file_072]]></node>
-        <node ><![CDATA[file_068 → file_074]]></node>
-        <node ><![CDATA[file_070 → fs]]></node>
-        <node ><![CDATA[file_070 → path]]></node>
-        <node ><![CDATA[file_070 → vscode]]></node>
-        <node ><![CDATA[file_071 → ws]]></node>
-        <node ><![CDATA[file_071 → file_069]]></node>
-        <node ><![CDATA[file_072 → vscode]]></node>
+        <node ><![CDATA[file_038 → ./build-test/src/rag/phase0/chunker/chunker-intelligent.js]]></node>
+        <node ><![CDATA[file_058 → file_193]]></node>
+        <node ><![CDATA[file_058 → file_256]]></node>
+        <node ><![CDATA[file_059 → ../build/src/core/tool-registry.js]]></node>
+        <node ><![CDATA[file_059 → ../build/src/rag/state-manager.js]]></node>
+        <node ><![CDATA[file_069 → vscode]]></node>
+        <node ><![CDATA[file_069 → file_072]]></node>
+        <node ><![CDATA[file_069 → file_073]]></node>
+        <node ><![CDATA[file_069 → file_075]]></node>
+        <node ><![CDATA[file_071 → fs]]></node>
+        <node ><![CDATA[file_071 → path]]></node>
+        <node ><![CDATA[file_071 → vscode]]></node>
+        <node ><![CDATA[file_072 → ws]]></node>
+        <node ><![CDATA[file_072 → file_070]]></node>
         <node ><![CDATA[file_073 → vscode]]></node>
-        <node ><![CDATA[file_073 → file_071]]></node>
-        <node ><![CDATA[file_073 → file_072]]></node>
         <node ><![CDATA[file_074 → vscode]]></node>
         <node ><![CDATA[file_074 → file_072]]></node>
-        <node ><![CDATA[... et 529 autres]]></node>
+        <node ><![CDATA[file_074 → file_073]]></node>
+        <node ><![CDATA[file_075 → vscode]]></node>
+        <node ><![CDATA[file_075 → file_073]]></node>
+        <node ><![CDATA[... et 538 autres]]></node>
       <node FOLDED="true"><![CDATA[Appels]]></node>
         <node ><![CDATA[fn_001 → fn_002]]></node>
         <node ><![CDATA[fn_002 → fn_001]]></node>
@@ -5060,15 +5135,15 @@
         <node ><![CDATA[fn_007 → fn_011]]></node>
         <node ><![CDATA[fn_008 → fn_007]]></node>
         <node ><![CDATA[fn_008 → fn_009]]></node>
-        <node ><![CDATA[... et 3972 autres]]></node>
+        <node ><![CDATA[... et 3976 autres]]></node>
       <node FOLDED="true"><![CDATA[Héritage]]></node>
         <node ><![CDATA[cls_032 → EventEmitter]]></node>
         <node ><![CDATA[cls_053 → EventEmitter]]></node>
         <node ><![CDATA[cls_056 → EventEmitter]]></node>
         <node ><![CDATA[cls_059 → EventEmitter]]></node>
         <node ><![CDATA[cls_064 → Error]]></node>
-        <node ><![CDATA[cls_083 → Error]]></node>
-        <node ><![CDATA[cls_085 → IVectorStore]]></node>
-        <node ><![CDATA[cls_094 → Transport]]></node>
+        <node ><![CDATA[cls_084 → Error]]></node>
+        <node ><![CDATA[cls_086 → IVectorStore]]></node>
+        <node ><![CDATA[cls_095 → Transport]]></node>
   </node>
 </map>

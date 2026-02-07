@@ -1,8 +1,8 @@
 {
   "name": "rag-mcp-extension",
-  "displayName": "RAG MCP Extension",
-  "description": "VS Code extension for interacting with RAG MCP Server",
-  "version": "0.1.0",
+  "displayName": "RAG MCP Extension (Read-Only)",
+  "description": "VS Code extension for monitoring RAG MCP Server - Read-only interface that reads monitoring files",
+  "version": "0.2.0",
   "publisher": "rag-mcp",
   "engines": {
     "vscode": "^1.96.0"
@@ -23,6 +23,18 @@
       {
         "command": "rag-mcp.getStatus",
         "title": "RAG MCP: Get System Status"
+      },
+      {
+        "command": "rag-mcp.showMetrics",
+        "title": "RAG MCP: Show Metrics"
+      },
+      {
+        "command": "rag-mcp.showHealth",
+        "title": "RAG MCP: Show Health Status"
+      },
+      {
+        "command": "rag-mcp.showEvents",
+        "title": "RAG MCP: Show Recent Events"
       }
     ],
     "viewsContainers": {
@@ -42,13 +54,18 @@
           "type": "webview"
         },
         {
-          "id": "rag-mcp.projects",
-          "name": "Projects",
+          "id": "rag-mcp.metrics",
+          "name": "Metrics",
           "type": "webview"
         },
         {
-          "id": "rag-mcp.status",
-          "name": "System Status",
+          "id": "rag-mcp.health",
+          "name": "Health",
+          "type": "webview"
+        },
+        {
+          "id": "rag-mcp.events",
+          "name": "Events",
           "type": "webview"
         }
       ]
@@ -56,16 +73,6 @@
     "configuration": {
       "title": "RAG MCP Extension",
       "properties": {
-        "rag-mcp.serverUrl": {
-          "type": "string",
-          "default": "ws://localhost:3000",
-          "description": "URL of the RAG MCP Server WebSocket"
-        },
-        "rag-mcp.timeout": {
-          "type": "number",
-          "default": 30000,
-          "description": "Timeout for MCP requests in milliseconds"
-        },
         "rag-mcp.autoRefresh": {
           "type": "boolean",
           "default": true,
@@ -87,14 +94,12 @@
     "package": "vsce package"
   },
   "devDependencies": {
-    "@modelcontextprotocol/sdk": "^1.25.3",
     "@types/jest": "^30.0.0",
     "@types/node": "^20.0.0",
     "@types/vscode": "^1.96.0",
     "@vscode/vsce": "^3.2.0",
     "jest": "^30.2.0",
     "ts-jest": "^29.4.6",
-    "typescript": "^5.0.0",
-    "ws": "^8.19.0"
+    "typescript": "^5.0.0"
   }
 }

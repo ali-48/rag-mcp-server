@@ -1,6 +1,7 @@
 // src/tools/rag/query-rag.ts
-// Outil query_rag - Recherche sémantique dans les fichiers indexés
-// Responsabilités: Recherche vectorielle, filtrage, ranking, retour de résultats
+// Outil query_rag - Interface unique passive pour la recherche RAG
+// Responsabilités: Recherche vectorielle purement passive (lecture seule)
+// Règles: Pas d'analyse déclenchée, pas d'indexation, recherche seulement sur index existant
 import { logger } from "../../core/logger.js";
 import { isRagInitialized } from "../../rag/phase0/rag-state.js";
 import { searchCode } from "../../rag/searcher.js";
@@ -369,16 +370,16 @@ export const queryRagHandler = async (args) => {
                             enable_reranking: args.enable_reranking === true
                         },
                         notes_for_ai: [
-                            "Recherche RAG réussie",
+                            "Recherche RAG réussie (interface passive)",
                             "Résultats: " + (searchResult.results?.length || 0),
                             "Durée: " + duration + "s",
                             "Scope: " + (args.scope || 'project'),
-                            "Mode: " + (args.search_mode || 'semantic')
+                            "Mode: " + (args.search_mode || 'semantic'),
+                            "Interface passive: aucune analyse ou indexation déclenchée"
                         ],
                         next_steps: [
                             "Affinez votre requête pour des résultats plus précis",
-                            "Utilisez scan_rag pour analyser les changements dans le projet",
-                            "Utilisez index_rag pour mettre à jour l'indexation"
+                            "Pour mettre à jour l'index, utilisez le pipeline RAG automatisé (activated_rag)"
                         ],
                         timestamp: new Date().toISOString()
                     }, null, 2)
