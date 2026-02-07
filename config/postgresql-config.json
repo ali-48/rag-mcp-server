@@ -1,0 +1,187 @@
+{
+  "version": "1.0.0",
+  "description": "Configuration PostgreSQL pour le stockage des vecteurs RAG",
+  "last_updated": "2026-02-07T23:44:46.000Z",
+  "environments": {
+    "development": {
+      "host": "localhost",
+      "port": 5432,
+      "database": "rag_vectors_dev",
+      "user": "postgres",
+      "password": "postgres",
+      "ssl": false,
+      "connection_timeout": 5000,
+      "max_connections": 10,
+      "pool_size": 5,
+      "idle_timeout": 30000,
+      "application_name": "rag-mcp-server-dev"
+    },
+    "testing": {
+      "host": "localhost",
+      "port": 5432,
+      "database": "rag_vectors_test",
+      "user": "postgres",
+      "password": "postgres",
+      "ssl": false,
+      "connection_timeout": 3000,
+      "max_connections": 5,
+      "pool_size": 3,
+      "idle_timeout": 10000,
+      "application_name": "rag-mcp-server-test"
+    },
+    "production": {
+      "host": "localhost",
+      "port": 5432,
+      "database": "rag_vectors",
+      "user": "rag_user",
+      "password": "${POSTGRES_PASSWORD}",
+      "ssl": true,
+      "connection_timeout": 10000,
+      "max_connections": 50,
+      "pool_size": 20,
+      "idle_timeout": 60000,
+      "application_name": "rag-mcp-server-prod"
+    }
+  },
+  "extensions": {
+    "required": [
+      "pgvector"
+    ],
+    "optional": [
+      "pg_trgm",
+      "btree_gin",
+      "uuid-ossp"
+    ],
+    "version_requirements": {
+      "pgvector": ">=0.5.0",
+      "postgresql": ">=12.0"
+    }
+  },
+  "schema": {
+    "name": "rag_schema",
+    "tables": {
+      "vectors": {
+        "name": "rag_vectors",
+        "columns": {
+          "id": "SERIAL PRIMARY KEY",
+          "embedding": "VECTOR(1536)",
+          "content": "TEXT NOT NULL",
+          "metadata": "JSONB",
+          "project_id": "VARCHAR(255)",
+          "file_path": "VARCHAR(1024)",
+          "chunk_index": "INTEGER",
+          "created_at": "TIMESTAMP DEFAULT CURRENT_TIMESTAMP",
+          "updated_at": "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
+        },
+        "indexes": [
+          "CREATE INDEX idx_rag_vectors_project_id ON rag_vectors(project_id)",
+          "CREATE INDEX idx_rag_vectors_file_path ON rag_vectors(file_path)",
+          "CREATE INDEX idx_rag_vectors_created_at ON rag_vectors(created_at)"
+        ]
+      },
+      "vector_metadata": {
+        "name": "rag_vector_metadata",
+        "columns": {
+          "id": "SERIAL PRIMARY KEY",
+          "vector_id": "INTEGER REFERENCES rag_vectors(id)",
+          "key": "VARCHAR(255) NOT NULL",
+          "value": "TEXT",
+          "data_type": "VARCHAR(50)",
+          "created_at": "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
+        },
+        "indexes": [
+          "CREATE INDEX idx_vector_metadata_vector_id ON rag_vector_metadata(vector_id)",
+          "CREATE INDEX idx_vector_metadata_key ON rag_vector_metadata(key)"
+        ]
+      },
+      "search_history": {
+        "name": "rag_search_history",
+        "columns": {
+          "id": "SERIAL PRIMARY KEY",
+          "query": "TEXT NOT NULL",
+          "results_count": "INTEGER",
+          "response_time_ms": "INTEGER",
+          "user_id": "VARCHAR(255)",
+          "project_id": "VARCHAR(255)",
+          "created_at": "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
+        },
+        "indexes": [
+          "CREATE INDEX idx_search_history_created_at ON rag_search_history(created_at)",
+          "CREATE INDEX idx_search_history_project_id ON rag_search_history(project_id)"
+        ]
+      }
+    },
+    "views": {
+      "vector_stats": "CREATE VIEW rag_vector_stats AS SELECT project_id, COUNT(*) as total_vectors, MIN(created_at) as first_vector, MAX(created_at) as last_vector FROM rag_vectors GROUP BY project_id",
+      "search_stats": "CREATE VIEW rag_search_stats AS SELECT DATE(created_at) as search_date, COUNT(*) as searches, AVG(response_time_ms) as avg_response_time FROM rag_search_history GROUP BY DATE(created_at)"
+    }
+  },
+  "performance": {
+    "vector_dimensions": 1536,
+    "max_vectors_per_insert": 1000,
+    "similarity_search_limit": 100,
+    "similarity_threshold": 0.3,
+    "index_type": "ivfflat",
+    "index_lists": 100,
+    "index_probes": 10
+  },
+  "maintenance": {
+    "vacuum_schedule": "0 2 * * *",
+    "analyze_schedule": "0 3 * * *",
+    "backup_schedule": "0 4 * * *",
+    "retention_days": 90,
+    "archive_older_than_days": 30
+  },
+  "security": {
+    "encryption": {
+      "ssl_required": true,
+      "password_encryption": "scram-sha-256"
+    },
+    "permissions": {
+      "rag_user": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ],
+      "rag_readonly": [
+        "SELECT"
+      ]
+    },
+    "audit_logging": true
+  },
+  "monitoring": {
+    "metrics_enabled": true,
+    "slow_query_threshold_ms": 1000,
+    "connection_pool_monitoring": true,
+    "health_check_interval_seconds": 30
+  },
+  "migration": {
+    "version_table": "rag_schema_version",
+    "migrations_dir": "/rag/migrations/postgresql",
+    "rollback_enabled": true,
+    "backup_before_migration": true
+  },
+  "fallback": {
+    "enabled": true,
+    "type": "sqlite",
+    "trigger_conditions": [
+      "postgresql_unavailable",
+      "connection_timeout",
+      "authentication_failure"
+    ],
+    "fallback_db_path": "/rag/db/vectors.sqlite"
+  },
+  "validation": {
+    "connection_test_query": "SELECT 1",
+    "extension_test_query": "SELECT extname FROM pg_extension WHERE extname = 'vector'",
+    "schema_test_query": "SELECT table_name FROM information_schema.tables WHERE table_schema = 'rag_schema'"
+  },
+  "notes": [
+    "Les mots de passe doivent être stockés dans des variables d'environnement",
+    "La configuration de production utilise SSL pour la sécurité",
+    "Le fallback SQLite est activé pour la résilience",
+    "Les extensions pgvector doivent être installées avant utilisation",
+    "Les migrations sont gérées via le répertoire /rag/migrations/postgresql"
+  ]
+}

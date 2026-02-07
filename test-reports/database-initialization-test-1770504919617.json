@@ -1,0 +1,20 @@
+{
+  "timestamp": "2026-02-07T22:55:19.616Z",
+  "tests": {
+    "dependencies": true,
+    "directories": true,
+    "sqliteInitializer": true,
+    "metadataDatabase": true,
+    "vectorDatabase": true,
+    "postgresqlConfig": true,
+    "persistentState": true,
+    "integration": true
+  },
+  "environment": {
+    "nodeVersion": "v22.14.0",
+    "platform": "linux",
+    "ragDbDir": "/rag/db",
+    "ragStateDir": "/rag/state",
+    "projectRoot": "/home/ali/Documents/Cline/MCP/rag-mcp-server"
+  }
+}

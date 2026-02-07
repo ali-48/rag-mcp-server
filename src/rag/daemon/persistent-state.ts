@@ -1,8 +1,36 @@
 // src/rag/daemon/persistent-state.ts
 // Système d'état persistant avec AutoInitializer et retry avec backoff
+// Architecture centralisée : /rag/db/ pour les bases de données SQLite
 
 import fs from 'fs';
 import path from 'path';
+
+// Import de l'utilitaire SQLite
+import { getSqliteInitializer } from './sqlite-initializer';
+
+// Chemins centraux pour l'architecture RAG
+const RAG_DB_DIR = '/rag/db';
+const RAG_STATE_DIR = '/rag/state';
+const RAG_MONITORING_DIR = '/rag/monitoring';
+
+// Configuration des bases de données centralisées
+const DATABASE_CONFIG = {
+  metadata: {
+    path: path.join(RAG_DB_DIR, 'metadata.sqlite'),
+    description: 'Base de données métadonnées des projets'
+  },
+  memory: {
+    path: path.join(RAG_DB_DIR, 'memory.sqlite'),
+    description: 'Base de données mémoire et cache'
+  },
+  vectors: {
+    path: path.join(RAG_DB_DIR, 'vectors.sqlite'),
+    description: 'Base de données vecteurs (fallback SQLite)'
+  }
+} as const;
+
+// Initialiseur SQLite singleton
+const sqliteInitializer = getSqliteInitializer(RAG_DB_DIR);
 
 /**
  * État d'initialisation d'un projet
@@ -196,35 +224,104 @@ export class AutoInitializer {
       throw new Error(`Permissions insuffisantes pour lire le projet: ${projectPath}`);
     }
 
-    // Créer la structure de base
+    console.log(`🚀 Initialisation centralisée pour: ${projectPath}`);
+    console.log(`📁 Utilisation du répertoire central: ${RAG_DB_DIR}`);
+
+    // 1. Initialiser les bases de données SQLite centralisées
+    console.log('🔧 Initialisation des bases de données SQLite centralisées...');
+
+    try {
+      // Initialiser metadata.sqlite
+      await sqliteInitializer.initializeMetadataDb();
+      console.log('✅ metadata.sqlite initialisée');
+
+      // Initialiser memory.sqlite
+      await sqliteInitializer.initializeMemoryDb();
+      console.log('✅ memory.sqlite initialisée');
+
+      // Vérifier l'état des bases de données
+      const status = await sqliteInitializer.checkDatabaseStatus();
+      console.log(`📊 État bases de données: metadata=${status.metadata.tables} tables, memory=${status.memory.tables} tables`);
+
+    } catch (error: any) {
+      console.error('❌ Erreur initialisation bases de données SQLite:', error.message);
+      throw new Error(`Échec initialisation bases de données: ${error.message}`);
+    }
+
+    // 2. Créer la configuration du projet (stockée dans .rag/ pour compatibilité)
     const ragDir = path.join(projectPath, '.rag');
     if (!fs.existsSync(ragDir)) {
       fs.mkdirSync(ragDir, { recursive: true });
     }
 
-    // Initialiser la base de données structurelle
-    const structureDbPath = path.join(ragDir, 'structure.sqlite');
-    // TODO: Initialiser la DB structurelle
-
-    // Initialiser la base de données vecteurs
-    const vectorsDbPath = path.join(ragDir, 'vectors.sqlite');
-    // TODO: Initialiser la DB vecteurs
-
-    // Créer le fichier de configuration
-    const config = {
-      version: '1.0.0',
+    // 3. Enregistrer le projet dans metadata.sqlite (via fichier temporaire pour l'instant)
+    const projectConfig = {
+      version: '2.0.0',
       projectPath,
+      projectId: this.generateProjectId(projectPath),
       initializedAt: new Date().toISOString(),
-      structureDbPath,
-      vectorsDbPath
+      databasePaths: {
+        metadata: DATABASE_CONFIG.metadata.path,
+        memory: DATABASE_CONFIG.memory.path,
+        vectors: DATABASE_CONFIG.vectors.path
+      },
+      architecture: 'centralized',
+      centralizedDbDir: RAG_DB_DIR
+    };
+
+    // Sauvegarder la configuration locale (pour compatibilité)
+    fs.writeFileSync(
+      path.join(ragDir, 'config.json'),
+      JSON.stringify(projectConfig, null, 2)
+    );
+
+    // 4. Créer un fichier de lien symbolique vers les bases centralisées
+    const dbLinksDir = path.join(ragDir, 'db_links');
+    if (!fs.existsSync(dbLinksDir)) {
+      fs.mkdirSync(dbLinksDir, { recursive: true });
+    }
+
+    // Créer des fichiers d'information (pas de liens physiques pour éviter les problèmes cross-filesystem)
+    const linkInfo = {
+      note: 'Les bases de données sont centralisées dans /rag/db/',
+      actualPaths: {
+        metadata: DATABASE_CONFIG.metadata.path,
+        memory: DATABASE_CONFIG.memory.path,
+        vectors: DATABASE_CONFIG.vectors.path
+      },
+      projectPath,
+      createdAt: new Date().toISOString()
     };
 
     fs.writeFileSync(
-      path.join(ragDir, 'config.json'),
-      JSON.stringify(config, null, 2)
+      path.join(dbLinksDir, 'centralized_databases.json'),
+      JSON.stringify(linkInfo, null, 2)
     );
 
-    console.log(`📁 Structure créée pour ${projectPath}`);
+    console.log(`✅ Projet initialisé avec architecture centralisée`);
+    console.log(`📁 Configuration sauvegardée: ${path.join(ragDir, 'config.json')}`);
+    console.log(`🔗 Bases de données centralisées: ${RAG_DB_DIR}`);
+  }
+
+  /**
+   * Génère un ID unique pour le projet
+   */
+  private generateProjectId(projectPath: string): string {
+    const hash = this.hashString(projectPath);
+    const timestamp = Date.now().toString(36);
+    return `proj_${hash}_${timestamp}`;
+  }
+
+  /**
+   * Hash une chaîne pour identification
+   */
+  private hashString(str: string): string {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = ((hash << 5) - hash) + str.charCodeAt(i);
+      hash |= 0; // Convertir en 32-bit integer
+    }
+    return Math.abs(hash).toString(16).substring(0, 8);
   }
 
   /**
@@ -404,7 +501,7 @@ export class PersistentStateManager {
             path: dirPath,
             type: sig.type,
             detectedAt: new Date().toISOString(),
-            rootGroup,
+            rootGroup: rootGroup || undefined,
             isolationLevel: rootGroup ? 'shared_memory' : 'full',
             metadata: { signature: sig.file }
           });
@@ -487,12 +584,12 @@ export class PersistentStateManager {
             // Scanner récursivement
             await this.scanDirectory(fullPath, maxDepth - 1, callback);
           }
-        } catch (error) {
+        } catch (error: any) {
           // Ignorer les erreurs d'accès
           console.warn(`⚠️ Impossible d'accéder à ${fullPath}:`, error.message);
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.warn(`⚠️ Impossible de scanner ${dirPath}:`, error.message);
     }
   }

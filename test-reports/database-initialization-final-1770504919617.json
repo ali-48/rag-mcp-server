@@ -1,0 +1,34 @@
+{
+  "timestamp": "2026-02-07T22:55:19.617Z",
+  "summary": {
+    "totalTests": 8,
+    "passedTests": 7,
+    "failedTests": 1,
+    "successRate": 88
+  },
+  "testResults": {
+    "dependencies": true,
+    "directories": false,
+    "sqliteInitializer": true,
+    "metadataDatabase": true,
+    "vectorDatabase": true,
+    "postgresqlConfig": true,
+    "persistentState": true,
+    "integration": true
+  },
+  "environment": {
+    "nodeVersion": "v22.14.0",
+    "platform": "linux",
+    "arch": "x64",
+    "ragDbDir": "/rag/db",
+    "ragStateDir": "/rag/state",
+    "ragMonitoringDir": "/rag/monitoring",
+    "projectRoot": "/home/ali/Documents/Cline/MCP/rag-mcp-server"
+  },
+  "recommendations": [
+    "Vérifier les dépendances manquantes",
+    "Créer les répertoires manquants",
+    "Compiler TypeScript si nécessaire",
+    "Vérifier les permissions des répertoires"
+  ]
+}
