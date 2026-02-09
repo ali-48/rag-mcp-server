@@ -1,578 +1,271 @@
-import * as fs from 'fs';
-import * as path from 'path';
-import * as vscode from 'vscode';
+/**
+ * Service de contexte VS Code passif
+ *
+ * Ce service a été refactorisé pour être passif :
+ * - Plus de méthode getFullContext() publique
+ * - Écouteurs passifs pour événements VS Code
+ * - Capture automatique sans interaction humaine
+ *
+ * Conforme aux règles R3, R4, R11, R15, R19
+ */
+
+import { EventFilter } from '../modules/context-capture/filters/event.filter.js';
+import { DiagnosticsListener } from '../modules/context-capture/listeners/diagnostics.listener.js';
+import { FileSaveListener } from '../modules/context-capture/listeners/file-save.listener.js';
+import { WorkspaceListener } from '../modules/context-capture/listeners/workspace.listener.js';
+import { EventNormalizer } from '../modules/context-capture/normalizers/event.normalizer.js';
+import { FileHasher } from '../modules/context-capture/utils/file-hasher.js';
+import { logger } from '../modules/context-capture/utils/logger.js';
 
 /**
- * Service pour récupérer automatiquement le contexte VS Code
+ * Service de contexte VS Code passif
  *
- * Ce service collecte :
- * 1. Configuration VS Code (.vscode/settings.json, extensions.json, workspace config)
- * 2. Informations Git (repository, branch, commit history, uncommitted changes)
- * 3. Structure du projet (package.json, tsconfig.json, structure dossiers)
- * 4. État de l'éditeur (fichiers ouverts, sélection, diagnostics)
- *
- * Le contexte est utilisé pour enrichir les requêtes RAG avec des informations
- * spécifiques au workspace actuel.
+ * Remplace l'ancien ContextService qui avait une méthode getFullContext() publique.
+ * Désormais, le service écoute passivement les événements VS Code et les capture
+ * automatiquement sans interaction humaine.
  */
 export class ContextService {
-  private workspaceRoot: string | undefined;
-  private gitExtension: vscode.Extension<any> | undefined;
+  private static instance: ContextService;
 
-  constructor() {
-    this.workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-    this.gitExtension = vscode.extensions.getExtension('vscode.git');
+  private fileSaveListener: FileSaveListener | null = null;
+  private diagnosticsListener: DiagnosticsListener | null = null;
+  private workspaceListener: WorkspaceListener | null = null;
+  private eventFilter: EventFilter;
+  private eventNormalizer: EventNormalizer;
+  private fileHasher: FileHasher;
+
+  private isInitialized = false;
+  private capturedEvents: any[] = [];
+  private maxCapturedEvents = 1000; // Limite mémoire
+
+  private constructor() {
+    this.eventFilter = new EventFilter();
+    this.eventNormalizer = new EventNormalizer();
+    this.fileHasher = new FileHasher();
+
+    logger.info('ContextService passif créé', {
+      service_version: '2.0.0',
+      capture_mode: 'passive',
+      max_events: this.maxCapturedEvents
+    });
   }
 
   /**
-   * Récupère le contexte complet du workspace VS Code
+   * Obtient l'instance singleton
    */
-  public async getFullContext(): Promise<VSCodeContext> {
+  public static getInstance(): ContextService {
+    if (!ContextService.instance) {
+      ContextService.instance = new ContextService();
+    }
+    return ContextService.instance;
+  }
+
+  /**
+   * Initialise le service de capture passive
+   *
+   * Cette méthode est appelée une fois au démarrage de l'extension
+   * pour configurer tous les écouteurs passifs.
+   */
+  public async initialize(): Promise<void> {
+    if (this.isInitialized) {
+      logger.warn('ContextService déjà initialisé');
+      return;
+    }
+
     try {
-      console.log('🔄 ContextService: Récupération du contexte VS Code...');
+      logger.info('Initialisation du ContextService passif...');
 
-      const context: VSCodeContext = {
-        timestamp: new Date().toISOString(),
-        workspace: await this.getWorkspaceInfo(),
-        configuration: await this.getVSCodeConfiguration(),
-        git: await this.getGitInfo(),
-        project: await this.getProjectStructure(),
-        editor: await this.getEditorState(),
-        extensions: await this.getExtensionsInfo(),
-        metadata: {
-          context_service_version: '1.0.0',
-          collected_at: new Date().toISOString(),
-          workspace_root: this.workspaceRoot || null
-        }
-      };
+      // Initialiser les composants
+      await this.eventNormalizer.initialize();
+      await this.fileHasher.initialize();
 
-      console.log('✅ ContextService: Contexte récupéré avec succès');
-      return context;
+      // Créer et initialiser les écouteurs
+      this.fileSaveListener = new FileSaveListener(this.eventFilter, this.eventNormalizer, this.fileHasher);
+      this.diagnosticsListener = new DiagnosticsListener(this.eventFilter, this.eventNormalizer);
+      this.workspaceListener = new WorkspaceListener(this.eventFilter, this.eventNormalizer);
+
+      // Démarrer les écouteurs
+      await this.fileSaveListener.start();
+      await this.diagnosticsListener.start();
+      await this.workspaceListener.start();
+
+      // Configurer les callbacks pour les événements capturés
+      this.setupEventCallbacks();
+
+      this.isInitialized = true;
+
+      logger.info('ContextService passif initialisé avec succès', {
+        listeners: ['file_save', 'diagnostics', 'workspace'],
+        components: ['filter', 'normalizer', 'hasher']
+      });
 
     } catch (error) {
-      console.error('❌ ContextService: Erreur lors de la récupération du contexte:', error);
-      throw new Error(`Failed to get VS Code context: ${error instanceof Error ? error.message : String(error)}`);
+      logger.error('Erreur lors de l\'initialisation du ContextService', {
+        error: error instanceof Error ? error.message : String(error)
+      });
+      throw error;
     }
   }
 
   /**
-   * Récupère les informations du workspace
+   * Configure les callbacks pour les événements capturés
    */
-  private async getWorkspaceInfo(): Promise<WorkspaceInfo> {
-    const workspaceFolders = vscode.workspace.workspaceFolders || [];
+  private setupEventCallbacks(): void {
+    if (this.fileSaveListener) {
+      this.fileSaveListener.onEventCaptured((event) => {
+        this.handleCapturedEvent(event, 'file_save');
+      });
+    }
 
-    return {
-      root: this.workspaceRoot,
-      folders: workspaceFolders.map(folder => ({
-        name: folder.name,
-        path: folder.uri.fsPath,
-        uri: folder.uri.toString()
-      })),
-      is_multi_root: workspaceFolders.length > 1,
-      total_folders: workspaceFolders.length,
-      workspace_file: vscode.workspace.workspaceFile?.fsPath || null
-    };
+    if (this.diagnosticsListener) {
+      this.diagnosticsListener.onEventCaptured((event) => {
+        this.handleCapturedEvent(event, 'diagnostic');
+      });
+    }
+
+    if (this.workspaceListener) {
+      this.workspaceListener.onEventCaptured((event) => {
+        this.handleCapturedEvent(event, 'workspace');
+      });
+    }
   }
 
   /**
-   * Récupère la configuration VS Code
+   * Gère un événement capturé
    */
-  private async getVSCodeConfiguration(): Promise<VSCodeConfiguration> {
-    const config = vscode.workspace.getConfiguration();
+  private handleCapturedEvent(event: any, eventType: string): void {
+    try {
+      // Ajouter l'événement à la liste capturée (avec limite mémoire)
+      this.capturedEvents.unshift(event);
+      if (this.capturedEvents.length > this.maxCapturedEvents) {
+        this.capturedEvents.pop();
+      }
 
-    // Configuration du workspace (.vscode/settings.json)
-    const workspaceSettingsPath = this.workspaceRoot
-      ? path.join(this.workspaceRoot, '.vscode', 'settings.json')
-      : null;
+      // Log de l'événement capturé
+      logger.debug('Événement VS Code capturé', {
+        event_type: eventType,
+        event_id: event.event_uuid,
+        project_id: event.project_id,
+        file_path: event.file?.path,
+        timestamp: event.timestamp
+      });
 
-    const workspaceSettings = workspaceSettingsPath && fs.existsSync(workspaceSettingsPath)
-      ? JSON.parse(fs.readFileSync(workspaceSettingsPath, 'utf-8'))
-      : {};
+      // Ici, l'événement serait normalement envoyé au Module C (déclencheurs)
+      // Pour l'instant, on se contente de le capturer et logger
 
-    // Extensions recommandées (.vscode/extensions.json)
-    const extensionsJsonPath = this.workspaceRoot
-      ? path.join(this.workspaceRoot, '.vscode', 'extensions.json')
-      : null;
+    } catch (error) {
+      logger.error('Erreur lors du traitement de l\'événement capturé', {
+        event_type: eventType,
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  }
 
-    const recommendedExtensions = extensionsJsonPath && fs.existsSync(extensionsJsonPath)
-      ? JSON.parse(fs.readFileSync(extensionsJsonPath, 'utf-8'))
-      : {};
+  /**
+   * Arrête le service de capture passive
+   */
+  public async dispose(): Promise<void> {
+    if (!this.isInitialized) {
+      return;
+    }
 
+    try {
+      logger.info('Arrêt du ContextService passif...');
+
+      // Arrêter les écouteurs
+      if (this.fileSaveListener) {
+        await this.fileSaveListener.stop();
+      }
+      if (this.diagnosticsListener) {
+        await this.diagnosticsListener.stop();
+      }
+      if (this.workspaceListener) {
+        await this.workspaceListener.stop();
+      }
+
+      // Nettoyer les ressources
+      this.capturedEvents = [];
+      this.isInitialized = false;
+
+      logger.info('ContextService passif arrêté avec succès');
+
+    } catch (error) {
+      logger.error('Erreur lors de l\'arrêt du ContextService', {
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  }
+
+  /**
+   * Obtient les statistiques de capture
+   *
+   * Méthode utilisée uniquement pour le monitoring (Module A)
+   */
+  public getCaptureStats(): CaptureStats {
     return {
-      settings: {
-        workspace: workspaceSettings,
-        user: config.get('') || {},
-        default: {}
+      is_initialized: this.isInitialized,
+      total_captured_events: this.capturedEvents.length,
+      listeners_active: {
+        file_save: this.fileSaveListener?.isActive() || false,
+        diagnostics: this.diagnosticsListener?.isActive() || false,
+        workspace: this.workspaceListener?.isActive() || false
       },
-      recommended_extensions: recommendedExtensions.recommendations || [],
-      workspace_configuration: {
-        has_settings: !!workspaceSettingsPath && fs.existsSync(workspaceSettingsPath),
-        has_extensions_json: !!extensionsJsonPath && fs.existsSync(extensionsJsonPath),
-        settings_path: workspaceSettingsPath,
-        extensions_json_path: extensionsJsonPath
-      }
+      last_capture_time: this.capturedEvents.length > 0
+        ? this.capturedEvents[0].timestamp
+        : null,
+      memory_usage_mb: Math.round((this.capturedEvents.length * 0.1) * 100) / 100 // Estimation
     };
   }
 
   /**
-   * Récupère les informations Git
+   * Obtient les derniers événements capturés (pour debug uniquement)
+   *
+   * Méthode utilisée uniquement pour le monitoring (Module A)
    */
-  private async getGitInfo(): Promise<GitInfo> {
-    if (!this.gitExtension || !this.gitExtension.isActive) {
-      return {
-        available: false,
-        reason: 'Git extension not active or not installed'
-      };
-    }
-
-    try {
-      const git = this.gitExtension.exports.getAPI(1);
-      const repositories = git.repositories || [];
-
-      if (repositories.length === 0) {
-        return {
-          available: false,
-          reason: 'No git repositories found'
-        };
-      }
-
-      const repo = repositories[0];
-      const state = repo.state;
-
-      return {
-        available: true,
-        repository: {
-          root: repo.rootUri.fsPath,
-          head: state.HEAD?.name || null,
-          commit: state.HEAD?.commit || null,
-          upstream: state.HEAD?.upstream?.name || null,
-          ahead: state.HEAD?.ahead || 0,
-          behind: state.HEAD?.behind || 0
-        },
-        status: {
-          working_changes: state.workingTreeChanges.length,
-          index_changes: state.indexChanges.length,
-          merge_changes: state.mergeChanges.length,
-          total_changes: state.workingTreeChanges.length + state.indexChanges.length + state.mergeChanges.length
-        },
-        branches: {
-          current: state.HEAD?.name || null,
-          local: state.refs?.filter((ref: GitRef) => ref.type === 0).map((ref: GitRef) => ref.name) || [],
-          remote: state.refs?.filter((ref: GitRef) => ref.type === 1).map((ref: GitRef) => ref.name) || []
-        },
-        remotes: repo.state.remotes?.map((remote: GitRemoteApi) => ({
-          name: remote.name,
-          fetch_url: remote.fetchUrl || null,
-          push_url: remote.pushUrl || null
-        })) || []
-      };
-
-    } catch (error) {
-      console.warn('⚠️ ContextService: Erreur lors de la récupération des informations Git:', error);
-      return {
-        available: false,
-        reason: `Git API error: ${error instanceof Error ? error.message : String(error)}`
-      };
-    }
+  public getRecentEvents(limit: number = 10): any[] {
+    return this.capturedEvents.slice(0, limit).map(event => ({
+      ...event,
+      // Masquer les données sensibles pour le monitoring
+      payload: event.payload ? '[REDACTED_FOR_MONITORING]' : undefined
+    }));
   }
 
   /**
-   * Récupère la structure du projet
+   * Vérifie si le service est actif
    */
-  private async getProjectStructure(): Promise<ProjectStructure> {
-    if (!this.workspaceRoot) {
-      return {
-        available: false,
-        reason: 'No workspace root'
-      };
-    }
-
-    try {
-      // Vérifier les fichiers de configuration courants
-      const configFiles = [
-        'package.json',
-        'tsconfig.json',
-        'package-lock.json',
-        'yarn.lock',
-        'pnpm-lock.yaml',
-        '.gitignore',
-        '.eslintrc',
-        '.eslintrc.json',
-        '.prettierrc',
-        'dockerfile',
-        'docker-compose.yml',
-        'README.md'
-      ];
-
-      const foundConfigs: ConfigFile[] = [];
-
-      for (const configFile of configFiles) {
-        const configPath = path.join(this.workspaceRoot, configFile);
-        if (fs.existsSync(configPath)) {
-          try {
-            const content = fs.readFileSync(configPath, 'utf-8');
-            const parsed = configFile === 'package.json' || configFile.endsWith('.json')
-              ? JSON.parse(content)
-              : content;
-
-            foundConfigs.push({
-              name: configFile,
-              path: configPath,
-              exists: true,
-              content_preview: typeof parsed === 'string'
-                ? parsed.substring(0, 500)
-                : JSON.stringify(parsed, null, 2).substring(0, 500)
-            });
-          } catch (parseError) {
-            foundConfigs.push({
-              name: configFile,
-              path: configPath,
-              exists: true,
-              content_preview: '[Binary or unreadable file]'
-            });
-          }
-        }
-      }
-
-      // Analyser la structure des dossiers (premier niveau)
-      const topLevelItems = fs.readdirSync(this.workspaceRoot, { withFileTypes: true });
-      const directories = topLevelItems.filter(item => item.isDirectory()).map(dir => dir.name);
-      const files = topLevelItems.filter(item => item.isFile()).map(file => file.name);
-
-      // Compter les fichiers par type
-      const fileTypes: Record<string, number> = {};
-      topLevelItems.forEach(item => {
-        if (item.isFile()) {
-          const ext = path.extname(item.name).toLowerCase() || 'no-extension';
-          fileTypes[ext] = (fileTypes[ext] || 0) + 1;
-        }
-      });
-
-      return {
-        available: true,
-        root: this.workspaceRoot,
-        config_files: foundConfigs,
-        structure: {
-          directories,
-          files,
-          total_items: topLevelItems.length,
-          file_types: fileTypes
-        },
-        package_info: foundConfigs.find(c => c.name === 'package.json')?.content_preview
-          ? JSON.parse(foundConfigs.find(c => c.name === 'package.json')!.content_preview)
-          : null,
-        typescript_config: foundConfigs.find(c => c.name === 'tsconfig.json')?.content_preview
-          ? JSON.parse(foundConfigs.find(c => c.name === 'tsconfig.json')!.content_preview)
-          : null
-      };
-
-    } catch (error) {
-      console.warn('⚠️ ContextService: Erreur lors de l\'analyse de la structure du projet:', error);
-      return {
-        available: false,
-        reason: `Project structure analysis error: ${error instanceof Error ? error.message : String(error)}`
-      };
-    }
-  }
-
-  /**
-   * Récupère l'état de l'éditeur
-   */
-  private async getEditorState(): Promise<EditorState> {
-    const activeEditor = vscode.window.activeTextEditor;
-
-    return {
-      active_editor: activeEditor ? {
-        document: {
-          uri: activeEditor.document.uri.toString(),
-          language: activeEditor.document.languageId,
-          line_count: activeEditor.document.lineCount,
-          is_untitled: activeEditor.document.isUntitled
-        },
-        selection: {
-          start: activeEditor.selection.start,
-          end: activeEditor.selection.end,
-          is_empty: activeEditor.selection.isEmpty
-        },
-        visible_ranges: activeEditor.visibleRanges.map(range => ({
-          start: range.start,
-          end: range.end
-        }))
-      } : null,
-      open_editors: vscode.window.visibleTextEditors.map(editor => ({
-        uri: editor.document.uri.toString(),
-        language: editor.document.languageId,
-        line_count: editor.document.lineCount
-      })),
-      diagnostics: this.getDiagnosticsSummary()
-    };
-  }
-
-  /**
-   * Récupère un résumé des diagnostics
-   */
-  private getDiagnosticsSummary(): DiagnosticsSummary {
-    const diagnostics = vscode.languages.getDiagnostics();
-    let total = 0;
-    const bySeverity: Record<string, number> = {
-      error: 0,
-      warning: 0,
-      information: 0,
-      hint: 0
-    };
-
-    for (const [uri, diags] of diagnostics) {
-      total += diags.length;
-      diags.forEach(diag => {
-        const severity = vscode.DiagnosticSeverity[diag.severity].toLowerCase();
-        bySeverity[severity] = (bySeverity[severity] || 0) + 1;
-      });
-    }
-
-    return {
-      total,
-      by_severity: bySeverity,
-      files_with_diagnostics: diagnostics.length
-    };
-  }
-
-  /**
-   * Récupère les informations sur les extensions
-   */
-  private async getExtensionsInfo(): Promise<ExtensionsInfo> {
-    const extensions = vscode.extensions.all;
-
-    return {
-      total: extensions.length,
-      enabled: extensions.filter(ext => ext.isActive).length,
-      disabled: extensions.filter(ext => !ext.isActive).length,
-      workspace_recommended: (await this.getVSCodeConfiguration()).recommended_extensions.length,
-      by_category: extensions.reduce((acc, ext) => {
-        const category = ext.packageJSON?.categories?.[0] || 'other';
-        acc[category] = (acc[category] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>)
-    };
-  }
-
-  /**
-   * Récupère un contexte minimal pour les requêtes RAG
-   */
-  public async getMinimalContext(): Promise<MinimalContext> {
-    const fullContext = await this.getFullContext();
-
-    return {
-      workspace_name: fullContext.workspace.folders[0]?.name || 'unknown',
-      project_type: this.detectProjectType(fullContext),
-      git_branch: fullContext.git.available ? fullContext.git.repository?.head || null : null,
-      open_files: fullContext.editor.open_editors.length,
-      has_errors: fullContext.editor.diagnostics.total > 0,
-      timestamp: fullContext.timestamp
-    };
-  }
-
-  /**
-   * Détecte le type de projet
-   */
-  private detectProjectType(context: VSCodeContext): string {
-    if (!context.project.available) {
-      return 'unknown';
-    }
-
-    const project = context.project;
-
-    // Vérifier package.json pour Node.js/TypeScript
-    if (project.package_info) {
-      const pkg = typeof project.package_info === 'string'
-        ? JSON.parse(project.package_info)
-        : project.package_info;
-
-      if (pkg.dependencies?.react || pkg.devDependencies?.react) return 'react';
-      if (pkg.dependencies?.vue || pkg.devDependencies?.vue) return 'vue';
-      if (pkg.dependencies?.angular || pkg.devDependencies?.angular) return 'angular';
-      if (pkg.dependencies?.next || pkg.devDependencies?.next) return 'nextjs';
-      if (pkg.scripts?.dev || pkg.scripts?.start) return 'nodejs';
-    }
-
-    // Vérifier tsconfig.json pour TypeScript
-    if (project.typescript_config) {
-      return 'typescript';
-    }
-
-    // Vérifier les fichiers de configuration
-    const configNames = project.config_files?.map(c => c.name) || [];
-    if (configNames.includes('dockerfile') || configNames.includes('docker-compose.yml')) {
-      return 'docker';
-    }
-
-    // Vérifier les extensions de fichiers
-    const fileTypes = project.structure?.file_types || {};
-    if (fileTypes['.py']) return 'python';
-    if (fileTypes['.java']) return 'java';
-    if (fileTypes['.go']) return 'go';
-    if (fileTypes['.rs']) return 'rust';
-    if (fileTypes['.cpp'] || fileTypes['.c']) return 'c++';
-
-    return 'unknown';
+  public isActive(): boolean {
+    return this.isInitialized;
   }
 }
 
-// Types pour le contexte VS Code
-
-// Interfaces pour les types Git de VS Code
-interface GitRef {
-  type: number;  // 0 = local, 1 = remote
-  name: string;
+/**
+ * Statistiques de capture
+ */
+export interface CaptureStats {
+  is_initialized: boolean;
+  total_captured_events: number;
+  listeners_active: {
+    file_save: boolean;
+    diagnostics: boolean;
+    workspace: boolean;
+  };
+  last_capture_time: string | null;
+  memory_usage_mb: number;
 }
 
-interface GitRemoteApi {
-  name: string;
-  fetchUrl?: string;
-  pushUrl?: string;
-}
-
+/**
+ * Ancienne interface conservée pour compatibilité
+ * (Les méthodes ne sont plus accessibles publiquement)
+ */
 export interface VSCodeContext {
   timestamp: string;
-  workspace: WorkspaceInfo;
-  configuration: VSCodeConfiguration;
-  git: GitInfo;
-  project: ProjectStructure;
-  editor: EditorState;
-  extensions: ExtensionsInfo;
-  metadata: ContextMetadata;
-}
-
-export interface WorkspaceInfo {
-  root: string | undefined;
-  folders: WorkspaceFolder[];
-  is_multi_root: boolean;
-  total_folders: number;
-  workspace_file: string | null;
-}
-
-export interface WorkspaceFolder {
-  name: string;
-  path: string;
-  uri: string;
-}
-
-export interface VSCodeConfiguration {
-  settings: {
-    workspace: any;
-    user: any;
-    default: any;
-  };
-  recommended_extensions: string[];
-  workspace_configuration: {
-    has_settings: boolean;
-    has_extensions_json: boolean;
-    settings_path: string | null;
-    extensions_json_path: string | null;
-  };
-}
-
-export interface GitInfo {
-  available: boolean;
-  reason?: string;
-  repository?: {
-    root: string;
-    head: string | null;
-    commit: string | null;
-    upstream: string | null;
-    ahead: number;
-    behind: number;
-  };
-  status?: {
-    working_changes: number;
-    index_changes: number;
-    merge_changes: number;
-    total_changes: number;
-  };
-  branches?: {
-    current: string | null;
-    local: string[];
-    remote: string[];
-  };
-  remotes?: GitRemote[];
-}
-
-export interface GitRemote {
-  name: string;
-  fetch_url: string | null;
-  push_url: string | null;
-}
-
-export interface ProjectStructure {
-  available: boolean;
-  reason?: string;
-  root?: string;
-  config_files?: ConfigFile[];
-  structure?: {
-    directories: string[];
-    files: string[];
-    total_items: number;
-    file_types: Record<string, number>;
-  };
-  package_info?: any;
-  typescript_config?: any;
-}
-
-export interface ConfigFile {
-  name: string;
-  path: string;
-  exists: boolean;
-  content_preview: string;
-}
-
-export interface EditorState {
-  active_editor: ActiveEditor | null;
-  open_editors: OpenEditor[];
-  diagnostics: DiagnosticsSummary;
-}
-
-export interface ActiveEditor {
-  document: {
-    uri: string;
-    language: string;
-    line_count: number;
-    is_untitled: boolean;
-  };
-  selection: {
-    start: vscode.Position;
-    end: vscode.Position;
-    is_empty: boolean;
-  };
-  visible_ranges: VisibleRange[];
-}
-
-export interface OpenEditor {
-  uri: string;
-  language: string;
-  line_count: number;
-}
-
-export interface VisibleRange {
-  start: vscode.Position;
-  end: vscode.Position;
-}
-
-export interface DiagnosticsSummary {
-  total: number;
-  by_severity: Record<string, number>;
-  files_with_diagnostics: number;
-}
-
-export interface ExtensionsInfo {
-  total: number;
-  enabled: number;
-  disabled: number;
-  workspace_recommended: number;
-  by_category: Record<string, number>;
-}
-
-export interface ContextMetadata {
-  context_service_version: string;
-  collected_at: string;
-  workspace_root: string | null;
+  workspace: any;
+  configuration: any;
+  git: any;
+  project: any;
+  editor: any;
+  extensions: any;
+  metadata: any;
 }
 
 export interface MinimalContext {
@@ -583,3 +276,11 @@ export interface MinimalContext {
   has_errors: boolean;
   timestamp: string;
 }
+
+// Export des types pour compatibilité
+export type {
+  ActiveEditor, ConfigFile, ContextMetadata, DiagnosticsSummary, EditorState, ExtensionsInfo, GitInfo,
+  GitRemote, OpenEditor, ProjectStructure, VisibleRange, VSCodeConfiguration, WorkspaceFolder, WorkspaceInfo
+} from './context-types';
+
+export default ContextService;

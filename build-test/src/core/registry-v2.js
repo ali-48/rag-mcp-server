@@ -15,15 +15,15 @@ const DEFAULT_CONFIG_V2 = {
     toolFilePattern: /\.js$/,
     toolExportPattern: /(Tool|Handler)$/,
     verbose: true,
-    legacyMode: true, // Par défaut, activer le mode rétrocompatible
+    legacyMode: false, // Par défaut, désactiver le mode rétrocompatible (suivre config v3)
     exposedTools: [
         'init_rag',
-        'activated_rag',
         'get_status',
         'query_rag',
         'cancel_task'
     ],
     hiddenTools: [
+        'activated_rag',
         'scan_rag',
         'index_rag',
         'prepare_rag',
@@ -284,13 +284,13 @@ export async function initializeAutoRegistryV2(config) {
  */
 export function getExpectedToolsV2() {
     return [
-        // Nouveaux outils principaux
+        // Nouveaux outils principaux (exposés)
         'init_rag',
-        'activated_rag',
         'get_status',
         'query_rag',
         'cancel_task',
         // Outils legacy (masqués par défaut)
+        'activated_rag',
         'scan_rag',
         'index_rag',
         'prepare_rag',

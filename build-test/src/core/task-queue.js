@@ -2,6 +2,7 @@
 // Système de file d'attente par projet pour les tâches RAG asynchrones
 // Version: v1.0.0
 // Responsabilités: FIFO par projet, limitation concurrence, gestion annulation
+// Intégration avec TaskEventEmitter pour événements
 import { logger } from './logger.js';
 import { getProgressTracker } from './progress-tracker.js';
 /**
